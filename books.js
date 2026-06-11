@@ -68,26 +68,45 @@ const BOOKS = [
     title: "항공안전법 시행규칙",
     subtitle: "국토교통부령 제1262호 (2026.01.01)",
     cover: "books/aviation-safety-rule/cover.svg"
-  }
+  },
 
-  // ===== 객실안전정보툰 Safety Star =====
-  // 아직 등록된 툰이 없습니다. 자료가 준비되면 아래 형식으로 추가하세요.
-  // (PDF 첨부형)
-  // {
-  //   id: "safety-star-01", type: "pdf", category: "safety-star",
-  //   path: "books/safety-star-01", file: "doc.pdf",
-  //   title: "Safety Star Vol.1", subtitle: "2026 봄호",
-  //   cover: "books/safety-star-01/cover.svg"
-  // }
-  //
-  // (이미지 책 넘김형 — 만화 컷을 페이지로)
-  // {
-  //   id: "safety-star-01", category: "safety-star",
-  //   path: "books/safety-star-01",
-  //   title: "Safety Star Vol.1", subtitle: "2026 봄호",
-  //   cover: "books/safety-star-01/pages/01.jpg",
-  //   pages: ["01.jpg","02.jpg","03.jpg"]
-  // }
+  // ===== 객실안전정보툰 Safety Star (기내 안전 정보 툰) =====
+  {
+    id: "safety-star-01", type: "pdf", category: "safety-star",
+    path: "books/safety-star-01", file: "doc.pdf",
+    title: "1화 · 세이프티 히어로즈", subtitle: "기내 안전 정보 툰",
+    cover: "books/safety-star-01/cover.jpg"
+  },
+  {
+    id: "safety-star-02", type: "pdf", category: "safety-star",
+    path: "books/safety-star-02", file: "doc.pdf",
+    title: "2화 · 보조배터리", subtitle: "기내 안전 정보 툰",
+    cover: "books/safety-star-02/cover.jpg"
+  },
+  {
+    id: "safety-star-03", type: "pdf", category: "safety-star",
+    path: "books/safety-star-03", file: "doc.pdf",
+    title: "3화 · 전자담배", subtitle: "기내 안전 정보 툰",
+    cover: "books/safety-star-03/cover.jpg"
+  },
+  {
+    id: "safety-star-04", type: "pdf", category: "safety-star",
+    path: "books/safety-star-04", file: "doc.pdf",
+    title: "4화 · 승객 탑승 준비", subtitle: "기내 안전 정보 툰",
+    cover: "books/safety-star-04/cover.jpg"
+  },
+  {
+    id: "safety-star-05", type: "pdf", category: "safety-star",
+    path: "books/safety-star-05", file: "doc.pdf",
+    title: "5화 · 탈출 상황에서는?", subtitle: "기내 안전 정보 툰",
+    cover: "books/safety-star-05/cover.jpg"
+  },
+  {
+    id: "safety-star-06", type: "pdf", category: "safety-star",
+    path: "books/safety-star-06", file: "doc.pdf",
+    title: "6화 · 승객 안전 브리핑", subtitle: "기내 안전 정보 툰",
+    cover: "books/safety-star-06/cover.jpg"
+  }
 ];
 
 // index.html / viewer.html / pdf.html 에서 참조
