@@ -249,6 +249,7 @@
           : '이 통계 기능은 <b>Cloudflare Pages 주소(eastarjet-ebook.pages.dev)</b> 에서만 동작합니다. 현재 주소에서는 표시되지 않습니다.');
       }
       const rb = $('reloadStats'); if (rb) rb.onclick = loadStats;
+      const db = $('dlStats'); if (db) db.onclick = downloadStatsCSV;
     }
     function renderStatsErrorRaw(msg) {
       $('statsBox').innerHTML =
@@ -297,8 +298,44 @@
         </div>
         <div class="row-actions" style="margin-top:16px">
           <button class="btn" id="reloadStats">새로고침</button>
+          <button class="btn primary" id="dlStats">📥 CSV 내려받기 (보관용)</button>
           <a class="btn" href="${DASH}" target="_blank" rel="noopener">전체 대시보드 ↗</a>
-        </div>`;
+        </div>
+        <p class="sub" style="margin:10px 2px 0">💡 무료 통계는 약 6개월 뒤 사라집니다. 주기적으로 CSV로 내려받아 보관하세요.</p>`;
+    }
+
+    // ---------- 통계 CSV 내려받기 (일별 원자료 ~6개월) ----------
+    function csvCell(v) { v = (v == null ? '' : String(v)); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+    async function downloadStatsCSV() {
+      const btn = $('dlStats'); const orig = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = '준비 중…'; }
+      try {
+        const r = await fetch('/api/stats?group=day&days=180', { cache: 'no-store' });
+        const d = await r.json();
+        if (!d.ok) { alert('데이터를 불러오지 못했습니다: ' + (d.message || d.error || '')); return; }
+        const today = new Date().toISOString().slice(0, 10);
+        const rows = [];
+        rows.push(['이스타항공 e-Book 방문통계']);
+        rows.push(['생성일', today]);
+        rows.push(['집계기간', (d.range && d.range.start || '').slice(0, 10) + ' ~ ' + (d.range && d.range.end || '').slice(0, 10), '(최근 ' + (d.range && d.range.days || 180) + '일)']);
+        rows.push(['총 페이지뷰', d.totals.views, '총 방문', d.totals.visits]);
+        rows.push([]);
+        rows.push(['[일별]']); rows.push(['날짜', '페이지뷰', '방문']);
+        (d.buckets || []).forEach(b => rows.push([b.label, b.views, b.visits]));
+        rows.push([]);
+        rows.push(['[인기 페이지]']); rows.push(['경로', '페이지뷰']);
+        (d.topPages || []).forEach(p => rows.push([p.path, p.views]));
+        rows.push([]);
+        rows.push(['[국가]']); rows.push(['국가', '페이지뷰']);
+        (d.topCountries || []).forEach(c => rows.push([c.country, c.views]));
+        const csv = rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'eastarjet-ebook_방문통계_' + today + '.csv';
+        document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+      } catch (e) { alert('내려받기 실패: ' + e.message); }
+      finally { if (btn) { btn.disabled = false; btn.textContent = orig; } }
     }
 
     function renderTables() {

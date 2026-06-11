@@ -59,9 +59,12 @@ export async function onRequestGet({ request, env }) {
     return out({ ok: false, error: "missing_env", message: "Cloudflare Pages 환경변수 CF_API_TOKEN(API 토큰)을 설정한 뒤 재배포하세요." });
   }
 
-  const g = new URL(request.url).searchParams.get("group");
+  const url = new URL(request.url);
+  const g = url.searchParams.get("group");
   const group = (g === "month" || g === "year") ? g : "day";
-  const days = group === "day" ? 30 : 180;   // 일별=30일, 월/년=약 6개월(보존 한도)
+  let days = group === "day" ? 30 : 180;      // 일별=30일, 월/년=약 6개월(보존 한도)
+  const dParam = parseInt(url.searchParams.get("days"), 10);   // 내려받기 등에서 범위 지정
+  if (!isNaN(dParam) && dParam > 0) days = Math.min(dParam, 186);
 
   const end = new Date();
   const start = new Date(end.getTime() - days * 86400000);
