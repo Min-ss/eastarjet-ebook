@@ -1,0 +1,8 @@
+# 사이트에서 쓰지 않는 참고용 이미지 (업로드 제외)
+웹진 형태 사진.png
+
+# OS·편집기 부산물
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp

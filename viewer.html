@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>e-Book 뷰어 — 이스타항공</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="viewer">
+  <div class="viewer-wrap">
+    <!-- 상단 바 -->
+    <div class="topbar v-top">
+      <a class="btn icon-btn" href="index.html" title="목록으로">←</a>
+      <a href="index.html"><img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" /></a>
+      <span class="title" id="bookTitle">불러오는 중…</span>
+      <div class="spacer"></div>
+      <button class="btn icon-btn" id="downloadBtn" title="PDF 다운로드">⬇</button>
+      <button class="btn icon-btn" id="shareBtn" title="링크 공유">↗</button>
+      <button class="btn icon-btn" id="zoomBtn" title="확대/축소">🔍</button>
+      <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
+      <button class="btn icon-btn" id="panelBtn" title="목차·썸네일">☰</button>
+    </div>
+
+    <!-- 책 무대 -->
+    <div id="stage">
+      <div id="book"></div>
+    </div>
+
+    <!-- 하단 컨트롤 -->
+    <div class="v-bottom">
+      <button class="btn icon-btn" id="prevBtn" title="이전">◀</button>
+      <input type="range" id="slider" min="1" max="1" value="1" />
+      <span id="pageInfo">- / -</span>
+      <button class="btn icon-btn" id="nextBtn" title="다음">▶</button>
+    </div>
+  </div>
+
+  <!-- 사이드 패널 -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="side" id="side">
+    <div class="side-head">
+      <div class="tabs">
+        <div class="tab active" data-tab="thumbs">썸네일</div>
+        <div class="tab" data-tab="toc">목차</div>
+      </div>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn icon-btn" id="closeSide">✕</button>
+    </div>
+    <div class="side-body">
+      <div id="thumbsView" class="thumbs"></div>
+      <div id="tocView" style="display:none"></div>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script src="books.js"></script>
+  <script>
+    // ---------- 책 선택 ----------
+    const params = new URLSearchParams(location.search);
+    const bookId = params.get('book');
+    const book = (window.BOOKS || []).find(b => b.id === bookId) || (window.BOOKS || [])[0];
+
+    const $ = id => document.getElementById(id);
+    const toast = (msg) => {
+      const t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800);
+    };
+
+    if (!book) {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>책을 찾을 수 없습니다</h2><p><a class="btn" href="index.html">← 서재로 돌아가기</a></p></div>';
+      throw new Error('no book');
+    }
+
+    document.title = `${book.title} — 이스타항공 e-Book`;
+    $('bookTitle').textContent = book.title;
+
+    const pagePaths = book.pages.map(p => `${book.path}/pages/${p}`);
+
+    // ---------- 책 크기 계산 ----------
+    const bookEl = $('book');
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    const RATIO = 1.414;            // 페이지 세로/가로 비율 (A4)
+
+    // 펼친 상태(데스크탑 2장 / 모바일 1장)가 가로·세로 모두 화면 안에
+    // 들어오도록 "한 페이지" 크기를 계산한다.
+    function calcSize() {
+      const stage = $('stage');
+      const sw = stage.clientWidth;
+      const sh = stage.clientHeight;
+      const cols = isMobile ? 1 : 2;                   // 데스크탑은 좌·우 2장 펼침
+      const byWidth = Math.floor((sw - 40) / cols);    // 가로 제약 → 좌/우가 화면에 맞음
+      const byHeight = Math.floor((sh - 24) / RATIO);  // 세로 제약 → 위/아래가 안 넘침
+      const w = Math.max(200, Math.min(byWidth, byHeight));
+      return { w, h: Math.round(w * RATIO) };
+    }
+
+    // ---------- StPageFlip (리사이즈 시 다시 생성) ----------
+    let pageFlip;
+    function buildBook(startIndex = 0) {
+      const { w, h } = calcSize();
+      const cols = isMobile ? 1 : 2;
+      bookEl.innerHTML = pagePaths.map((src, i) =>
+        `<div class="page" data-i="${i}"><img src="${src}" alt="${i + 1}페이지" loading="${i < 4 ? 'eager' : 'lazy'}"></div>`
+      ).join('');
+      // 펼친 폭(데스크탑 2장 / 모바일 1장)을 직접 제한 → 좌·우가 화면에 정확히 맞음
+      bookEl.style.width = (w * cols) + 'px';
+      bookEl.style.height = h + 'px';
+      pageFlip = new St.PageFlip(bookEl, {
+        width: w, height: h,
+        size: 'stretch',             // 위에서 제한한 폭에 맞춰 펼침
+        minWidth: 200, maxWidth: 3000,
+        minHeight: 200, maxHeight: 4000,
+        showCover: true,
+        usePortrait: true,           // 좁은 화면(모바일)에서는 한 장씩
+        mobileScrollSupport: false,
+        maxShadowOpacity: 0.5,
+        flippingTime: 650,
+        drawShadow: true,
+      });
+      pageFlip.loadFromHTML(document.querySelectorAll('#book .page'));
+      pageFlip.on('flip', update);
+      if (startIndex > 0) pageFlip.turnToPage(startIndex);
+    }
+    buildBook();
+
+    const total = pageFlip.getPageCount();
+    const slider = $('slider');
+    slider.max = total;
+
+    function update() {
+      const cur = pageFlip.getCurrentPageIndex() + 1;
+      $('pageInfo').textContent = `${cur} / ${total}`;
+      slider.value = cur;
+      $('prevBtn').disabled = cur <= 1;
+      $('nextBtn').disabled = cur >= total;
+      document.querySelectorAll('.thumb').forEach(t => t.classList.toggle('active', +t.dataset.i === cur - 1));
+    }
+
+    // ---------- 컨트롤 ----------
+    $('prevBtn').onclick = () => pageFlip.flipPrev();
+    $('nextBtn').onclick = () => pageFlip.flipNext();
+    slider.oninput = e => pageFlip.flip(+e.target.value - 1);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft') pageFlip.flipPrev();
+      if (e.key === 'ArrowRight') pageFlip.flipNext();
+      if (e.key === 'Escape') closePanel();
+    });
+
+    // 확대/축소
+    let zoomed = false;
+    $('zoomBtn').onclick = () => {
+      zoomed = !zoomed;
+      bookEl.style.transition = 'transform .25s';
+      bookEl.style.transform = zoomed ? 'scale(1.6)' : 'scale(1)';
+      toast(zoomed ? '확대 (다시 누르면 원래대로)' : '원래 크기');
+    };
+
+    // 전체화면
+    $('fsBtn').onclick = () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    };
+
+    // PDF 다운로드
+    $('downloadBtn').onclick = () => {
+      if (book.pdf) {
+        const a = document.createElement('a');
+        a.href = `${book.path}/${book.pdf}`; a.download = '';
+        document.body.appendChild(a); a.click(); a.remove();
+      } else {
+        toast('다운로드용 PDF가 등록되지 않았습니다');
+      }
+    };
+
+    // 공유
+    $('shareBtn').onclick = async () => {
+      const url = location.href;
+      if (navigator.share) {
+        try { await navigator.share({ title: book.title, url }); } catch (e) {}
+      } else {
+        try { await navigator.clipboard.writeText(url); toast('링크가 복사되었습니다'); }
+        catch (e) { toast(url); }
+      }
+    };
+
+    // ---------- 사이드 패널 ----------
+    const side = $('side'), scrim = $('scrim');
+    function openPanel() { side.classList.add('open'); scrim.classList.add('show'); }
+    function closePanel() { side.classList.remove('open'); scrim.classList.remove('show'); }
+    $('panelBtn').onclick = openPanel;
+    $('closeSide').onclick = closePanel;
+    scrim.onclick = closePanel;
+
+    // 탭 전환
+    document.querySelectorAll('.side .tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.side .tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const t = tab.dataset.tab;
+        $('thumbsView').style.display = t === 'thumbs' ? 'grid' : 'none';
+        $('tocView').style.display = t === 'toc' ? 'block' : 'none';
+      };
+    });
+
+    // 썸네일
+    $('thumbsView').innerHTML = pagePaths.map((src, i) => `
+      <div class="thumb" data-i="${i}">
+        <img src="${src}" loading="lazy" alt="">
+        <span>${i + 1}</span>
+      </div>`).join('');
+    $('thumbsView').querySelectorAll('.thumb').forEach(el => {
+      el.onclick = () => { pageFlip.flip(+el.dataset.i); update(); if (isMobile) closePanel(); };
+    });
+
+    // 목차
+    const toc = book.toc || [];
+    $('tocView').innerHTML = toc.length
+      ? toc.map(item => `<div class="toc-item" data-pg="${item.page}"><span>${item.title}</span><span class="pg">${item.page}p</span></div>`).join('')
+      : '<div style="color:var(--muted);padding:12px;font-size:14px">등록된 목차가 없습니다.</div>';
+    $('tocView').querySelectorAll('.toc-item').forEach(el => {
+      el.onclick = () => { pageFlip.flip(+el.dataset.pg - 1); update(); if (isMobile) closePanel(); };
+    });
+
+    update();
+
+    // 회전/리사이즈 대응 — 현재 페이지를 유지한 채 크기 재계산 후 다시 생성
+    let rT;
+    window.addEventListener('resize', () => {
+      clearTimeout(rT);
+      rT = setTimeout(() => {
+        const idx = pageFlip.getCurrentPageIndex();
+        try { pageFlip.destroy(); } catch (e) {}
+        buildBook(idx);
+        update();
+      }, 200);
+    });
+  </script>
+</body>
+</html>

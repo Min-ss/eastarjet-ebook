@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>간행물 뷰어 — 이스타항공</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="viewer flipbook">
+  <!-- ===== ① 표지 랜딩 + 전체 페이지 미리보기 ===== -->
+  <section class="wz-landing" id="landing">
+    <div class="topbar v-top">
+      <a class="btn icon-btn" href="index.html" title="목록으로">←</a>
+      <a href="index.html"><img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" /></a>
+      <span class="title" id="bookTitle">불러오는 중…</span>
+      <div class="spacer"></div>
+      <a class="btn icon-btn" id="searchLink" title="문서 검색 보기">🔍</a>
+      <button class="btn icon-btn" id="dlBtn1" title="PDF 다운로드">⬇</button>
+    </div>
+
+    <div class="wz-hero">
+      <div class="wz-cover">
+        <img id="coverImg" alt="표지" />
+        <button class="play-btn" id="playBtn" title="열람하기">▶</button>
+      </div>
+      <div class="wz-info">
+        <h1 id="titleBig">　</h1>
+        <p class="sub" id="subBig"></p>
+        <button class="btn primary" id="openFlip">간행물 열람하기 ›</button>
+        <div class="hint">📄 한 장씩 보기가 기본입니다. 상단의 <b>1장 / 2장</b> 으로 펼침 보기로 바꿀 수 있어요.<br>(← → 키 · 좌우 스와이프로 페이지 이동)</div>
+        <a class="alt-link" id="searchLink2">본문 검색·복사가 필요하면 문서 보기 →</a>
+      </div>
+    </div>
+
+    <div class="wz-spreads-head" id="spreadsHead">전체 페이지</div>
+    <div class="wz-spreads" id="spreads"></div>
+  </section>
+
+  <!-- ===== ② 읽기 모드 (페이지 단위) ===== -->
+  <div id="flipView" hidden>
+    <div class="topbar v-top">
+      <button class="btn icon-btn" id="closeFlip" title="미리보기로">←</button>
+      <img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
+      <span class="title" id="flipTitle"></span>
+      <div class="spacer"></div>
+      <div class="seg" id="modeSeg" title="보기 방식">
+        <button data-m="single" class="active">1장</button>
+        <button data-m="spread">2장</button>
+      </div>
+      <button class="btn icon-btn" id="dlBtn2" title="PDF 다운로드">⬇</button>
+      <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
+      <button class="btn icon-btn" id="panelBtn" title="페이지 목록">☰</button>
+    </div>
+
+    <div id="stage"><div id="pages" class="pages one"></div></div>
+
+    <div class="v-bottom">
+      <button class="btn icon-btn" id="prevBtn" title="이전">◀</button>
+      <input type="range" id="slider" min="1" max="1" value="1" />
+      <span id="pageInfo">- / -</span>
+      <button class="btn icon-btn" id="nextBtn" title="다음">▶</button>
+    </div>
+  </div>
+
+  <!-- 사이드 패널 (페이지 썸네일) -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="side" id="side">
+    <div class="side-head">
+      <div class="tabs"><div class="tab active">페이지</div></div>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn icon-btn" id="closeSide">✕</button>
+    </div>
+    <div class="side-body"><div id="sideThumbs" class="thumbs"></div></div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="books.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const toast = (m) => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800); };
+
+    // ---------- 책 선택 ----------
+    const params = new URLSearchParams(location.search);
+    const book = (window.BOOKS || []).find(b => b.id === params.get('book'));
+    if (!book || book.type !== 'pdf') {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>문서를 찾을 수 없습니다</h2><p><a class="btn" href="index.html">← 목록으로</a></p></div>';
+      throw new Error('no book');
+    }
+    document.title = `${book.title} — 이스타항공`;
+    $('bookTitle').textContent = book.title;
+    $('flipTitle').textContent = book.title;
+    $('titleBig').textContent = book.title;
+    $('subBig').textContent = book.subtitle || '';
+    $('coverImg').src = book.cover;
+    const pdfUrl = `${book.path}/${book.file}`;
+    const searchHref = `pdf.html?book=${encodeURIComponent(book.id)}`;
+    $('searchLink').href = searchHref;
+    $('searchLink2').href = searchHref;
+
+    function download() { const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
+    $('dlBtn1').onclick = download; $('dlBtn2').onclick = download;
+
+    // ---------- PDF.js ----------
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let pdf = null, numPages = 0, baseW = 0, baseH = 0, RATIO = 1.414;
+    const thumbCache = {};
+    const fullCache = new Map();
+    const FULL_CACHE_MAX = 28;
+    let curPageW = 480;       // 현재 페이지 렌더 폭(px) — 해상도 결정
+
+    async function renderToUrl(n, scale, quality) {
+      const page = await pdf.getPage(n);
+      const vp = page.getViewport({ scale });
+      const c = document.createElement('canvas');
+      c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      const ctx = c.getContext('2d', { alpha: false });
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      return c.toDataURL('image/jpeg', quality);
+    }
+    async function fullUrl(n) {
+      if (fullCache.has(n)) { const u = fullCache.get(n); fullCache.delete(n); fullCache.set(n, u); return u; }
+      const targetW = Math.min(1600, Math.round(curPageW * DPR));
+      const url = await renderToUrl(n, targetW / baseW, 0.85);
+      fullCache.set(n, url);
+      while (fullCache.size > FULL_CACHE_MAX) fullCache.delete(fullCache.keys().next().value);
+      return url;
+    }
+
+    // ---------- 초기 로딩 ----------
+    (async () => {
+      try {
+        pdf = await pdfjsLib.getDocument({ url: pdfUrl, cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked: true }).promise;
+        numPages = pdf.numPages;
+        const p1 = await pdf.getPage(1);
+        const vp = p1.getViewport({ scale: 1 });
+        baseW = vp.width; baseH = vp.height; RATIO = baseH / baseW;
+        $('spreadsHead').textContent = `전체 ${numPages}페이지`;
+        $('slider').max = numPages;
+        buildThumbs();
+        if (location.hash === '#read') openReader(1);
+      } catch (e) {
+        const isFile = location.protocol === 'file:';
+        $('landing').innerHTML = `<div class="empty-state" style="margin-top:90px">
+          <h2>간행물을 불러오지 못했습니다</h2>
+          ${isFile
+            ? `<p>파일을 더블클릭(<code>file://</code>)으로 열면 브라우저 보안 정책상 PDF를 읽지 못합니다.<br>
+               같은 폴더의 <b>「미리보기.bat」</b> 을 실행하거나, GitHub Pages 등 웹주소(http/https)로 열면 정상 동작합니다.</p>
+               <p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p>`
+            : `<p>${e.message || e}</p><p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p>`}
+        </div>`;
+      }
+    })();
+
+    // ---------- 미리보기 썸네일(지연 렌더) ----------
+    const spreadsEl = $('spreads');
+    const tio = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { renderThumb(+e.target.dataset.n, e.target); tio.unobserve(e.target); }
+    }), { rootMargin: '400px' });
+    const sideTio = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { renderThumb(+e.target.dataset.n, e.target); sideTio.unobserve(e.target); }
+    }), { root: null, rootMargin: '300px' });
+
+    function buildThumbs() {
+      spreadsEl.innerHTML = '';
+      const sideHtml = [];
+      for (let n = 1; n <= numPages; n++) {
+        const b = document.createElement('button');
+        b.className = 'wz-thumb'; b.dataset.n = n;
+        b.innerHTML = `<div class="wz-thumb-img"><span>${n}</span></div>`;
+        b.onclick = () => openReader(n);
+        spreadsEl.appendChild(b);
+        tio.observe(b);
+        sideHtml.push(`<div class="thumb" data-n="${n}"><div class="wz-thumb-img" style="border:none"><span>${n}</span></div></div>`);
+      }
+      $('sideThumbs').innerHTML = sideHtml.join('');
+      $('sideThumbs').querySelectorAll('.thumb').forEach(el => {
+        el.onclick = () => { cur = +el.dataset.n; if (!$('flipView').hidden) render(); else openReader(cur); closePanel(); };
+        sideTio.observe(el);
+      });
+    }
+    async function renderThumb(n, el) {
+      try {
+        if (!thumbCache[n]) thumbCache[n] = await renderToUrl(n, 200 / baseW, 0.7);
+        const box = el.querySelector('.wz-thumb-img');
+        box.style.backgroundImage = `url("${thumbCache[n]}")`; box.classList.add('loaded');
+      } catch (e) {}
+    }
+
+    // ============================================================
+    //  읽기 모드 — 페이지 단위 (1장 / 2장)
+    // ============================================================
+    const pagesEl = $('pages');
+    let mode = (localStorage.getItem('eb_pdf_mode') === 'spread') ? 'spread' : 'single';
+    let cur = 1;   // 현재(또는 펼침의 왼쪽) 페이지
+
+    function pageList() {
+      if (mode === 'single') return [cur];
+      const left = (cur % 2 === 1) ? cur : cur - 1;   // 펼침: 홀수가 왼쪽
+      cur = Math.max(1, left);
+      return (cur + 1 <= numPages) ? [cur, cur + 1] : [cur];
+    }
+
+    function render() {
+      if (!numPages) return;
+      const stage = $('stage');
+      const sw = stage.clientWidth, sh = stage.clientHeight;
+      const pad = 36, gap = 14;
+      let w, h;
+      if (mode === 'single') {
+        h = sh - pad; w = h / RATIO;
+        if (w > sw - pad) { w = sw - pad; h = w * RATIO; }
+      } else {
+        w = (sw - pad - gap) / 2; h = w * RATIO;
+        if (h > sh - pad) { h = sh - pad; w = h / RATIO; }
+      }
+      w = Math.max(120, Math.floor(w)); h = Math.floor(h);
+      curPageW = w;
+      const list = pageList();
+      pagesEl.className = 'pages ' + (mode === 'spread' ? 'two' : 'one');
+      pagesEl.innerHTML = list.map(n =>
+        `<div class="rpage" data-n="${n}" style="width:${w}px;height:${h}px"><div class="page-skel">${n}</div><img class="pimg" alt="${n}페이지"></div>`
+      ).join('');
+      pagesEl.querySelectorAll('.rpage').forEach(loadInto);
+      prefetch(list);
+      updateBar(list);
+    }
+
+    async function loadInto(div) {
+      const n = +div.dataset.n;
+      try {
+        const url = await fullUrl(n);
+        const img = div.querySelector('.pimg');
+        img.onload = () => div.classList.add('ready');
+        img.src = url;
+      } catch (e) {}
+    }
+    function prefetch(list) {
+      const around = [];
+      const step = mode === 'spread' ? 2 : 1;
+      for (let k = 1; k <= 2; k++) { around.push(list[0] - k * step, list[list.length - 1] + k * step); }
+      around.forEach(n => { if (n >= 1 && n <= numPages) fullUrl(n).catch(() => {}); });
+    }
+
+    function updateBar(list) {
+      const total = numPages;
+      $('slider').value = cur;
+      $('pageInfo').textContent = (list.length === 2 ? `${list[0]}-${list[1]}` : `${cur}`) + ` / ${total}`;
+      $('prevBtn').disabled = cur <= 1;
+      $('nextBtn').disabled = cur >= total;
+    }
+
+    function go(dir) {
+      const step = mode === 'spread' ? 2 : 1;
+      cur = Math.max(1, Math.min(numPages, cur + dir * step));
+      render();
+    }
+    $('prevBtn').onclick = () => go(-1);
+    $('nextBtn').onclick = () => go(1);
+    $('slider').oninput = e => { cur = +e.target.value; render(); };
+
+    // 보기 방식 토글
+    function applyMode(m) {
+      mode = m; localStorage.setItem('eb_pdf_mode', m);
+      $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
+      render();
+    }
+    $('modeSeg').querySelectorAll('button').forEach(b => b.onclick = () => applyMode(b.dataset.m));
+
+    // 진입/이탈
+    function openReader(startPage = 1) {
+      cur = Math.max(1, Math.min(numPages, startPage | 0));
+      $('landing').style.display = 'none';
+      $('flipView').hidden = false;
+      $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === mode));
+      requestAnimationFrame(render);
+    }
+    function closeReader() { $('flipView').hidden = true; $('landing').style.display = 'flex'; }
+    $('playBtn').onclick = () => openReader(1);
+    $('openFlip').onclick = () => openReader(1);
+    $('closeFlip').onclick = closeReader;
+
+    // 키보드 / 스와이프
+    document.addEventListener('keydown', e => {
+      if ($('flipView').hidden) return;
+      if (e.key === 'ArrowLeft') go(-1);
+      if (e.key === 'ArrowRight') go(1);
+      if (e.key === 'Escape') { if ($('side').classList.contains('open')) closePanel(); else closeReader(); }
+    });
+    let touchX = null;
+    $('stage').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+    $('stage').addEventListener('touchend', e => {
+      if (touchX === null) return;
+      const dx = e.changedTouches[0].clientX - touchX; touchX = null;
+      if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
+    }, { passive: true });
+
+    $('fsBtn').onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
+
+    // 사이드 패널
+    const side = $('side'), scrim = $('scrim');
+    function openPanel() { side.classList.add('open'); scrim.classList.add('show'); }
+    function closePanel() { side.classList.remove('open'); scrim.classList.remove('show'); }
+    $('panelBtn').onclick = openPanel; $('closeSide').onclick = closePanel; scrim.onclick = closePanel;
+
+    // 리사이즈 — 현재 페이지 유지하며 다시 그림
+    let rT;
+    window.addEventListener('resize', () => {
+      clearTimeout(rT);
+      rT = setTimeout(() => { if (!$('flipView').hidden) render(); }, 200);
+    });
+  </script>
+</body>
+</html>

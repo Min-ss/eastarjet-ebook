@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>이스타항공 대외 간행물 e-Book</title>
+  <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
+  <div class="splash" id="splash">
+    <div class="splash-bg" id="splashBg"></div>
+    <div class="splash-scrim"></div>
+    <div class="splash-inner">
+      <img class="splash-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
+      <div class="splash-title">대외 간행물 e-Book</div>
+      <div class="splash-bar"><span id="splashBarFill"></span></div>
+    </div>
+    <button class="splash-skip" id="splashSkip">건너뛰기 ✕</button>
+  </div>
+
+  <!-- ===== 상단 브랜드 바 ===== -->
+  <div class="topbar">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
+      <span class="brand-divider"></span>
+      <span class="brand-title">대외 간행물 e-Book</span>
+    </a>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- ===== 메인: 카테고리 선택 ===== -->
+  <section class="hero">
+    <h1>대외 간행물</h1>
+    <p>카테고리를 선택하면 간행물을 웹진 형태로 열람할 수 있습니다.</p>
+  </section>
+
+  <main class="cat-grid" id="catGrid"></main>
+
+  <!-- ===== 카테고리 상세: 간행물 목록(웹진) ===== -->
+  <main class="cat-detail" id="catDetail" style="display:none">
+    <button class="back-btn" id="backBtn">← 카테고리</button>
+    <div class="cat-detail-head">
+      <h2 id="detailTitle"></h2>
+      <p id="detailDesc"></p>
+    </div>
+    <div class="shelf" id="shelf"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <h2>🛫 준비 중입니다</h2>
+      <p>이 카테고리의 간행물이 곧 등록될 예정입니다.</p>
+    </div>
+  </main>
+
+  <footer class="site">© EASTAR JET — 대외 간행물 e-Book. 무단 전재·재배포 금지.</footer>
+
+  <script src="books.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const books = (window.BOOKS || []);
+    const categories = (window.CATEGORIES || []);
+    const loadingImages = (window.LOADING_IMAGES || []);
+
+    /* ---------- ① 로딩 스플래시 ---------- */
+    (function splashInit() {
+      const splash = $('splash');
+      if (!loadingImages.length) { splash.remove(); return; }
+
+      const bg = $('splashBg');
+      // 무작위 순서로 섞기
+      const order = loadingImages.slice().sort(() => Math.random() - 0.5);
+      // 미리 두 레이어를 만들어 크로스페이드
+      const layers = [document.createElement('div'), document.createElement('div')];
+      layers.forEach(l => { l.className = 'splash-img'; bg.appendChild(l); });
+      let idx = 0, front = 0;
+      function show(i) {
+        const back = 1 - front;
+        layers[back].style.backgroundImage = `url("${order[i % order.length]}")`;
+        layers[back].classList.add('on');
+        layers[front].classList.remove('on');
+        front = back;
+      }
+      show(0);
+      // 3초 동안 약 0.9초 간격으로 사진 교체
+      const swap = setInterval(() => { idx++; show(idx); }, 900);
+
+      const DURATION = 3000;
+      $('splashBarFill').style.transitionDuration = DURATION + 'ms';
+      requestAnimationFrame(() => $('splashBarFill').style.width = '100%');
+
+      let done = false;
+      function finish() {
+        if (done) return; done = true;
+        clearInterval(swap);
+        splash.classList.add('hide');
+        setTimeout(() => splash.remove(), 650);
+      }
+      const timer = setTimeout(finish, DURATION);
+      $('splashSkip').onclick = () => { clearTimeout(timer); finish(); };
+    })();
+
+    /* ---------- ② 카테고리 카드 ---------- */
+    function countIn(catId) { return books.filter(b => b.category === catId).length; }
+
+    $('catGrid').innerHTML = categories.map(c => `
+      <a class="cat-card" data-cat="${c.id}" href="#${c.id}">
+        <span class="cat-count">${countIn(c.id)}종</span>
+        <div class="cat-body">
+          <h3>${c.title}</h3>
+          <p>${c.desc || ''}</p>
+          <span class="cat-go">살펴보기 ›</span>
+        </div>
+        <div class="cat-cover">
+          <img src="${c.cover}" alt="${c.title}" loading="lazy" />
+        </div>
+      </a>`).join('');
+
+    /* ---------- ③ 카테고리 상세(웹진 목록) ---------- */
+    function openCategory(catId) {
+      const cat = categories.find(c => c.id === catId);
+      if (!cat) return;
+      const list = books.filter(b => b.category === catId);
+
+      $('detailTitle').textContent = cat.title;
+      $('detailDesc').textContent = cat.desc || '';
+
+      const shelf = $('shelf'), empty = $('emptyState');
+      if (!list.length) {
+        shelf.style.display = 'none';
+        shelf.innerHTML = '';
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        shelf.style.display = 'grid';
+        shelf.innerHTML = list.map(b => {
+          const isPdf = b.type === 'pdf';
+          // PDF·이미지 모두 웹진(플립북)으로 열람 — PDF는 flip.html
+          const href = (isPdf ? 'flip.html' : 'viewer.html') + '?book=' + encodeURIComponent(b.id);
+          const count = Array.isArray(b.pages) ? ` · ${b.pages.length}p` : '';
+          return `
+          <a class="book-card" href="${href}">
+            <div class="cover-wrap">
+              <span class="badge badge-type">${isPdf ? 'PDF' : '웹진'}</span>
+              <img src="${b.cover}" alt="${b.title} 표지" loading="lazy" />
+            </div>
+            <h3>${b.title}</h3>
+            <div class="meta">${b.subtitle || ''}${count}</div>
+          </a>`;
+        }).join('');
+      }
+
+      $('catGrid').style.display = 'none';
+      document.querySelector('.hero').style.display = 'none';
+      $('catDetail').style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    function showHome() {
+      $('catDetail').style.display = 'none';
+      $('catGrid').style.display = 'grid';
+      document.querySelector('.hero').style.display = 'block';
+    }
+
+    $('catGrid').querySelectorAll('.cat-card').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); location.hash = el.dataset.cat; });
+    });
+    $('backBtn').onclick = () => { location.hash = ''; };
+
+    /* ---------- 해시 라우팅 (뒤로가기 지원) ---------- */
+    function route() {
+      const id = location.hash.replace('#', '');
+      if (id && categories.some(c => c.id === id)) openCategory(id);
+      else showHome();
+    }
+    window.addEventListener('hashchange', route);
+    route();
+  </script>
+</body>
+</html>

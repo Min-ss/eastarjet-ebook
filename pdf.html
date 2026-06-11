@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>PDF 뷰어 — 이스타항공</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    /* ---------- PDF 뷰어 전용 ---------- */
+    #pdfScroll {
+      flex: 1; overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: 16px 0 40px; background: var(--bg-soft);
+    }
+    .pdf-page {
+      position: relative; margin: 0 auto 14px;
+      background: #fff; box-shadow: 0 6px 22px rgba(0,0,0,.45);
+      width: max-content; max-width: 100%;
+    }
+    .pdf-page canvas { display: block; }
+    /* PDF.js 텍스트 레이어 (선택·복사·검색용) */
+    .textLayer {
+      position: absolute; inset: 0; overflow: hidden;
+      line-height: 1; opacity: 1; mix-blend-mode: multiply;
+    }
+    .textLayer span, .textLayer br {
+      position: absolute; white-space: pre; cursor: text;
+      color: transparent; transform-origin: 0 0;
+    }
+    .textLayer ::selection { background: rgba(0, 120, 255, .35); }
+    .textLayer .hl { background: rgba(255, 215, 0, .45); border-radius: 2px; }
+    .pdf-skeleton {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #9aa6b8; font-size: 13px; background: #fff;
+    }
+    /* 검색 바 */
+    .findbar {
+      display: none; align-items: center; gap: 8px;
+      padding: 8px 14px; background: rgba(255,255,255,.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .findbar.show { display: flex; }
+    .findbar input {
+      flex: 1; min-width: 0; max-width: 360px;
+      background: var(--bg-soft); border: 1px solid var(--line);
+      color: var(--text); border-radius: 10px; padding: 8px 11px; font-size: 14px; outline: none;
+    }
+    .findbar .count { color: var(--muted); font-size: 13px; min-width: 64px; text-align: center; }
+    .zoom-label { font-size: 13px; color: var(--muted); min-width: 44px; text-align: center; }
+    .v-bottom #pageBox {
+      width: 54px; text-align: center; background: var(--bg-soft);
+      border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 6px 4px; font-size: 14px;
+    }
+    @media (max-width: 640px) {
+      .zoom-label { display: none; }
+      .v-top .title { max-width: 30vw; }
+    }
+  </style>
+</head>
+<body class="viewer">
+  <div class="viewer-wrap">
+    <!-- 상단 바 -->
+    <div class="topbar v-top">
+      <a class="btn icon-btn" href="index.html" title="목록으로">←</a>
+      <a href="index.html"><img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" /></a>
+      <span class="title" id="bookTitle">불러오는 중…</span>
+      <div class="spacer"></div>
+      <button class="btn icon-btn" id="findBtn" title="검색">🔍</button>
+      <button class="btn icon-btn" id="zoomOut" title="축소">－</button>
+      <span class="zoom-label" id="zoomLabel">100%</span>
+      <button class="btn icon-btn" id="zoomIn" title="확대">＋</button>
+      <button class="btn icon-btn" id="downloadBtn" title="PDF 다운로드">⬇</button>
+    </div>
+
+    <!-- 검색 바 -->
+    <div class="findbar" id="findbar">
+      <input type="search" id="findInput" placeholder="본문에서 검색…" autocomplete="off" />
+      <span class="count" id="findCount">—</span>
+      <button class="btn icon-btn" id="findPrev" title="이전 결과">◀</button>
+      <button class="btn icon-btn" id="findNext" title="다음 결과">▶</button>
+      <button class="btn icon-btn" id="findClose" title="닫기">✕</button>
+    </div>
+
+    <!-- PDF 영역 -->
+    <div id="pdfScroll"></div>
+
+    <!-- 하단 컨트롤 -->
+    <div class="v-bottom">
+      <button class="btn icon-btn" id="prevBtn" title="이전 페이지">◀</button>
+      <input id="pageBox" type="text" inputmode="numeric" value="1" />
+      <span id="pageInfo">/ -</span>
+      <button class="btn icon-btn" id="nextBtn" title="다음 페이지">▶</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="books.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const toast = (msg) => {
+      const t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800);
+    };
+
+    // ---------- 책 선택 ----------
+    const params = new URLSearchParams(location.search);
+    const bookId = params.get('book');
+    const book = (window.BOOKS || []).find(b => b.id === bookId);
+    if (!book || book.type !== 'pdf') {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>문서를 찾을 수 없습니다</h2><p><a class="btn" href="index.html">← 서재로 돌아가기</a></p></div>';
+      throw new Error('no pdf book');
+    }
+    document.title = `${book.title} — 이스타항공`;
+    $('bookTitle').textContent = book.title;
+    const pdfUrl = `${book.path}/${book.file}`;
+
+    // ---------- PDF.js 준비 ----------
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+    const scrollEl = $('pdfScroll');
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let pdf = null, numPages = 0;
+    let baseW = 0, baseH = 0;          // 1페이지 기준 크기(스케일 1)
+    let zoom = 1;                       // 사용자 배율
+    let cssScale = 1;                   // 컨테이너에 맞춘 기본 배율
+    const wrappers = [];               // 페이지 래퍼 div 목록
+    const rendered = new Set();        // 그려진 페이지 번호
+    const renderTasks = {};            // 진행 중 렌더 취소용
+    const textCache = {};              // 검색용 페이지 텍스트 캐시
+
+    function fitScale() {
+      // 가용 폭에 1페이지 폭을 맞춤 (좌우 여백 고려), 데스크탑은 최대 900px
+      const avail = Math.min(scrollEl.clientWidth - 24, 900);
+      return avail / baseW;
+    }
+
+    function pageDims() {
+      const s = cssScale * zoom;
+      return { w: Math.round(baseW * s), h: Math.round(baseH * s), scale: s };
+    }
+
+    // 페이지 자리(스켈레톤) 만들기 — 실제 렌더는 화면에 가까워질 때
+    function buildPlaceholders() {
+      const { w, h } = pageDims();
+      scrollEl.innerHTML = '';
+      wrappers.length = 0; rendered.clear();
+      for (let n = 1; n <= numPages; n++) {
+        const div = document.createElement('div');
+        div.className = 'pdf-page';
+        div.dataset.page = n;
+        div.style.width = w + 'px';
+        div.style.height = h + 'px';
+        div.innerHTML = `<div class="pdf-skeleton">${n} 페이지</div>`;
+        scrollEl.appendChild(div);
+        wrappers.push(div);
+        io.observe(div);
+      }
+    }
+
+    // 한 페이지 렌더 (캔버스 + 텍스트 레이어)
+    async function renderPage(n) {
+      if (rendered.has(n)) return;
+      rendered.add(n);
+      const wrap = wrappers[n - 1];
+      try {
+        const page = await pdf.getPage(n);
+        const { scale } = pageDims();
+        const viewport = page.getViewport({ scale });
+        // 실제 비율로 높이 보정 (별표 등 다른 크기 대응)
+        wrap.style.width = Math.round(viewport.width) + 'px';
+        wrap.style.height = Math.round(viewport.height) + 'px';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(viewport.width * DPR);
+        canvas.height = Math.round(viewport.height * DPR);
+        canvas.style.width = Math.round(viewport.width) + 'px';
+        canvas.style.height = Math.round(viewport.height) + 'px';
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        const task = page.render({
+          canvasContext: ctx,
+          viewport,
+          transform: DPR !== 1 ? [DPR, 0, 0, DPR, 0, 0] : null,
+        });
+        renderTasks[n] = task;
+        await task.promise;
+        delete renderTasks[n];
+
+        wrap.innerHTML = '';
+        wrap.appendChild(canvas);
+
+        // 텍스트 레이어 (선택·복사·검색)
+        const textContent = await page.getTextContent();
+        const tl = document.createElement('div');
+        tl.className = 'textLayer';
+        wrap.appendChild(tl);
+        pdfjsLib.renderTextLayer({
+          textContentSource: textContent,
+          textContent: textContent,
+          container: tl,
+          viewport,
+          textDivs: [],
+        });
+      } catch (e) {
+        if (e && e.name === 'RenderingCancelledException') { rendered.delete(n); return; }
+        wrap.innerHTML = `<div class="pdf-skeleton">${n} 페이지 (불러오기 실패)</div>`;
+      }
+    }
+
+    function unloadPage(n) {
+      if (!rendered.has(n)) return;
+      rendered.delete(n);
+      if (renderTasks[n]) { try { renderTasks[n].cancel(); } catch (e) {} delete renderTasks[n]; }
+      const wrap = wrappers[n - 1];
+      if (wrap) wrap.innerHTML = `<div class="pdf-skeleton">${n} 페이지</div>`;
+    }
+
+    // 화면 근처 페이지만 렌더, 멀어지면 메모리 해제(648p 대응)
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        const n = +en.target.dataset.page;
+        if (en.isIntersecting) renderPage(n);
+        else unloadPage(n);
+      });
+    }, { root: scrollEl, rootMargin: '800px 0px' });
+
+    // ---------- 초기 로딩 ----------
+    (async () => {
+      try {
+        pdf = await pdfjsLib.getDocument({
+          url: pdfUrl,
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+          cMapPacked: true,
+        }).promise;
+        numPages = pdf.numPages;
+        const first = await pdf.getPage(1);
+        const vp1 = first.getViewport({ scale: 1 });
+        baseW = vp1.width; baseH = vp1.height;
+        cssScale = fitScale();
+        $('pageInfo').textContent = `/ ${numPages}`;
+        $('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+        buildPlaceholders();
+      } catch (e) {
+        const isFile = location.protocol === 'file:';
+        scrollEl.innerHTML = `<div class="empty-state" style="margin-top:90px">
+          <h2>PDF를 불러오지 못했습니다</h2>
+          ${isFile
+            ? `<p>파일을 더블클릭(<code>file://</code>)으로 열면 브라우저 보안 정책상 PDF를 읽지 못합니다.<br>
+               같은 폴더의 <b>「미리보기.bat」</b> 을 실행하거나, GitHub Pages 등 웹주소(http/https)로 열면 정상 동작합니다.</p>
+               <p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p>`
+            : `<p>${e.message || e}</p>`}
+        </div>`;
+      }
+    })();
+
+    // ---------- 현재 페이지 추적 ----------
+    let curPage = 1;
+    function updateCurrent() {
+      const mid = scrollEl.scrollTop + scrollEl.clientHeight / 2;
+      let acc = 0, p = 1;
+      for (let i = 0; i < wrappers.length; i++) {
+        const h = wrappers[i].offsetHeight + 14;
+        if (acc + h > mid) { p = i + 1; break; }
+        acc += h; p = i + 1;
+      }
+      if (p !== curPage) { curPage = p; if (document.activeElement !== $('pageBox')) $('pageBox').value = p; }
+    }
+    scrollEl.addEventListener('scroll', () => { requestAnimationFrame(updateCurrent); }, { passive: true });
+
+    function goToPage(n) {
+      n = Math.max(1, Math.min(numPages, n | 0));
+      wrappers[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    $('prevBtn').onclick = () => goToPage(curPage - 1);
+    $('nextBtn').onclick = () => goToPage(curPage + 1);
+    $('pageBox').addEventListener('keydown', e => { if (e.key === 'Enter') { goToPage(+e.target.value); e.target.blur(); } });
+    $('pageBox').addEventListener('change', e => goToPage(+e.target.value));
+
+    // ---------- 확대/축소 ----------
+    function applyZoom(z) {
+      const anchor = curPage;
+      zoom = Math.max(0.5, Math.min(3, Math.round(z * 10) / 10));
+      cssScale = fitScale();
+      $('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+      buildPlaceholders();
+      setTimeout(() => goToPage(anchor), 50);
+    }
+    $('zoomIn').onclick = () => applyZoom(zoom + 0.2);
+    $('zoomOut').onclick = () => applyZoom(zoom - 0.2);
+
+    // ---------- 다운로드 ----------
+    $('downloadBtn').onclick = () => {
+      const a = document.createElement('a');
+      a.href = pdfUrl; a.download = `${book.title}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+    };
+
+    // ---------- 검색 (전체 문서) ----------
+    const findbar = $('findbar'), findInput = $('findInput'), findCount = $('findCount');
+    let matches = [], matchIdx = -1, indexed = false, indexing = false;
+
+    $('findBtn').onclick = () => { findbar.classList.toggle('show'); if (findbar.classList.contains('show')) findInput.focus(); };
+    $('findClose').onclick = () => { findbar.classList.remove('show'); };
+
+    async function buildIndex() {
+      if (indexed || indexing) return;
+      indexing = true; findCount.textContent = '준비중…';
+      for (let n = 1; n <= numPages; n++) {
+        if (textCache[n] === undefined) {
+          try { const pg = await pdf.getPage(n); const tc = await pg.getTextContent();
+            textCache[n] = tc.items.map(i => i.str).join(' ').toLowerCase(); }
+          catch (e) { textCache[n] = ''; }
+        }
+      }
+      indexed = true; indexing = false;
+    }
+
+    async function runSearch(q) {
+      q = q.trim().toLowerCase();
+      matches = []; matchIdx = -1;
+      if (!q) { findCount.textContent = '—'; return; }
+      await buildIndex();
+      for (let n = 1; n <= numPages; n++) {
+        if (textCache[n] && textCache[n].includes(q)) matches.push(n);
+      }
+      if (!matches.length) { findCount.textContent = '0건'; toast('검색 결과 없음'); return; }
+      matchIdx = 0; jumpMatch();
+    }
+    function jumpMatch() {
+      if (!matches.length) return;
+      findCount.textContent = `${matchIdx + 1}/${matches.length} · ${matches[matchIdx]}p`;
+      goToPage(matches[matchIdx]);
+    }
+    let findT;
+    findInput.addEventListener('input', e => { clearTimeout(findT); findT = setTimeout(() => runSearch(e.target.value), 350); });
+    findInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); if (matches.length) { matchIdx = (matchIdx + 1) % matches.length; jumpMatch(); } } });
+    $('findNext').onclick = () => { if (matches.length) { matchIdx = (matchIdx + 1) % matches.length; jumpMatch(); } };
+    $('findPrev').onclick = () => { if (matches.length) { matchIdx = (matchIdx - 1 + matches.length) % matches.length; jumpMatch(); } };
+
+    // ---------- 키보드 / 리사이즈 ----------
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') { goToPage(curPage + 1); }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { goToPage(curPage - 1); }
+    });
+    let rT;
+    window.addEventListener('resize', () => {
+      clearTimeout(rT);
+      rT = setTimeout(() => { if (!numPages) return; const a = curPage; cssScale = fitScale(); buildPlaceholders(); setTimeout(() => goToPage(a), 50); }, 250);
+    });
+  </script>
+</body>
+</html>
