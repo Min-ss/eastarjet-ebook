@@ -53,6 +53,23 @@
       font-size: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-soft); resize: vertical; }
     .row-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
     @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+    /* 접속현황 통계 */
+    .stat-nums { display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stat-nums .stat { flex: 1; min-width: 140px; background: var(--bg-soft); border-radius: 12px; padding: 16px 18px; }
+    .stat-nums .v { font-size: 30px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+    .stat-nums .l { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .stat-chart { display: flex; align-items: flex-end; gap: 3px; height: 92px; background: var(--bg-soft);
+      border-radius: 12px; padding: 10px 12px; margin-bottom: 18px; }
+    .stat-chart .bar { flex: 1; background: var(--red); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
+    .stat-chart .bar:hover { opacity: 1; }
+    .stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .stat-cols h4 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 700; }
+    .stat-list { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
+    .stat-list li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+    .stat-list .p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stat-list .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+    @media (max-width: 640px) { .stat-cols { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -139,15 +156,8 @@
     <!-- 접속현황 -->
     <div class="card">
       <h2>📊 접속현황 (방문 통계)</h2>
-      <p class="sub"><b>Cloudflare Web Analytics</b> 연결됨 — 방문 데이터를 수집 중입니다.</p>
-      <div class="hintbox">
-        방문자 수 · 페이지뷰 · <b>인기 페이지</b>(어떤 간행물을 많이 보는지) · 유입경로 · 국가 · 기기 통계를
-        Cloudflare 대시보드에서 확인할 수 있습니다.<br>
-        ※ 데이터는 수집 시작 후 <b>몇 분~수 시간</b> 뒤부터 표시됩니다. (개인은 추적하지 않는 익명 통계)
-      </div>
-      <div class="row-actions">
-        <a class="btn primary" href="https://dash.cloudflare.com/?to=/:account/web-analytics" target="_blank" rel="noopener">Cloudflare 통계 대시보드 열기 ↗</a>
-      </div>
+      <p class="sub">최근 30일 · Cloudflare Web Analytics (개인 추적 없는 익명 통계)</p>
+      <div id="statsBox"><div style="color:var(--muted)">불러오는 중…</div></div>
     </div>
   </main>
 
@@ -193,9 +203,7 @@
     $('loginBtn').onclick = tryLogin;
     $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
-    // 이미 로그인된 상태면 바로 콘솔
-    if (localStorage.getItem('eb_admin') === '1') showConsole();
-    else $('pw').focus();
+    // (이미 로그인 상태 자동 진입은 스크립트 맨 끝에서 처리 — 모든 변수·함수 선언 이후)
 
     // ---------- 콘솔 로직 ----------
     let books = [];
@@ -206,6 +214,65 @@
       books = JSON.parse(JSON.stringify(window.BOOKS || []));
       $('fCat').innerHTML = cats.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
       renderTables();
+      loadStats();
+    }
+
+    // ---------- 접속현황 (서버리스 /api/stats) ----------
+    const DASH = 'https://dash.cloudflare.com/?to=/:account/web-analytics';
+    async function loadStats() {
+      const box = $('statsBox');
+      box.innerHTML = '<div style="color:var(--muted)">불러오는 중…</div>';
+      try {
+        const r = await fetch('/api/stats', { cache: 'no-store' });
+        const d = await r.json();
+        box.innerHTML = d.ok ? renderStats(d) : renderStatsError(d);
+      } catch (e) {
+        const onPages = location.hostname.endsWith('.pages.dev');
+        renderStatsErrorRaw(onPages
+          ? '통계 서버에 연결하지 못했습니다: ' + e.message
+          : '이 통계 기능은 <b>Cloudflare Pages 주소(eastarjet-ebook.pages.dev)</b> 에서만 동작합니다. 현재 주소에서는 표시되지 않습니다.');
+      }
+      const rb = $('reloadStats'); if (rb) rb.onclick = loadStats;
+    }
+    function renderStatsErrorRaw(msg) {
+      $('statsBox').innerHTML =
+        `<div class="hintbox">${msg}</div>
+         <div class="row-actions"><button class="btn" id="reloadStats">다시 시도</button>
+         <a class="btn primary" href="${DASH}" target="_blank" rel="noopener">대시보드 열기 ↗</a></div>`;
+    }
+    function renderStatsError(d) {
+      const setup = d.error === 'missing_env'
+        ? '<br><br><b>설정:</b> Cloudflare Pages → 프로젝트 → <b>Settings → Variables and Secrets</b> 에 ' +
+          '<code>CF_API_TOKEN</code>(Account Analytics: Read 토큰) · <code>CF_ACCOUNT_ID</code> 추가 → 재배포(Retry deployment).'
+        : '';
+      return `<div class="hintbox">아직 통계를 불러올 수 없습니다.<br>${esc(d.message || '')}${setup}</div>
+        <div class="row-actions"><button class="btn" id="reloadStats">다시 시도</button>
+        <a class="btn primary" href="${DASH}" target="_blank" rel="noopener">대시보드 열기 ↗</a></div>`;
+    }
+    function renderStats(d) {
+      const t = d.totals;
+      const days = (d.byDate || []).slice(-30);
+      const max = Math.max(1, ...days.map(x => x.views));
+      const bars = days.length
+        ? days.map(x => `<div class="bar" title="${x.date} · ${x.views} 뷰" style="height:${Math.max(2, Math.round(x.views / max * 100))}%"></div>`).join('')
+        : '<div style="color:var(--muted);font-size:13px;align-self:center">아직 데이터가 없습니다 (수집 직후엔 비어 있어요)</div>';
+      const list = (arr, key) => arr && arr.length
+        ? arr.map(x => `<li><span class="p">${esc(x[key] || '-')}</span><span class="n">${x.views.toLocaleString()}</span></li>`).join('')
+        : '<li style="color:var(--muted);border:none">데이터 없음</li>';
+      return `
+        <div class="stat-nums">
+          <div class="stat"><div class="v">${t.views.toLocaleString()}</div><div class="l">페이지뷰 (30일)</div></div>
+          <div class="stat"><div class="v">${t.visits.toLocaleString()}</div><div class="l">방문 (30일)</div></div>
+        </div>
+        <div class="stat-chart">${bars}</div>
+        <div class="stat-cols">
+          <div><h4>인기 페이지</h4><ul class="stat-list">${list(d.topPages, 'path')}</ul></div>
+          <div><h4>국가</h4><ul class="stat-list">${list(d.topCountries, 'country')}</ul></div>
+        </div>
+        <div class="row-actions" style="margin-top:16px">
+          <button class="btn" id="reloadStats">새로고침</button>
+          <a class="btn" href="${DASH}" target="_blank" rel="noopener">전체 대시보드 ↗</a>
+        </div>`;
     }
 
     function renderTables() {
@@ -301,6 +368,10 @@ window.BOOKS = BOOKS;
       if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
       t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800);
     }
+
+    // 이미 로그인된 상태면 바로 콘솔 (모든 변수·함수 선언 이후 실행)
+    if (localStorage.getItem('eb_admin') === '1') showConsole();
+    else $('pw').focus();
   </script>
 
   <!-- Cloudflare Web Analytics -->
