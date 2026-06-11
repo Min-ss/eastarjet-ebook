@@ -47,6 +47,8 @@
         <button data-m="single" class="active">1장</button>
         <button data-m="spread">2장</button>
       </div>
+      <button class="btn icon-btn" id="zoomOut" title="글자 축소">－</button>
+      <button class="btn icon-btn" id="zoomIn" title="글자 확대">＋</button>
       <button class="btn icon-btn" id="dlBtn2" title="PDF 다운로드">⬇</button>
       <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
       <button class="btn icon-btn" id="panelBtn" title="페이지 목록">☰</button>
@@ -125,7 +127,7 @@
     }
     async function fullUrl(n) {
       if (fullCache.has(n)) { const u = fullCache.get(n); fullCache.delete(n); fullCache.set(n, u); return u; }
-      const targetW = Math.min(1600, Math.round(curPageW * DPR));
+      const targetW = Math.min(2400, Math.round(curPageW * DPR));
       const url = await renderToUrl(n, targetW / baseW, 0.85);
       fullCache.set(n, url);
       while (fullCache.size > FULL_CACHE_MAX) fullCache.delete(fullCache.keys().next().value);
@@ -198,6 +200,7 @@
     const pagesEl = $('pages');
     let mode = (localStorage.getItem('eb_pdf_mode') === 'spread') ? 'spread' : 'single';
     let cur = 1;   // 현재(또는 펼침의 왼쪽) 페이지
+    let zoom = 1;  // 확대 배율 (1 = 화면에 맞춤)
 
     function pageList() {
       if (mode === 'single') return [cur];
@@ -210,7 +213,7 @@
       if (!numPages) return;
       const stage = $('stage');
       const sw = stage.clientWidth, sh = stage.clientHeight;
-      const pad = 36, gap = 14;
+      const pad = 40, gap = 14;
       let w, h;
       if (mode === 'single') {
         h = sh - pad; w = h / RATIO;
@@ -219,7 +222,7 @@
         w = (sw - pad - gap) / 2; h = w * RATIO;
         if (h > sh - pad) { h = sh - pad; w = h / RATIO; }
       }
-      w = Math.max(120, Math.floor(w)); h = Math.floor(h);
+      w = Math.max(120, Math.floor(w * zoom)); h = Math.floor(h * zoom);
       curPageW = w;
       const list = pageList();
       pagesEl.className = 'pages ' + (mode === 'spread' ? 'two' : 'one');
@@ -229,6 +232,7 @@
       pagesEl.querySelectorAll('.rpage').forEach(loadInto);
       prefetch(list);
       updateBar(list);
+      const st = $('stage'); st.scrollTop = 0; st.scrollLeft = 0;
     }
 
     async function loadInto(div) {
@@ -264,17 +268,27 @@
     $('nextBtn').onclick = () => go(1);
     $('slider').oninput = e => { cur = +e.target.value; render(); };
 
+    // 확대/축소 (글자 키우기)
+    function setZoom(z) {
+      z = Math.max(1, Math.min(3, Math.round(z * 100) / 100));
+      if (z === zoom) return;
+      zoom = z; fullCache.clear(); render();
+    }
+    $('zoomIn').onclick = () => setZoom(zoom + 0.25);
+    $('zoomOut').onclick = () => setZoom(zoom - 0.25);
+
     // 보기 방식 토글
     function applyMode(m) {
       mode = m; localStorage.setItem('eb_pdf_mode', m);
       $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
-      render();
+      fullCache.clear(); render();
     }
     $('modeSeg').querySelectorAll('button').forEach(b => b.onclick = () => applyMode(b.dataset.m));
 
     // 진입/이탈
     function openReader(startPage = 1) {
       cur = Math.max(1, Math.min(numPages, startPage | 0));
+      zoom = 1;
       $('landing').style.display = 'none';
       $('flipView').hidden = false;
       $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === mode));
