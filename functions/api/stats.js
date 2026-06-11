@@ -2,13 +2,15 @@
 //  Cloudflare Pages Function — 관리자용 방문 통계 API
 //  경로: /api/stats   (eastarjet-ebook.pages.dev 에서만 동작)
 //
-//  필요한 환경변수 (Cloudflare Pages → Settings → Environment variables):
-//   - CF_API_TOKEN  : API 토큰 (권한: Account Analytics → Read)   ※ Secret 권장
-//   - CF_ACCOUNT_ID : Cloudflare 계정 ID
-//   - CF_SITE_TAG   : (선택) Web Analytics 사이트 토큰. 미설정 시 아래 기본값 사용
+//  필요한 환경변수 (Cloudflare Pages → Settings → Variables and Secrets):
+//   - CF_API_TOKEN  : API 토큰 (권한: Account Analytics → Read)  ※ 반드시 Secret  ※ 이것만 설정하면 됨
+//   - CF_ACCOUNT_ID : (선택) 계정 ID — 미설정 시 아래 기본값 사용
+//   - CF_SITE_TAG   : (선택) Web Analytics RUM siteTag — 미설정 시 아래 기본값 사용
+//  ※ 계정 ID·siteTag 는 비밀이 아니라 코드에 둬도 됩니다(토큰만 비밀).
 // ============================================================
 
-const SITE_TAG_DEFAULT = "4d85921930d3449da6c2bd152139da4c";
+const SITE_TAG_DEFAULT = "9f36fa4601844c2e95f5ecc9d9701285";   // Web Analytics RUM siteTag
+const ACCOUNT_DEFAULT = "d6f547fff6ac48829ac38b71bc00afbd";    // Cloudflare 계정 ID
 
 function out(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -19,13 +21,13 @@ function out(obj, status = 200) {
 
 export async function onRequestGet({ env }) {
   const token = env.CF_API_TOKEN;
-  const account = env.CF_ACCOUNT_ID;
+  const account = env.CF_ACCOUNT_ID || ACCOUNT_DEFAULT;
   const siteTag = env.CF_SITE_TAG || SITE_TAG_DEFAULT;
 
-  if (!token || !account) {
+  if (!token) {
     return out({
       ok: false, error: "missing_env",
-      message: "Cloudflare Pages 환경변수 CF_API_TOKEN, CF_ACCOUNT_ID 를 설정한 뒤 재배포하세요.",
+      message: "Cloudflare Pages 환경변수 CF_API_TOKEN(API 토큰)을 설정한 뒤 재배포하세요.",
     });
   }
 

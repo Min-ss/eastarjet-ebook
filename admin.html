@@ -243,7 +243,7 @@
     function renderStatsError(d) {
       const setup = d.error === 'missing_env'
         ? '<br><br><b>설정:</b> Cloudflare Pages → 프로젝트 → <b>Settings → Variables and Secrets</b> 에 ' +
-          '<code>CF_API_TOKEN</code>(Account Analytics: Read 토큰) · <code>CF_ACCOUNT_ID</code> 추가 → 재배포(Retry deployment).'
+          '<code>CF_API_TOKEN</code>(Account Analytics: Read 토큰)을 <b>Secret</b>으로 추가 → 재배포(Retry deployment).'
         : '';
       return `<div class="hintbox">아직 통계를 불러올 수 없습니다.<br>${esc(d.message || '')}${setup}</div>
         <div class="row-actions"><button class="btn" id="reloadStats">다시 시도</button>
