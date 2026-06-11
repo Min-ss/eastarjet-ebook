@@ -63,6 +63,8 @@
       border-radius: 12px; padding: 10px 12px; margin-bottom: 18px; }
     .stat-chart .bar { flex: 1; background: var(--red); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
     .stat-chart .bar:hover { opacity: 1; }
+    .stat-xlabels { display: flex; gap: 3px; padding: 0 12px; margin: -12px 0 16px; }
+    .stat-xlabels span { flex: 1; text-align: center; font-size: 10px; color: var(--muted); overflow: hidden; white-space: nowrap; }
     .stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
     .stat-cols h4 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 700; }
     .stat-list { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
@@ -156,7 +158,12 @@
     <!-- 접속현황 -->
     <div class="card">
       <h2>📊 접속현황 (방문 통계)</h2>
-      <p class="sub">최근 30일 · Cloudflare Web Analytics (개인 추적 없는 익명 통계)</p>
+      <p class="sub">Cloudflare Web Analytics · 개인 추적 없는 익명 통계</p>
+      <div class="seg" id="statsSeg" style="margin-bottom:14px">
+        <button data-g="day" class="active">일별</button>
+        <button data-g="month">월별</button>
+        <button data-g="year">연별</button>
+      </div>
       <div id="statsBox"><div style="color:var(--muted)">불러오는 중…</div></div>
     </div>
   </main>
@@ -214,16 +221,25 @@
       books = JSON.parse(JSON.stringify(window.BOOKS || []));
       $('fCat').innerHTML = cats.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
       renderTables();
+      bindStatsSeg();
       loadStats();
     }
 
     // ---------- 접속현황 (서버리스 /api/stats) ----------
     const DASH = 'https://dash.cloudflare.com/?to=/:account/web-analytics';
+    let statsGroup = 'day';   // day | month | year
+    function bindStatsSeg() {
+      $('statsSeg').querySelectorAll('button').forEach(b => b.onclick = () => {
+        statsGroup = b.dataset.g;
+        $('statsSeg').querySelectorAll('button').forEach(x => x.classList.toggle('active', x.dataset.g === statsGroup));
+        loadStats();
+      });
+    }
     async function loadStats() {
       const box = $('statsBox');
       box.innerHTML = '<div style="color:var(--muted)">불러오는 중…</div>';
       try {
-        const r = await fetch('/api/stats', { cache: 'no-store' });
+        const r = await fetch('/api/stats?group=' + statsGroup, { cache: 'no-store' });
         const d = await r.json();
         box.innerHTML = d.ok ? renderStats(d) : renderStatsError(d);
       } catch (e) {
@@ -249,22 +265,32 @@
         <div class="row-actions"><button class="btn" id="reloadStats">다시 시도</button>
         <a class="btn primary" href="${DASH}" target="_blank" rel="noopener">대시보드 열기 ↗</a></div>`;
     }
+    function fmtBucket(label, group) {
+      if (group === 'year') return label;                              // 2026
+      if (group === 'month') return label.slice(2).replace('-', '.');  // 2026-05 → 26.05
+      return label.slice(8);                                           // 2026-05-11 → 11
+    }
     function renderStats(d) {
       const t = d.totals;
-      const days = (d.byDate || []).slice(-30);
-      const max = Math.max(1, ...days.map(x => x.views));
-      const bars = days.length
-        ? days.map(x => `<div class="bar" title="${x.date} · ${x.views} 뷰" style="height:${Math.max(2, Math.round(x.views / max * 100))}%"></div>`).join('')
-        : '<div style="color:var(--muted);font-size:13px;align-self:center">아직 데이터가 없습니다 (수집 직후엔 비어 있어요)</div>';
+      const buckets = d.buckets || [];
+      const rangeLabel = d.group === 'year' ? '최근(연별)' : d.group === 'month' ? '최근 6개월' : '최근 30일';
+      const max = Math.max(1, ...buckets.map(x => x.views));
+      const showLabels = buckets.length > 0 && buckets.length <= 14;
+      const bars = buckets.length
+        ? buckets.map(x => `<div class="bar" title="${x.label} · ${x.views.toLocaleString()} 뷰 / ${x.visits.toLocaleString()} 방문" style="height:${Math.max(2, Math.round(x.views / max * 100))}%"></div>`).join('')
+        : '<div style="color:var(--muted);font-size:13px;margin:auto">아직 데이터가 없습니다</div>';
+      const labels = showLabels
+        ? `<div class="stat-xlabels">${buckets.map(x => `<span>${fmtBucket(x.label, d.group)}</span>`).join('')}</div>`
+        : '';
       const list = (arr, key) => arr && arr.length
         ? arr.map(x => `<li><span class="p">${esc(x[key] || '-')}</span><span class="n">${x.views.toLocaleString()}</span></li>`).join('')
         : '<li style="color:var(--muted);border:none">데이터 없음</li>';
       return `
         <div class="stat-nums">
-          <div class="stat"><div class="v">${t.views.toLocaleString()}</div><div class="l">페이지뷰 (30일)</div></div>
-          <div class="stat"><div class="v">${t.visits.toLocaleString()}</div><div class="l">방문 (30일)</div></div>
+          <div class="stat"><div class="v">${t.views.toLocaleString()}</div><div class="l">페이지뷰 (${rangeLabel})</div></div>
+          <div class="stat"><div class="v">${t.visits.toLocaleString()}</div><div class="l">방문 (${rangeLabel})</div></div>
         </div>
-        <div class="stat-chart">${bars}</div>
+        <div class="stat-chart">${bars}</div>${labels}
         <div class="stat-cols">
           <div><h4>인기 페이지</h4><ul class="stat-list">${list(d.topPages, 'path')}</ul></div>
           <div><h4>국가</h4><ul class="stat-list">${list(d.topCountries, 'country')}</ul></div>
