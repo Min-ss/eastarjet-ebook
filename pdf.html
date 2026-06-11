@@ -296,6 +296,8 @@
       a.href = pdfUrl; a.download = `${book.title}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();
     };
+    // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
+    if (localStorage.getItem('eb_admin') !== '1') $('downloadBtn').style.display = 'none';
 
     // ---------- 검색 (전체 문서) ----------
     const findbar = $('findbar'), findInput = $('findInput'), findCount = $('findCount');

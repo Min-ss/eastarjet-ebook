@@ -101,6 +101,8 @@
 
     function download() { const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
     $('dlBtn1').onclick = download; $('dlBtn2').onclick = download;
+    // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
+    if (localStorage.getItem('eb_admin') !== '1') { $('dlBtn1').style.display = 'none'; $('dlBtn2').style.display = 'none'; }
 
     // ---------- PDF.js ----------
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';

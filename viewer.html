@@ -173,6 +173,8 @@
         toast('다운로드용 PDF가 등록되지 않았습니다');
       }
     };
+    // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
+    if (localStorage.getItem('eb_admin') !== '1') $('downloadBtn').style.display = 'none';
 
     // 공유
     $('shareBtn').onclick = async () => {
