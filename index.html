@@ -67,31 +67,21 @@
       if (!loadingImages.length) { splash.remove(); return; }
 
       const bg = $('splashBg');
-      // 무작위 순서로 섞기
-      const order = loadingImages.slice().sort(() => Math.random() - 0.5);
-      // 미리 두 레이어를 만들어 크로스페이드
-      const layers = [document.createElement('div'), document.createElement('div')];
-      layers.forEach(l => { l.className = 'splash-img'; bg.appendChild(l); });
-      let idx = 0, front = 0;
-      function show(i) {
-        const back = 1 - front;
-        layers[back].style.backgroundImage = `url("${order[i % order.length]}")`;
-        layers[back].classList.add('on');
-        layers[front].classList.remove('on');
-        front = back;
-      }
-      show(0);
-      // 3초 동안 약 0.9초 간격으로 사진 교체
-      const swap = setInterval(() => { idx++; show(idx); }, 900);
+      // 진입할 때마다 무작위로 1장 선택해 2초간 그대로 유지
+      const pick = loadingImages[Math.floor(Math.random() * loadingImages.length)];
+      const layer = document.createElement('div');
+      layer.className = 'splash-img';
+      layer.style.backgroundImage = `url("${pick}")`;
+      bg.appendChild(layer);
+      requestAnimationFrame(() => layer.classList.add('on'));
 
-      const DURATION = 3000;
+      const DURATION = 2000;
       $('splashBarFill').style.transitionDuration = DURATION + 'ms';
       requestAnimationFrame(() => $('splashBarFill').style.width = '100%');
 
       let done = false;
       function finish() {
         if (done) return; done = true;
-        clearInterval(swap);
         splash.classList.add('hide');
         setTimeout(() => splash.remove(), 650);
       }
