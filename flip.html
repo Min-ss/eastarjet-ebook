@@ -27,7 +27,7 @@
         <h1 id="titleBig">　</h1>
         <p class="sub" id="subBig"></p>
         <button class="btn primary" id="openFlip">간행물 열람하기 ›</button>
-        <div class="hint">📄 한 장씩 보기가 기본입니다. 상단의 <b>1장 / 2장</b> 으로 펼침 보기로 바꿀 수 있어요.<br>(← → 키 · 좌우 스와이프로 페이지 이동)</div>
+        <div class="hint">📄 한 장씩 보기가 기본 · 상단 <b>1장 / 2장</b> 으로 펼침 전환<br>🔍 확대: <b>＋</b> 버튼 · 두 손가락 핀치 · 더블탭 &nbsp;|&nbsp; 확대 후 <b>끌어서 이동</b><br>↔ 넘김: 좌우 스와이프 · ◀ ▶ · ← → 키</div>
         <a class="alt-link" id="searchLink2">본문 검색·복사가 필요하면 문서 보기 →</a>
       </div>
     </div>
@@ -47,8 +47,9 @@
         <button data-m="single" class="active">1장</button>
         <button data-m="spread">2장</button>
       </div>
-      <button class="btn icon-btn" id="zoomOut" title="글자 축소">－</button>
-      <button class="btn icon-btn" id="zoomIn" title="글자 확대">＋</button>
+      <button class="btn icon-btn" id="zoomOut" title="축소">－</button>
+      <button class="btn" id="fitBtn" title="화면 맞춤"><span id="zoomLabel">100%</span></button>
+      <button class="btn icon-btn" id="zoomIn" title="확대">＋</button>
       <button class="btn icon-btn" id="dlBtn2" title="PDF 다운로드">⬇</button>
       <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
       <button class="btn icon-btn" id="panelBtn" title="페이지 목록">☰</button>
@@ -127,7 +128,7 @@
     }
     async function fullUrl(n) {
       if (fullCache.has(n)) { const u = fullCache.get(n); fullCache.delete(n); fullCache.set(n, u); return u; }
-      const targetW = Math.min(2400, Math.round(curPageW * DPR));
+      const targetW = Math.min(2600, Math.round(curPageW * 3));   // 맞춤폭의 3배로 렌더 → 확대해도 선명
       const url = await renderToUrl(n, targetW / baseW, 0.85);
       fullCache.set(n, url);
       while (fullCache.size > FULL_CACHE_MAX) fullCache.delete(fullCache.keys().next().value);
@@ -182,7 +183,7 @@
       }
       $('sideThumbs').innerHTML = sideHtml.join('');
       $('sideThumbs').querySelectorAll('.thumb').forEach(el => {
-        el.onclick = () => { cur = +el.dataset.n; if (!$('flipView').hidden) render(); else openReader(cur); closePanel(); };
+        el.onclick = () => { const n = +el.dataset.n; if (!$('flipView').hidden) jumpTo(n); else openReader(n); closePanel(); };
         sideTio.observe(el);
       });
     }
@@ -198,9 +199,12 @@
     //  읽기 모드 — 페이지 단위 (1장 / 2장)
     // ============================================================
     const pagesEl = $('pages');
+    const stageEl = $('stage');
     let mode = (localStorage.getItem('eb_pdf_mode') === 'spread') ? 'spread' : 'single';
-    let cur = 1;   // 현재(또는 펼침의 왼쪽) 페이지
-    let zoom = 1;  // 확대 배율 (1 = 화면에 맞춤)
+    let cur = 1;                  // 현재(또는 펼침 왼쪽) 페이지
+    let scale = 1, tx = 0, ty = 0;   // 확대 배율 / 이동(px)
+    let layoutW = 0, layoutH = 0;    // 맞춤(배율1)일 때 콘텐츠 크기
+    const MIN_SCALE = 1, MAX_SCALE = 4;
 
     function pageList() {
       if (mode === 'single') return [cur];
@@ -209,11 +213,9 @@
       return (cur + 1 <= numPages) ? [cur, cur + 1] : [cur];
     }
 
-    function render() {
-      if (!numPages) return;
-      const stage = $('stage');
-      const sw = stage.clientWidth, sh = stage.clientHeight;
-      const pad = 40, gap = 14;
+    function fitSize() {
+      const sw = stageEl.clientWidth, sh = stageEl.clientHeight;
+      const pad = 22, gap = 14;
       let w, h;
       if (mode === 'single') {
         h = sh - pad; w = h / RATIO;
@@ -222,17 +224,42 @@
         w = (sw - pad - gap) / 2; h = w * RATIO;
         if (h > sh - pad) { h = sh - pad; w = h / RATIO; }
       }
-      w = Math.max(120, Math.floor(w * zoom)); h = Math.floor(h * zoom);
+      return { w: Math.max(100, Math.floor(w)), h: Math.floor(h), gap };
+    }
+
+    function render(resetView = true) {
+      if (!numPages) return;
+      const { w, h, gap } = fitSize();
       curPageW = w;
       const list = pageList();
+      layoutW = list.length === 2 ? (w * 2 + gap) : w;
+      layoutH = h;
       pagesEl.className = 'pages ' + (mode === 'spread' ? 'two' : 'one');
+      pagesEl.style.width = layoutW + 'px';
+      pagesEl.style.height = layoutH + 'px';
       pagesEl.innerHTML = list.map(n =>
         `<div class="rpage" data-n="${n}" style="width:${w}px;height:${h}px"><div class="page-skel">${n}</div><img class="pimg" alt="${n}페이지"></div>`
       ).join('');
       pagesEl.querySelectorAll('.rpage').forEach(loadInto);
       prefetch(list);
+      if (resetView) { scale = 1; tx = 0; ty = 0; }
+      applyTransform();
       updateBar(list);
-      const st = $('stage'); st.scrollTop = 0; st.scrollLeft = 0;
+    }
+
+    function clampPan() {
+      const sw = stageEl.clientWidth, sh = stageEl.clientHeight;
+      const maxX = Math.max(0, (layoutW * scale - sw) / 2 + 6);
+      const maxY = Math.max(0, (layoutH * scale - sh) / 2 + 6);
+      tx = Math.min(maxX, Math.max(-maxX, tx));
+      ty = Math.min(maxY, Math.max(-maxY, ty));
+    }
+    function applyTransform() {
+      if (scale <= 1.01) scale = 1;
+      clampPan();
+      pagesEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      stageEl.classList.toggle('zoomed', scale > 1.01);
+      const zl = $('zoomLabel'); if (zl) zl.textContent = Math.round(scale * 100) + '%';
     }
 
     async function loadInto(div) {
@@ -259,23 +286,38 @@
       $('nextBtn').disabled = cur >= total;
     }
 
+    // 페이지 넘김 (확대 배율 유지, 새 페이지는 위쪽부터)
     function go(dir) {
       const step = mode === 'spread' ? 2 : 1;
-      cur = Math.max(1, Math.min(numPages, cur + dir * step));
-      render();
+      const n = Math.max(1, Math.min(numPages, cur + dir * step));
+      if (n === cur) return;
+      jumpTo(n);
+    }
+    function jumpTo(n) {
+      n = Math.max(1, Math.min(numPages, n | 0));
+      cur = n;
+      const kept = scale;
+      render(false);
+      if (kept > 1.01) { tx = 0; ty = 1e9; applyTransform(); }   // 위쪽 정렬
     }
     $('prevBtn').onclick = () => go(-1);
     $('nextBtn').onclick = () => go(1);
-    $('slider').oninput = e => { cur = +e.target.value; render(); };
+    $('slider').oninput = e => jumpTo(+e.target.value);
 
-    // 확대/축소 (글자 키우기)
-    function setZoom(z) {
-      z = Math.max(1, Math.min(3, Math.round(z * 100) / 100));
-      if (z === zoom) return;
-      zoom = z; fullCache.clear(); render();
+    // 확대/축소 (focal 기준)
+    const CENTER = { x: 0, y: 0 };
+    function zoomTo(focal, ns) {
+      ns = Math.min(MAX_SCALE, Math.max(MIN_SCALE, ns));
+      if (Math.abs(ns - scale) < 0.001) return;
+      tx = focal.x - (focal.x - tx) * (ns / scale);
+      ty = focal.y - (focal.y - ty) * (ns / scale);
+      scale = ns;
+      if (scale <= 1.01) { scale = 1; tx = 0; ty = 0; }
+      applyTransform();
     }
-    $('zoomIn').onclick = () => setZoom(zoom + 0.25);
-    $('zoomOut').onclick = () => setZoom(zoom - 0.25);
+    $('zoomIn').onclick = () => zoomTo(CENTER, scale * 1.35);
+    $('zoomOut').onclick = () => zoomTo(CENTER, scale / 1.35);
+    $('fitBtn').onclick = () => { scale = 1; tx = 0; ty = 0; applyTransform(); };
 
     // 보기 방식 토글
     function applyMode(m) {
@@ -288,31 +330,99 @@
     // 진입/이탈
     function openReader(startPage = 1) {
       cur = Math.max(1, Math.min(numPages, startPage | 0));
-      zoom = 1;
+      scale = 1; tx = 0; ty = 0;
       $('landing').style.display = 'none';
       $('flipView').hidden = false;
       $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === mode));
-      requestAnimationFrame(render);
+      requestAnimationFrame(() => render(true));
+      if (!sessionStorage.getItem('eb_reader_hint')) {
+        sessionStorage.setItem('eb_reader_hint', '1');
+        setTimeout(() => toast('두 손가락으로 확대 · 확대 후 끌어서 이동 · 더블탭으로 확대/복귀'), 500);
+      }
     }
     function closeReader() { $('flipView').hidden = true; $('landing').style.display = 'flex'; }
     $('playBtn').onclick = () => openReader(1);
     $('openFlip').onclick = () => openReader(1);
     $('closeFlip').onclick = closeReader;
 
-    // 키보드 / 스와이프
-    document.addEventListener('keydown', e => {
+    // ----- 제스처: 팬 / 핀치 / 더블탭 / 스와이프 -----
+    const pointers = new Map();
+    let pinch = null, panStart = null, downInfo = null, lastTap = 0;
+    function centerOffset(cx, cy) {
+      const r = stageEl.getBoundingClientRect();
+      return { x: cx - (r.left + r.width / 2), y: cy - (r.top + r.height / 2) };
+    }
+    stageEl.addEventListener('pointerdown', e => {
       if ($('flipView').hidden) return;
-      if (e.key === 'ArrowLeft') go(-1);
-      if (e.key === 'ArrowRight') go(1);
-      if (e.key === 'Escape') { if ($('side').classList.contains('open')) closePanel(); else closeReader(); }
+      try { stageEl.setPointerCapture(e.pointerId); } catch (_) {}
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const p = [...pointers.values()];
+        pinch = { dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y), scale: scale,
+                  focal: centerOffset((p[0].x + p[1].x) / 2, (p[0].y + p[1].y) / 2), tx, ty };
+        panStart = null; downInfo = null;
+      } else if (pointers.size === 1) {
+        panStart = { x: e.clientX, y: e.clientY, tx, ty };
+        downInfo = { x: e.clientX, y: e.clientY, moved: false };
+      }
     });
-    let touchX = null;
-    $('stage').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
-    $('stage').addEventListener('touchend', e => {
-      if (touchX === null) return;
-      const dx = e.changedTouches[0].clientX - touchX; touchX = null;
-      if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
-    }, { passive: true });
+    stageEl.addEventListener('pointermove', e => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pointers.size >= 2) {
+        const p = [...pointers.values()];
+        const dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        const ns = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinch.scale * (dist / pinch.dist)));
+        tx = pinch.focal.x - (pinch.focal.x - pinch.tx) * (ns / pinch.scale);
+        ty = pinch.focal.y - (pinch.focal.y - pinch.ty) * (ns / pinch.scale);
+        scale = ns; applyTransform(); e.preventDefault();
+      } else if (panStart && pointers.size === 1) {
+        const dx = e.clientX - panStart.x, dy = e.clientY - panStart.y;
+        if (Math.abs(dx) + Math.abs(dy) > 6 && downInfo) downInfo.moved = true;
+        if (scale > 1.01) { tx = panStart.tx + dx; ty = panStart.ty + dy; applyTransform(); e.preventDefault(); }
+      }
+    });
+    function endPointer(e) {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinch = null;
+      if (pointers.size === 1) {
+        // 핀치 후 한 손가락 남으면 이어서 팬
+        const pt = [...pointers.values()][0];
+        panStart = { x: pt.x, y: pt.y, tx, ty };
+        downInfo = { x: pt.x, y: pt.y, moved: true };
+      } else if (pointers.size === 0) {
+        if (downInfo && !downInfo.moved) {              // 탭 → 더블탭 검사
+          const now = e.timeStamp;
+          if (now - lastTap < 300) { lastTap = 0; zoomTo(centerOffset(e.clientX, e.clientY), scale > 1.01 ? 1 : 2.4); }
+          else lastTap = now;
+        } else if (downInfo && scale <= 1.01) {         // 맞춤 상태에서 명확한 수평 스와이프만 넘김
+          const dx = e.clientX - downInfo.x, dy = e.clientY - downInfo.y;
+          if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1);
+        }
+        panStart = null; downInfo = null;
+      }
+    }
+    stageEl.addEventListener('pointerup', endPointer);
+    stageEl.addEventListener('pointercancel', endPointer);
+
+    // 휠: Ctrl(⌘)+휠 확대, 확대 중 휠로 상하·좌우 이동
+    stageEl.addEventListener('wheel', e => {
+      if ($('flipView').hidden) return;
+      if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoomTo(centerOffset(e.clientX, e.clientY), scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); }
+      else if (scale > 1.01) { e.preventDefault(); tx -= e.deltaX; ty -= e.deltaY; applyTransform(); }
+    }, { passive: false });
+
+    // 키보드
+    document.addEventListener('keydown', e => {
+      if ($('flipView').hidden || e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowLeft') go(-1);
+      else if (e.key === 'ArrowRight') go(1);
+      else if (e.key === '+' || e.key === '=') zoomTo(CENTER, scale * 1.35);
+      else if (e.key === '-' || e.key === '_') zoomTo(CENTER, scale / 1.35);
+      else if (e.key === '0') { scale = 1; tx = 0; ty = 0; applyTransform(); }
+      else if (e.key === 'Escape') { if ($('side').classList.contains('open')) closePanel(); else closeReader(); }
+    });
 
     $('fsBtn').onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
 
@@ -322,11 +432,11 @@
     function closePanel() { side.classList.remove('open'); scrim.classList.remove('show'); }
     $('panelBtn').onclick = openPanel; $('closeSide').onclick = closePanel; scrim.onclick = closePanel;
 
-    // 리사이즈 — 현재 페이지 유지하며 다시 그림
+    // 리사이즈 — 맞춤 크기 재계산 후 다시 그림
     let rT;
     window.addEventListener('resize', () => {
       clearTimeout(rT);
-      rT = setTimeout(() => { if (!$('flipView').hidden) render(); }, 200);
+      rT = setTimeout(() => { if (!$('flipView').hidden) { fullCache.clear(); render(true); } }, 200);
     });
   </script>
 

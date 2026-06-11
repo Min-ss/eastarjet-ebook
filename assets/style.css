@@ -329,12 +329,12 @@ body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
 }
 .seg button.active { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); }
 
-/* 페이지 단위 표시 영역 (flip.html 읽기 모드) */
-.flipbook #stage { display: block; overflow: auto; padding: 0; }
+/* 페이지 단위 표시 영역 (flip.html 읽기 모드 — transform 확대/이동) */
+.flipbook #stage { display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; touch-action: none; }
+.flipbook #stage.zoomed { cursor: grab; }
 #stage .pages {
   display: flex; align-items: center; justify-content: center; gap: 14px;
-  min-width: 100%; min-height: 100%; width: max-content; height: max-content;
-  box-sizing: border-box; padding: 16px;
+  flex: 0 0 auto; transform-origin: center center; will-change: transform;
 }
 .rpage {
   position: relative; background: #fff; box-shadow: var(--shadow-lg);
