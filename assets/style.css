@@ -336,6 +336,13 @@ body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
   display: flex; align-items: center; justify-content: center; gap: 14px;
   flex: 0 0 auto; transform-origin: center center; will-change: transform;
 }
+
+/* 스크롤(연속/웹툰) 모드 */
+.flipbook #stage.scroll-mode { display: block; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; cursor: default; -webkit-overflow-scrolling: touch; }
+.flipbook #stage.scroll-mode .pages { transform: none !important; display: block; margin: 0 auto; height: auto !important; padding: 10px 0 40px; will-change: auto; }
+.spage { position: relative; margin: 0 auto 8px; background: #fff; box-shadow: var(--shadow); overflow: hidden; }
+.spage .pimg { width: 100%; height: 100%; object-fit: contain; display: block; }
+.spage.ready .page-skel { display: none; }
 .rpage {
   position: relative; background: #fff; box-shadow: var(--shadow-lg);
   overflow: hidden; border-radius: 3px; flex: 0 0 auto;

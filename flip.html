@@ -46,6 +46,7 @@
       <div class="seg" id="modeSeg" title="보기 방식">
         <button data-m="single" class="active">1장</button>
         <button data-m="spread">2장</button>
+        <button data-m="scroll">스크롤</button>
       </div>
       <button class="btn icon-btn" id="zoomOut" title="축소">－</button>
       <button class="btn" id="fitBtn" title="화면 맞춤"><span id="zoomLabel">100%</span></button>
@@ -200,11 +201,16 @@
     // ============================================================
     const pagesEl = $('pages');
     const stageEl = $('stage');
-    let mode = (localStorage.getItem('eb_pdf_mode') === 'spread') ? 'spread' : 'single';
+    let mode = localStorage.getItem('eb_pdf_mode');
+    mode = (mode === 'spread' || mode === 'scroll') ? mode : 'single';
     let cur = 1;                  // 현재(또는 펼침 왼쪽) 페이지
-    let scale = 1, tx = 0, ty = 0;   // 확대 배율 / 이동(px)
+    let scale = 1, tx = 0, ty = 0;   // 확대 배율 / 이동(px) — 페이지 모드
     let layoutW = 0, layoutH = 0;    // 맞춤(배율1)일 때 콘텐츠 크기
     const MIN_SCALE = 1, MAX_SCALE = 4;
+    // 스크롤(연속) 모드 상태
+    let scrollScale = 1, scrollPageW = 0, scrollIO = null;
+    const scrollWraps = [], scrollRendered = new Set(), scrollCache = new Map();
+    const SCROLL_CACHE_MAX = 16;
 
     function pageList() {
       if (mode === 'single') return [cur];
@@ -229,6 +235,12 @@
 
     function render(resetView = true) {
       if (!numPages) return;
+      if (mode === 'scroll') { renderScroll(); return; }
+      renderPaged(resetView);
+    }
+    function renderPaged(resetView = true) {
+      stageEl.classList.remove('scroll-mode');
+      if (scrollIO) { scrollIO.disconnect(); scrollIO = null; }
       const { w, h, gap } = fitSize();
       curPageW = w;
       const list = pageList();
@@ -286,6 +298,85 @@
       $('nextBtn').disabled = cur >= total;
     }
 
+    // ----- 스크롤(연속/웹툰) 모드 -----
+    function renderScroll() {
+      stageEl.classList.remove('zoomed');
+      stageEl.classList.add('scroll-mode');
+      pagesEl.style.transform = 'none';
+      pagesEl.className = 'pages scroll';
+      const avail = Math.min(stageEl.clientWidth - 20, 900);
+      const w = Math.max(120, Math.round(avail * scrollScale));
+      scrollPageW = w;
+      pagesEl.style.width = w + 'px';
+      pagesEl.style.height = '';
+      if (scrollIO) scrollIO.disconnect();
+      scrollIO = new IntersectionObserver(es => es.forEach(en => {
+        const n = +en.target.dataset.n;
+        if (en.isIntersecting) renderScrollPage(n); else unloadScrollPage(n);
+      }), { root: stageEl, rootMargin: '1400px 0px' });
+      scrollWraps.length = 0; scrollRendered.clear();
+      pagesEl.innerHTML = '';
+      for (let n = 1; n <= numPages; n++) {
+        const d = document.createElement('div');
+        d.className = 'spage'; d.dataset.n = n;
+        d.style.width = w + 'px'; d.style.height = Math.round(w * RATIO) + 'px';
+        d.innerHTML = `<div class="page-skel">${n}</div><img class="pimg" alt="${n}">`;
+        pagesEl.appendChild(d); scrollWraps.push(d); scrollIO.observe(d);
+      }
+      const zl = $('zoomLabel'); if (zl) zl.textContent = Math.round(scrollScale * 100) + '%';
+      requestAnimationFrame(() => { if (cur > 1 && scrollWraps[cur - 1]) scrollWraps[cur - 1].scrollIntoView({ block: 'start' }); updateScrollBar(); });
+    }
+    async function renderScrollPage(n) {
+      if (scrollRendered.has(n)) return;
+      scrollRendered.add(n);
+      const d = scrollWraps[n - 1]; if (!d) return;
+      try {
+        const page = await pdf.getPage(n);
+        const vp0 = page.getViewport({ scale: 1 });
+        d.style.height = Math.round(scrollPageW * (vp0.height / vp0.width)) + 'px';
+        let url = scrollCache.get(n);
+        if (!url) {
+          const targetW = Math.min(2000, Math.round(scrollPageW * 2));
+          url = await renderToUrl(n, targetW / vp0.width, 0.82);
+          scrollCache.set(n, url);
+          while (scrollCache.size > SCROLL_CACHE_MAX) scrollCache.delete(scrollCache.keys().next().value);
+        }
+        const img = d.querySelector('.pimg');
+        if (img) { img.onload = () => d.classList.add('ready'); img.src = url; }
+      } catch (e) { scrollRendered.delete(n); }
+    }
+    function unloadScrollPage(n) {
+      if (!scrollRendered.has(n)) return;
+      scrollRendered.delete(n);
+      const d = scrollWraps[n - 1]; if (!d) return;
+      d.classList.remove('ready'); const img = d.querySelector('.pimg'); if (img) img.removeAttribute('src');
+    }
+    function updateScrollBar() {
+      $('slider').value = cur;
+      $('pageInfo').textContent = `${cur} / ${numPages}`;
+      $('prevBtn').disabled = cur <= 1; $('nextBtn').disabled = cur >= numPages;
+    }
+    function updateScrollCur() {
+      if (mode !== 'scroll' || !scrollWraps.length) return;
+      const mid = stageEl.scrollTop + stageEl.clientHeight * 0.4;
+      let acc = 0, p = 1;
+      for (let i = 0; i < scrollWraps.length; i++) {
+        const h = scrollWraps[i].offsetHeight + 8;
+        if (acc + h > mid) { p = i + 1; break; }
+        acc += h; p = i + 1;
+      }
+      if (p !== cur) { cur = p; updateScrollBar(); }
+    }
+    function setScrollScale(s) {
+      s = Math.max(0.5, Math.min(3, Math.round(s * 100) / 100));
+      if (s === scrollScale) return;
+      const anchor = cur;
+      scrollScale = s; scrollCache.clear(); renderScroll();
+      requestAnimationFrame(() => { if (scrollWraps[anchor - 1]) scrollWraps[anchor - 1].scrollIntoView({ block: 'start' }); });
+    }
+    let scrollRaf;
+    stageEl.addEventListener('scroll', () => { if (mode === 'scroll') { cancelAnimationFrame(scrollRaf); scrollRaf = requestAnimationFrame(updateScrollCur); } }, { passive: true });
+
     // 페이지 넘김 (확대 배율 유지, 새 페이지는 위쪽부터)
     function go(dir) {
       const step = mode === 'spread' ? 2 : 1;
@@ -296,6 +387,11 @@
     function jumpTo(n) {
       n = Math.max(1, Math.min(numPages, n | 0));
       cur = n;
+      if (mode === 'scroll') {
+        if (scrollWraps[n - 1]) scrollWraps[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateScrollBar();
+        return;
+      }
       const kept = scale;
       render(false);
       if (kept > 1.01) { tx = 0; ty = 1e9; applyTransform(); }   // 위쪽 정렬
@@ -315,9 +411,9 @@
       if (scale <= 1.01) { scale = 1; tx = 0; ty = 0; }
       applyTransform();
     }
-    $('zoomIn').onclick = () => zoomTo(CENTER, scale * 1.35);
-    $('zoomOut').onclick = () => zoomTo(CENTER, scale / 1.35);
-    $('fitBtn').onclick = () => { scale = 1; tx = 0; ty = 0; applyTransform(); };
+    $('zoomIn').onclick = () => mode === 'scroll' ? setScrollScale(scrollScale * 1.2) : zoomTo(CENTER, scale * 1.35);
+    $('zoomOut').onclick = () => mode === 'scroll' ? setScrollScale(scrollScale / 1.2) : zoomTo(CENTER, scale / 1.35);
+    $('fitBtn').onclick = () => { if (mode === 'scroll') setScrollScale(1); else { scale = 1; tx = 0; ty = 0; applyTransform(); } };
 
     // 보기 방식 토글
     function applyMode(m) {
@@ -337,7 +433,7 @@
       requestAnimationFrame(() => render(true));
       if (!sessionStorage.getItem('eb_reader_hint')) {
         sessionStorage.setItem('eb_reader_hint', '1');
-        setTimeout(() => toast('두 손가락으로 확대 · 확대 후 끌어서 이동 · 더블탭으로 확대/복귀'), 500);
+        setTimeout(() => toast('확대: 핀치·더블탭·＋ · 끌어서 이동  |  상단 「스크롤」로 연속(웹툰) 보기'), 500);
       }
     }
     function closeReader() { $('flipView').hidden = true; $('landing').style.display = 'flex'; }
@@ -353,7 +449,7 @@
       return { x: cx - (r.left + r.width / 2), y: cy - (r.top + r.height / 2) };
     }
     stageEl.addEventListener('pointerdown', e => {
-      if ($('flipView').hidden) return;
+      if ($('flipView').hidden || mode === 'scroll') return;
       try { stageEl.setPointerCapture(e.pointerId); } catch (_) {}
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 2) {
@@ -408,7 +504,7 @@
 
     // 휠: Ctrl(⌘)+휠 확대, 확대 중 휠로 상하·좌우 이동
     stageEl.addEventListener('wheel', e => {
-      if ($('flipView').hidden) return;
+      if ($('flipView').hidden || mode === 'scroll') return;   // 스크롤 모드는 기본 스크롤
       if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoomTo(centerOffset(e.clientX, e.clientY), scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); }
       else if (scale > 1.01) { e.preventDefault(); tx -= e.deltaX; ty -= e.deltaY; applyTransform(); }
     }, { passive: false });
