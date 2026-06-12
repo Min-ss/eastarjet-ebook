@@ -393,18 +393,28 @@
       }
       if (p !== cur) { cur = p; updateScrollBar(); savePos(); }
     }
-    function setScrollScale(s) {
+    function setScrollScale(s, focal) {
       s = Math.max(0.5, Math.min(3, Math.round(s * 100) / 100));
       if (s === scrollScale) return;
-      const anchor = cur;
+      const f = s / scrollScale;
+      // 초점(기본: 화면 중앙)이 가리키던 내용이 화면의 같은 자리에 남도록 스크롤 보정
+      const fx = focal ? focal.x : stageEl.clientWidth / 2;
+      const fy = focal ? focal.y : stageEl.clientHeight / 2;
+      const sl = stageEl.scrollLeft, st = stageEl.scrollTop;
       scrollScale = s; scrollCache.clear(); renderScroll();
-      requestAnimationFrame(() => { if (scrollWraps[anchor - 1]) scrollWraps[anchor - 1].scrollIntoView({ block: 'start' }); centerScrollX(); });
+      // renderScroll 내부 rAF(페이지 앵커) 이후에 실행되어 이 보정이 최종 적용됨
+      requestAnimationFrame(() => {
+        stageEl.scrollLeft = Math.max(0, (sl + fx) * f - fx);
+        stageEl.scrollTop = Math.max(0, (st + fy) * f - fy);
+        updateScrollBar();
+      });
     }
     let scrollRaf;
     stageEl.addEventListener('scroll', () => { if (mode === 'scroll') { cancelAnimationFrame(scrollRaf); scrollRaf = requestAnimationFrame(updateScrollCur); } }, { passive: true });
 
-    // ----- 스크롤 모드: 드래그 패닝 (마우스 + 터치 한 손가락, 관성 포함) -----
-    let sDrag = null, sFlingId = 0;
+    // ----- 스크롤 모드: 드래그 패닝 + 두 손가락 핀치 줌 (관성 포함) -----
+    const sPts = new Map();
+    let sDrag = null, sPinch = null, sFlingId = 0;
     function scrollFling(vx, vy) {
       if (Math.abs(vx) < 0.4 && Math.abs(vy) < 0.4) return;
       stageEl.scrollLeft += vx;
@@ -415,26 +425,64 @@
       if ($('flipView').hidden || mode !== 'scroll') return;
       cancelAnimationFrame(sFlingId);
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      if (sDrag) { sDrag = null; return; }   // 두 번째 손가락이 닿으면 패닝 중단
-      sDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, vx: 0, vy: 0, t: e.timeStamp };
+      sPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try { stageEl.setPointerCapture(e.pointerId); } catch (_) {}
+      if (sPts.size === 2) {
+        // 핀치 시작 — 끝날 때까지 CSS 미리보기, 떼는 순간 실제 재렌더
+        sDrag = null;
+        const p = [...sPts.values()];
+        const r = stageEl.getBoundingClientRect();
+        const fx = (p[0].x + p[1].x) / 2 - r.left, fy = (p[0].y + p[1].y) / 2 - r.top;
+        sPinch = { d0: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y), f: 1, fx, fy, rect: r };
+        pagesEl.style.transformOrigin =
+          (stageEl.scrollLeft + fx) + 'px ' + (stageEl.scrollTop + fy) + 'px';
+      } else if (sPts.size === 1) {
+        sDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, vx: 0, vy: 0, t: e.timeStamp };
+      }
     });
     stageEl.addEventListener('pointermove', e => {
-      if (!sDrag || e.pointerId !== sDrag.id || mode !== 'scroll') return;
-      const dx = sDrag.x - e.clientX, dy = sDrag.y - e.clientY;
-      stageEl.scrollLeft += dx;
-      stageEl.scrollTop += dy;
-      const dt = Math.max(1, e.timeStamp - sDrag.t);
-      sDrag.vx = dx / dt * 16; sDrag.vy = dy / dt * 16;   // px/frame(60fps) 기준 속도
-      sDrag.x = e.clientX; sDrag.y = e.clientY; sDrag.t = e.timeStamp;
+      if (mode !== 'scroll' || !sPts.has(e.pointerId)) return;
+      sPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (sPinch && sPts.size >= 2) {
+        const p = [...sPts.values()];
+        const d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        // 최종 배율이 0.5~3 범위를 벗어나지 않도록 미리보기 단계에서 제한
+        sPinch.f = Math.max(0.5 / scrollScale, Math.min(3 / scrollScale, d / sPinch.d0));
+        sPinch.fx = (p[0].x + p[1].x) / 2 - sPinch.rect.left;
+        sPinch.fy = (p[0].y + p[1].y) / 2 - sPinch.rect.top;
+        pagesEl.style.transform = `scale(${sPinch.f})`;
+      } else if (sDrag && e.pointerId === sDrag.id) {
+        const dx = sDrag.x - e.clientX, dy = sDrag.y - e.clientY;
+        stageEl.scrollLeft += dx;
+        stageEl.scrollTop += dy;
+        const dt = Math.max(1, e.timeStamp - sDrag.t);
+        sDrag.vx = dx / dt * 16; sDrag.vy = dy / dt * 16;   // px/frame(60fps) 기준 속도
+        sDrag.x = e.clientX; sDrag.y = e.clientY; sDrag.t = e.timeStamp;
+      }
     });
     ['pointerup', 'pointercancel'].forEach(ev =>
       stageEl.addEventListener(ev, e => {
-        if (!sDrag || e.pointerId !== sDrag.id) return;
-        const { vx, vy, t } = sDrag;
-        sDrag = null;
-        // 멈춘 채로 떼면 관성 없음 (마지막 이동 후 80ms 이상 경과)
-        if (ev === 'pointerup' && e.timeStamp - t < 80) scrollFling(vx, vy);
+        if (!sPts.has(e.pointerId)) return;
+        sPts.delete(e.pointerId);
+        if (sPinch && sPts.size < 2) {
+          const { f, fx, fy } = sPinch;
+          sPinch = null;
+          pagesEl.style.transform = 'none';
+          pagesEl.style.transformOrigin = '';
+          if (Math.abs(f - 1) > 0.05) setScrollScale(scrollScale * f, { x: fx, y: fy });
+          // 핀치 후 한 손가락이 남으면 이어서 팬
+          if (sPts.size === 1) {
+            const id = [...sPts.keys()][0], pt = sPts.get(id);
+            sDrag = { id, x: pt.x, y: pt.y, vx: 0, vy: 0, t: e.timeStamp };
+          } else sDrag = null;
+          return;
+        }
+        if (sDrag && e.pointerId === sDrag.id) {
+          const { vx, vy, t } = sDrag;
+          sDrag = null;
+          // 멈춘 채로 떼면 관성 없음 (마지막 이동 후 80ms 이상 경과)
+          if (ev === 'pointerup' && e.timeStamp - t < 80) scrollFling(vx, vy);
+        }
       }));
     // 마우스 드래그 시 이미지의 기본 드래그 동작이 패닝을 끊지 않도록
     stageEl.addEventListener('dragstart', e => e.preventDefault());
