@@ -73,37 +73,37 @@ const BOOKS = [
     id: "safety-star-mag-01", type: "pdf", category: "safety-pub",
     path: "books/safety-star-mag-01", file: "doc.pdf",
     title: "SAFETY STAR Rev.01", subtitle: "안전정보 간행물",
-    cover: "books/safety-star-mag-01/cover.svg"
+    cover: "books/safety-star-mag-01/cover.png"
   },
   {
     id: "safety-star-mag-02", type: "pdf", category: "safety-pub",
     path: "books/safety-star-mag-02", file: "doc.pdf",
     title: "SAFETY STAR Rev.02", subtitle: "안전정보 간행물",
-    cover: "books/safety-star-mag-02/cover.svg"
+    cover: "books/safety-star-mag-02/cover.png"
   },
   {
     id: "safety-star-mag-03", type: "pdf", category: "safety-pub",
     path: "books/safety-star-mag-03", file: "doc.pdf",
     title: "SAFETY STAR Rev.03", subtitle: "안전정보 간행물",
-    cover: "books/safety-star-mag-03/cover.svg"
+    cover: "books/safety-star-mag-03/cover.png"
   },
   {
     id: "safety-star-mag-04", type: "pdf", category: "safety-pub",
     path: "books/safety-star-mag-04", file: "doc.pdf",
     title: "SAFETY STAR Rev.04", subtitle: "안전정보 간행물",
-    cover: "books/safety-star-mag-04/cover.svg"
+    cover: "books/safety-star-mag-04/cover.png"
   },
   {
     id: "safety-star-mag-05", type: "pdf", category: "safety-pub",
     path: "books/safety-star-mag-05", file: "doc.pdf",
     title: "SAFETY STAR Rev.05", subtitle: "안전정보 간행물",
-    cover: "books/safety-star-mag-05/cover.svg"
+    cover: "books/safety-star-mag-05/cover.png"
   },
   {
     id: "safety-star-mag-06", type: "pdf", category: "safety-pub",
     path: "books/safety-star-mag-06", file: "doc.pdf",
     title: "SAFETY STAR Rev.06", subtitle: "안전정보 간행물",
-    cover: "books/safety-star-mag-06/cover.svg"
+    cover: "books/safety-star-mag-06/cover.png"
   },
 
   // ===== 객실안전정보툰 Safety Star (기내 안전 정보 툰) =====
