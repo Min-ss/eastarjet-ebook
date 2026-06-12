@@ -359,7 +359,7 @@ body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
   .cat-card { min-height: 420px; }
   .cat-card h3 { font-size: 23px; }
   .cat-detail-head h2 { font-size: 27px; }
-  .shelf { grid-template-columns: repeat(2, 1fr); gap: 24px 16px; }
+  .shelf { grid-template-columns: 1fr; gap: 28px; }
   .splash-logo { height: 28px; padding: 13px 18px; }
   .v-top .title { max-width: 36vw; }
   /* 읽기 모드 상단 바: 좁은 화면에선 로고·제목 숨기고 컴팩트하게 */
