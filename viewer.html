@@ -4,21 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>e-Book 뷰어 — 이스타항공</title>
-  <link rel="stylesheet" href="assets/style.css" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="assets/style.css" />
 </head>
 <body class="viewer">
   <div class="viewer-wrap">
     <!-- 상단 바 -->
     <div class="topbar v-top">
-      <a class="btn icon-btn" href="index.html" title="목록으로">←</a>
+      <a class="btn icon-btn" href="index.html" title="목록으로" aria-label="목록으로">←</a>
       <a href="index.html"><img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" /></a>
       <span class="title" id="bookTitle">불러오는 중…</span>
       <div class="spacer"></div>
-      <button class="btn icon-btn" id="downloadBtn" title="PDF 다운로드">⬇</button>
-      <button class="btn icon-btn" id="shareBtn" title="링크 공유">↗</button>
-      <button class="btn icon-btn" id="zoomBtn" title="확대/축소">🔍</button>
-      <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
-      <button class="btn icon-btn" id="panelBtn" title="목차·썸네일">☰</button>
+      <button class="btn icon-btn" id="downloadBtn" title="PDF 다운로드" aria-label="PDF 다운로드">⬇</button>
+      <button class="btn icon-btn" id="shareBtn" title="링크 공유" aria-label="링크 공유">↗</button>
+      <button class="btn icon-btn" id="zoomBtn" title="확대/축소" aria-label="확대/축소">🔍</button>
+      <button class="btn icon-btn" id="fsBtn" title="전체화면" aria-label="전체화면">⛶</button>
+      <button class="btn icon-btn" id="panelBtn" title="목차·썸네일" aria-label="목차·썸네일">☰</button>
     </div>
 
     <!-- 책 무대 -->
@@ -28,10 +30,10 @@
 
     <!-- 하단 컨트롤 -->
     <div class="v-bottom">
-      <button class="btn icon-btn" id="prevBtn" title="이전">◀</button>
+      <button class="btn icon-btn" id="prevBtn" title="이전" aria-label="이전">◀</button>
       <input type="range" id="slider" min="1" max="1" value="1" />
       <span id="pageInfo">- / -</span>
-      <button class="btn icon-btn" id="nextBtn" title="다음">▶</button>
+      <button class="btn icon-btn" id="nextBtn" title="다음" aria-label="다음">▶</button>
     </div>
   </div>
 

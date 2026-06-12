@@ -4,24 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>간행물 뷰어 — 이스타항공</title>
-  <link rel="stylesheet" href="assets/style.css" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="assets/style.css" />
 </head>
 <body class="viewer flipbook">
   <!-- ===== ① 표지 랜딩 + 전체 페이지 미리보기 ===== -->
   <section class="wz-landing" id="landing">
     <div class="topbar v-top">
-      <a class="btn icon-btn" href="index.html" title="목록으로">←</a>
+      <a class="btn icon-btn" href="index.html" title="목록으로" aria-label="목록으로">←</a>
       <a href="index.html"><img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" /></a>
       <span class="title" id="bookTitle">불러오는 중…</span>
       <div class="spacer"></div>
-      <a class="btn icon-btn" id="searchLink" title="문서 검색 보기">🔍</a>
-      <button class="btn icon-btn" id="dlBtn1" title="PDF 다운로드">⬇</button>
+      <a class="btn icon-btn" id="searchLink" title="문서 검색 보기" aria-label="문서 검색 보기">🔍</a>
+      <button class="btn icon-btn" id="dlBtn1" title="PDF 다운로드" aria-label="PDF 다운로드">⬇</button>
     </div>
 
     <div class="wz-hero">
       <div class="wz-cover">
         <img id="coverImg" alt="표지" />
-        <button class="play-btn" id="playBtn" title="열람하기">▶</button>
+        <button class="play-btn" id="playBtn" title="열람하기" aria-label="열람하기">▶</button>
       </div>
       <div class="wz-info">
         <h1 id="titleBig">　</h1>
@@ -39,31 +41,31 @@
   <!-- ===== ② 읽기 모드 (페이지 단위) ===== -->
   <div id="flipView" hidden>
     <div class="topbar v-top">
-      <button class="btn icon-btn" id="closeFlip" title="미리보기로">←</button>
+      <button class="btn icon-btn" id="closeFlip" title="미리보기로" aria-label="미리보기로">←</button>
       <img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
       <span class="title" id="flipTitle"></span>
       <div class="spacer"></div>
-      <div class="seg" id="modeSeg" title="보기 방식">
+      <div class="seg" id="modeSeg" title="보기 방식" aria-label="보기 방식">
         <button data-m="single" class="active">1장</button>
         <button data-m="spread">2장</button>
         <button data-m="scroll">스크롤</button>
       </div>
-      <button class="btn icon-btn" id="zoomOut" title="축소">－</button>
-      <button class="btn" id="fitBtn" title="화면 맞춤"><span id="zoomLabel">100%</span></button>
-      <button class="btn icon-btn" id="zoomIn" title="확대">＋</button>
-      <a class="btn icon-btn" id="searchLink3" title="문서 검색·복사 보기">🔍</a>
-      <button class="btn icon-btn" id="dlBtn2" title="PDF 다운로드">⬇</button>
-      <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
-      <button class="btn icon-btn" id="panelBtn" title="페이지 목록">☰</button>
+      <button class="btn icon-btn" id="zoomOut" title="축소" aria-label="축소">－</button>
+      <button class="btn" id="fitBtn" title="화면 맞춤" aria-label="화면 맞춤"><span id="zoomLabel">100%</span></button>
+      <button class="btn icon-btn" id="zoomIn" title="확대" aria-label="확대">＋</button>
+      <a class="btn icon-btn" id="searchLink3" title="문서 검색·복사 보기" aria-label="문서 검색·복사 보기">🔍</a>
+      <button class="btn icon-btn" id="dlBtn2" title="PDF 다운로드" aria-label="PDF 다운로드">⬇</button>
+      <button class="btn icon-btn" id="fsBtn" title="전체화면" aria-label="전체화면">⛶</button>
+      <button class="btn icon-btn" id="panelBtn" title="페이지 목록" aria-label="페이지 목록">☰</button>
     </div>
 
     <div id="stage"><div id="pages" class="pages one"></div></div>
 
     <div class="v-bottom">
-      <button class="btn icon-btn" id="prevBtn" title="이전">◀</button>
-      <input type="range" id="slider" min="1" max="1" value="1" />
+      <button class="btn icon-btn" id="prevBtn" title="이전" aria-label="이전">◀</button>
+      <input type="range" id="slider" min="1" max="1" value="1" aria-label="페이지 이동" />
       <span id="pageInfo">- / -</span>
-      <button class="btn icon-btn" id="nextBtn" title="다음">▶</button>
+      <button class="btn icon-btn" id="nextBtn" title="다음" aria-label="다음">▶</button>
     </div>
   </div>
 
@@ -112,7 +114,7 @@
       $('landing').style.display = 'none';
       $('flipView').hidden = false;
       $('flipTitle').textContent = book.title;
-      $('pages').innerHTML = '<div style="color:#8aa0bd;width:100%;text-align:center;padding-top:120px;font-size:15px">불러오는 중…</div>';
+      $('pages').innerHTML = '<div id="loadMsg" style="color:#8aa0bd;width:100%;text-align:center;padding-top:120px;font-size:15px">불러오는 중…</div>';
     }
 
     function download() { const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
@@ -151,7 +153,13 @@
     // ---------- 초기 로딩 ----------
     (async () => {
       try {
-        pdf = await pdfjsLib.getDocument({ url: pdfUrl, cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked: true }).promise;
+        const task = pdfjsLib.getDocument({ url: pdfUrl, cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked: true });
+        // 다운로드 진행률 표시 (Pages는 Range 미지원 → 전체 수신 후 표시되므로 진행률이 체감에 중요)
+        task.onProgress = p => {
+          const el = $('loadMsg');
+          if (el && p.total) el.textContent = `불러오는 중… ${Math.min(99, Math.round(p.loaded / p.total * 100))}%`;
+        };
+        pdf = await task.promise;
         numPages = pdf.numPages;
         const p1 = await pdf.getPage(1);
         const vp = p1.getViewport({ scale: 1 });
@@ -159,7 +167,7 @@
         $('spreadsHead').textContent = `전체 ${numPages}페이지`;
         $('slider').max = numPages;
         buildThumbs();
-        if (location.hash === '#read') openReader(1);
+        if (location.hash === '#read') openWithResume();
       } catch (e) {
         const isFile = location.protocol === 'file:';
         // 바로읽기로 진입해 랜딩을 숨겼다면, 오류 안내를 보이도록 되돌림
@@ -380,7 +388,7 @@
         if (acc + h > mid) { p = i + 1; break; }
         acc += h; p = i + 1;
       }
-      if (p !== cur) { cur = p; updateScrollBar(); }
+      if (p !== cur) { cur = p; updateScrollBar(); savePos(); }
     }
     function setScrollScale(s) {
       s = Math.max(0.5, Math.min(3, Math.round(s * 100) / 100));
@@ -399,9 +407,36 @@
       if (n === cur) return;
       jumpTo(n);
     }
+    // ---------- 이어읽기: 책별 마지막 페이지 기억 (pdf.html 과 키 공유) ----------
+    const POS_KEY = 'eb_pos_' + book.id;
+    function savePos() { try { localStorage.setItem(POS_KEY, String(cur)); } catch (e) {} }
+    function resumePage() {
+      const v = parseInt(localStorage.getItem(POS_KEY) || '0', 10);
+      return (v >= 2 && v <= numPages) ? v : 0;
+    }
+    let resumeShown = false;
+    function resumeToast(p) {
+      resumeShown = true;
+      const t = $('toast');
+      t.textContent = `${p}페이지부터 이어봅니다 `;
+      const b = document.createElement('button');
+      b.textContent = '처음부터';
+      b.style.cssText = 'margin-left:10px;background:none;border:none;color:#8fc7ff;font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;padding:0';
+      b.onclick = () => { jumpTo(1); t.classList.remove('show'); };
+      t.appendChild(b);
+      t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 4500);
+    }
+    function openWithResume() {
+      const r = resumePage();
+      openReader(r || 1);
+      if (r) setTimeout(() => resumeToast(r), 600);
+    }
+
     function jumpTo(n) {
       n = Math.max(1, Math.min(numPages, n | 0));
       cur = n;
+      savePos();
       if (mode === 'scroll') {
         if (scrollWraps[n - 1]) scrollWraps[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
         updateScrollBar();
@@ -441,6 +476,7 @@
     // 진입/이탈
     function openReader(startPage = 1) {
       cur = Math.max(1, Math.min(numPages, startPage | 0));
+      savePos();
       scale = 1; tx = 0; ty = 0;
       $('landing').style.display = 'none';
       $('flipView').hidden = false;
@@ -448,7 +484,8 @@
       requestAnimationFrame(() => render(true));
       if (!sessionStorage.getItem('eb_reader_hint')) {
         sessionStorage.setItem('eb_reader_hint', '1');
-        setTimeout(() => toast('확대: 핀치·더블탭·＋ · 끌어서 이동  |  상단 「스크롤」로 연속(웹툰) 보기'), 500);
+        // 이어읽기 토스트가 떠 있으면 힌트는 건너뜀 (같은 토스트 영역 공유)
+        setTimeout(() => { if (!resumeShown) toast('확대: 핀치·더블탭·＋ · 끌어서 이동  |  상단 「스크롤」로 연속(웹툰) 보기'); }, 500);
       }
     }
     // 랜딩(페이지 목록) 단계를 건너뛰므로, 뷰어의 뒤로가기는 해당 카테고리 목록으로 이동.
@@ -457,8 +494,8 @@
       if (directRead) { location.href = 'index.html#' + (book.category || ''); }
       else { $('flipView').hidden = true; $('landing').style.display = 'flex'; }
     }
-    $('playBtn').onclick = () => openReader(1);
-    $('openFlip').onclick = () => openReader(1);
+    $('playBtn').onclick = openWithResume;
+    $('openFlip').onclick = openWithResume;
     $('closeFlip').onclick = closeReader;
 
     // ----- 제스처: 팬 / 핀치 / 더블탭 / 스와이프 -----
@@ -541,6 +578,8 @@
     });
 
     $('fsBtn').onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
+    // iPhone Safari 는 requestFullscreen 미지원 → 무반응 버튼은 숨김
+    if (!document.documentElement.requestFullscreen) $('fsBtn').style.display = 'none';
 
     // 사이드 패널
     const side = $('side'), scrim = $('scrim');

@@ -206,7 +206,7 @@ footer.site .admin-link:hover { opacity: 1; color: var(--red); }
 /* ============================================================
    웹진 플립북 (flip.html) — 표지 랜딩 + 미리보기
    ============================================================ */
-.wz-landing { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+.wz-landing { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
 .wz-hero {
   max-width: 1000px; width: 100%; margin: 0 auto; padding: 56px 22px 36px;
   display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: 48px; align-items: center;
@@ -270,8 +270,8 @@ footer.site .admin-link:hover { opacity: 1; color: var(--red); }
 /* ============================================================
    뷰어 (viewer.html / flip.html 플립 모드)
    ============================================================ */
-body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
-.viewer-wrap { display: flex; flex-direction: column; height: 100vh; }
+body.viewer { overflow: hidden; height: 100vh; height: 100dvh; background: var(--bg-soft); }
+.viewer-wrap { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 .v-top { gap: 12px; }
 .v-top .title { font-weight: 600; font-size: 15px; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; }
 
@@ -382,4 +382,39 @@ body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
   #stage { padding: 10px; }
   .brand .sub { display: none; }
   .brand-title, .brand-divider { display: none; }
+}
+
+/* ============================================================
+   다크 모드 — 시스템 설정(prefers-color-scheme) 자동 적용
+   (책 페이지·표지 자체는 원본 색 유지, UI 크롬만 어둡게)
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0c0c10;
+    --bg-soft: #1c1c21;
+    --bg-soft2: #141418;
+    --text: #f5f5f7;
+    --muted: #a1a1a8;
+    --line: rgba(255, 255, 255, .14);
+    --card: #1c1c21;
+    --shadow: 0 4px 22px rgba(0, 0, 0, .5);
+    --shadow-lg: 0 16px 44px rgba(0, 0, 0, .65);
+  }
+  .topbar { background: rgba(18, 18, 22, .72); }
+  .btn:hover, .icon-btn:hover, .back-btn:hover { background: #2a2a31; }
+  .seg button.active { background: #3a3a42; color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .5); }
+  .v-bottom { background: rgba(18, 18, 22, .82); }
+  .cat-count { background: rgba(28, 28, 33, .92); box-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
+  .book-card .badge:not(.badge-type) { background: rgba(28, 28, 33, .9); }
+  .wz-thumb-img span { background: rgba(20, 20, 24, .85); }
+  .wz-thumb-img.loaded span { color: var(--text); }
+}
+
+/* 시스템 '동작 줄이기' 설정 존중 — 큰 전환/애니메이션 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
 }

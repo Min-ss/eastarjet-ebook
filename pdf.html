@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>PDF 뷰어 — 이스타항공</title>
-  <link rel="stylesheet" href="assets/style.css" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="assets/style.css" />
   <style>
     /* ---------- PDF 뷰어 전용 ---------- */
     #pdfScroll {
@@ -54,30 +56,35 @@
       .zoom-label { display: none; }
       .v-top .title { max-width: 30vw; }
     }
+    /* 다크 모드: 뷰어 크롬만 어둡게 (페이지 캔버스는 원본 유지) */
+    @media (prefers-color-scheme: dark) {
+      .findbar { background: rgba(18, 18, 22, .92); }
+      .pdf-page { box-shadow: 0 6px 22px rgba(0, 0, 0, .7); }
+    }
   </style>
 </head>
 <body class="viewer">
   <div class="viewer-wrap">
     <!-- 상단 바 -->
     <div class="topbar v-top">
-      <a class="btn icon-btn" href="index.html" title="목록으로">←</a>
+      <a class="btn icon-btn" href="index.html" title="목록으로" aria-label="목록으로">←</a>
       <a href="index.html"><img class="bar-logo" src="assets/eastar_logo.svg" alt="이스타항공" /></a>
       <span class="title" id="bookTitle">불러오는 중…</span>
       <div class="spacer"></div>
-      <button class="btn icon-btn" id="findBtn" title="검색">🔍</button>
-      <button class="btn icon-btn" id="zoomOut" title="축소">－</button>
+      <button class="btn icon-btn" id="findBtn" title="검색" aria-label="검색">🔍</button>
+      <button class="btn icon-btn" id="zoomOut" title="축소" aria-label="축소">－</button>
       <span class="zoom-label" id="zoomLabel">100%</span>
-      <button class="btn icon-btn" id="zoomIn" title="확대">＋</button>
-      <button class="btn icon-btn" id="downloadBtn" title="PDF 다운로드">⬇</button>
+      <button class="btn icon-btn" id="zoomIn" title="확대" aria-label="확대">＋</button>
+      <button class="btn icon-btn" id="downloadBtn" title="PDF 다운로드" aria-label="PDF 다운로드">⬇</button>
     </div>
 
     <!-- 검색 바 -->
     <div class="findbar" id="findbar">
       <input type="search" id="findInput" placeholder="본문에서 검색…" autocomplete="off" />
       <span class="count" id="findCount">—</span>
-      <button class="btn icon-btn" id="findPrev" title="이전 결과">◀</button>
-      <button class="btn icon-btn" id="findNext" title="다음 결과">▶</button>
-      <button class="btn icon-btn" id="findClose" title="닫기">✕</button>
+      <button class="btn icon-btn" id="findPrev" title="이전 결과" aria-label="이전 결과">◀</button>
+      <button class="btn icon-btn" id="findNext" title="다음 결과" aria-label="다음 결과">▶</button>
+      <button class="btn icon-btn" id="findClose" title="닫기" aria-label="닫기">✕</button>
     </div>
 
     <!-- PDF 영역 -->
@@ -85,10 +92,10 @@
 
     <!-- 하단 컨트롤 -->
     <div class="v-bottom">
-      <button class="btn icon-btn" id="prevBtn" title="이전 페이지">◀</button>
-      <input id="pageBox" type="text" inputmode="numeric" value="1" />
+      <button class="btn icon-btn" id="prevBtn" title="이전 페이지" aria-label="이전 페이지">◀</button>
+      <input id="pageBox" type="text" inputmode="numeric" value="1" aria-label="페이지 번호" />
       <span id="pageInfo">/ -</span>
-      <button class="btn icon-btn" id="nextBtn" title="다음 페이지">▶</button>
+      <button class="btn icon-btn" id="nextBtn" title="다음 페이지" aria-label="다음 페이지">▶</button>
     </div>
   </div>
 
@@ -228,14 +235,36 @@
       });
     }, { root: scrollEl, rootMargin: '800px 0px' });
 
+    // ---------- 이어읽기: 책별 마지막 페이지 기억 (flip.html 과 키 공유) ----------
+    const POS_KEY = 'eb_pos_' + book.id;
+    function savePos(n) { try { localStorage.setItem(POS_KEY, String(n)); } catch (e) {} }
+    function resumeToast(p) {
+      const t = $('toast');
+      t.textContent = `${p}페이지부터 이어봅니다 `;
+      const b = document.createElement('button');
+      b.textContent = '처음부터';
+      b.style.cssText = 'margin-left:10px;background:none;border:none;color:#8fc7ff;font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;padding:0';
+      b.onclick = () => { goToPage(1); t.classList.remove('show'); };
+      t.appendChild(b);
+      t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 4500);
+    }
+
     // ---------- 초기 로딩 ----------
     (async () => {
       try {
-        pdf = await pdfjsLib.getDocument({
+        scrollEl.innerHTML = '<div class="empty-state" id="loadMsg" style="margin-top:90px">불러오는 중…</div>';
+        const task = pdfjsLib.getDocument({
           url: pdfUrl,
           cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
           cMapPacked: true,
-        }).promise;
+        });
+        // 다운로드 진행률 표시
+        task.onProgress = p => {
+          const el = $('loadMsg');
+          if (el && p.total) el.textContent = `불러오는 중… ${Math.min(99, Math.round(p.loaded / p.total * 100))}%`;
+        };
+        pdf = await task.promise;
         numPages = pdf.numPages;
         const first = await pdf.getPage(1);
         const vp1 = first.getViewport({ scale: 1 });
@@ -244,6 +273,14 @@
         $('pageInfo').textContent = `/ ${numPages}`;
         $('zoomLabel').textContent = Math.round(zoom * 100) + '%';
         buildPlaceholders();
+        // 저장된 위치가 있으면 그 페이지로 이동
+        const saved = parseInt(localStorage.getItem(POS_KEY) || '0', 10);
+        if (saved >= 2 && saved <= numPages) {
+          requestAnimationFrame(() => {
+            wrappers[saved - 1]?.scrollIntoView({ block: 'start' });
+            resumeToast(saved);
+          });
+        }
       } catch (e) {
         const isFile = location.protocol === 'file:';
         scrollEl.innerHTML = `<div class="empty-state" style="margin-top:90px">
@@ -267,7 +304,7 @@
         if (acc + h > mid) { p = i + 1; break; }
         acc += h; p = i + 1;
       }
-      if (p !== curPage) { curPage = p; if (document.activeElement !== $('pageBox')) $('pageBox').value = p; }
+      if (p !== curPage) { curPage = p; if (document.activeElement !== $('pageBox')) $('pageBox').value = p; savePos(p); }
     }
     scrollEl.addEventListener('scroll', () => { requestAnimationFrame(updateCurrent); }, { passive: true });
 

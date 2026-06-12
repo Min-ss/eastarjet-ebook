@@ -1,0 +1,13 @@
+# Cloudflare Pages 캐시 정책
+# - PDF·표지: 1일 캐시 + 1주 stale-while-revalidate
+#   (뷰어 전환(flip↔pdf)·재방문 시 수 MB PDF 재다운로드 방지. Rev 교체 시 최대 1일 내 반영)
+# - books.js·HTML: 항상 재검증 (목록 갱신 즉시 반영, ETag 304 로 비용 거의 없음)
+
+/books/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/books.js
+  Cache-Control: no-cache
