@@ -12,11 +12,19 @@
     #pdfScroll {
       flex: 1; overflow: auto; -webkit-overflow-scrolling: touch;
       padding: 16px 0 40px; background: var(--bg-soft);
+      /* 한 손가락 끌기는 JS 패닝으로 처리(축 잠김 없이 자유 이동), 두 손가락 핀치 줌은 브라우저에 맡김 */
+      touch-action: pinch-zoom;
+    }
+    /* 페이지 묶음: 확대로 페이지가 화면보다 넓어지면 가로 스크롤 영역을 만들어 줌.
+       (페이지에 직접 margin:auto 를 주면 넘친 왼쪽이 스크롤로 닿지 않는 영역이 됨) */
+    #pdfStack {
+      width: max-content; min-width: 100%;
+      margin: 0 auto; padding: 0 12px; box-sizing: border-box;
     }
     .pdf-page {
       position: relative; margin: 0 auto 14px;
       background: #fff; box-shadow: 0 6px 22px rgba(0,0,0,.45);
-      width: max-content; max-width: 100%;
+      width: max-content;
     }
     .pdf-page canvas { display: block; }
     /* PDF.js 텍스트 레이어 (선택·복사·검색용) */
@@ -152,6 +160,9 @@
     function buildPlaceholders() {
       const { w, h } = pageDims();
       scrollEl.innerHTML = '';
+      const stack = document.createElement('div');
+      stack.id = 'pdfStack';
+      scrollEl.appendChild(stack);
       wrappers.length = 0; rendered.clear();
       for (let n = 1; n <= numPages; n++) {
         const div = document.createElement('div');
@@ -160,7 +171,7 @@
         div.style.width = w + 'px';
         div.style.height = h + 'px';
         div.innerHTML = `<div class="pdf-skeleton">${n} 페이지</div>`;
-        scrollEl.appendChild(div);
+        stack.appendChild(div);
         wrappers.push(div);
         io.observe(div);
       }
@@ -318,16 +329,68 @@
     $('pageBox').addEventListener('change', e => goToPage(+e.target.value));
 
     // ---------- 확대/축소 ----------
+    function centerHorizontally() {
+      scrollEl.scrollLeft = Math.max(0, (scrollEl.scrollWidth - scrollEl.clientWidth) / 2);
+    }
     function applyZoom(z) {
       const anchor = curPage;
       zoom = Math.max(0.5, Math.min(3, Math.round(z * 10) / 10));
       cssScale = fitScale();
       $('zoomLabel').textContent = Math.round(zoom * 100) + '%';
       buildPlaceholders();
-      setTimeout(() => goToPage(anchor), 50);
+      centerHorizontally();
+      setTimeout(() => { goToPage(anchor); centerHorizontally(); }, 50);
     }
     $('zoomIn').onclick = () => applyZoom(zoom + 0.2);
     $('zoomOut').onclick = () => applyZoom(zoom - 0.2);
+
+    // ---------- 드래그 패닝 (마우스 + 터치 한 손가락) ----------
+    let drag = null, flingId = 0;
+
+    function fling(vx, vy) {
+      // 손가락을 뗀 뒤 관성 스크롤 (px/frame, 매 프레임 5%씩 감속)
+      if (Math.abs(vx) < 0.4 && Math.abs(vy) < 0.4) return;
+      scrollEl.scrollLeft += vx;
+      scrollEl.scrollTop += vy;
+      flingId = requestAnimationFrame(() => fling(vx * 0.95, vy * 0.95));
+    }
+
+    scrollEl.addEventListener('pointerdown', e => {
+      cancelAnimationFrame(flingId);
+      if (e.pointerType === 'mouse') {
+        if (e.button !== 0) return;
+        // 마우스는 텍스트 레이어 위에서 드래그 선택(복사)을 우선
+        if (e.target.closest('.textLayer')) return;
+      } else if (drag) {
+        // 두 번째 손가락이 닿으면 패닝을 멈추고 핀치 줌에 양보
+        drag = null;
+        return;
+      }
+      drag = {
+        id: e.pointerId, x: e.clientX, y: e.clientY,
+        vx: 0, vy: 0, t: e.timeStamp,
+      };
+      try { scrollEl.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+
+    scrollEl.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = drag.x - e.clientX, dy = drag.y - e.clientY;
+      scrollEl.scrollLeft += dx;
+      scrollEl.scrollTop += dy;
+      const dt = Math.max(1, e.timeStamp - drag.t);
+      drag.vx = dx / dt * 16; drag.vy = dy / dt * 16;   // px/frame(60fps) 기준 속도
+      drag.x = e.clientX; drag.y = e.clientY; drag.t = e.timeStamp;
+    });
+
+    ['pointerup', 'pointercancel'].forEach(ev =>
+      scrollEl.addEventListener(ev, e => {
+        if (!drag || e.pointerId !== drag.id) { drag = null; return; }
+        const { vx, vy, t } = drag;
+        drag = null;
+        // 멈춘 채로 떼면 관성 없음 (마지막 이동 후 80ms 이상 경과)
+        if (ev === 'pointerup' && e.timeStamp - t < 80) fling(vx, vy);
+      }));
 
     // ---------- 다운로드 ----------
     $('downloadBtn').onclick = () => {
@@ -389,7 +452,7 @@
     let rT;
     window.addEventListener('resize', () => {
       clearTimeout(rT);
-      rT = setTimeout(() => { if (!numPages) return; const a = curPage; cssScale = fitScale(); buildPlaceholders(); setTimeout(() => goToPage(a), 50); }, 250);
+      rT = setTimeout(() => { if (!numPages) return; const a = curPage; cssScale = fitScale(); buildPlaceholders(); centerHorizontally(); setTimeout(() => { goToPage(a); centerHorizontally(); }, 50); }, 250);
     });
   </script>
 
