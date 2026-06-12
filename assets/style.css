@@ -106,6 +106,7 @@ img { display: block; }
   font-size: 16px; font-weight: 500; letter-spacing: 3px;
   text-shadow: 0 2px 12px rgba(0, 0, 0, .5);
 }
+.splash-title .t-mobile { display: none; }   /* 모바일에서만 표시(EASTARJET) */
 .splash-bar { margin: 26px auto 0; width: 180px; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .22); overflow: hidden; }
 .splash-bar span { display: block; height: 100%; width: 0; background: #fff; transition: width linear; }
 .splash-skip {
@@ -362,7 +363,14 @@ body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
   .shelf { grid-template-columns: 1fr; gap: 28px; }
   /* 세로 화면에선 가로로 긴 비행기 사진의 좌우가 잘리지 않도록 전체를 보여줌 */
   .splash-img { background-size: contain; background-repeat: no-repeat; }
-  .splash-logo { height: 28px; padding: 13px 18px; }
+  /* 스플래시 문구를 사진 아래 여백으로 내리고, 로고는 숨기고, 로딩바를 문구 옆에 가로 배치 */
+  .splash { align-items: flex-end; padding-bottom: 16vh; }
+  .splash-inner { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .splash-logo { display: none; }
+  .splash-title { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 2px; }
+  .splash-title .t-desktop { display: none; }
+  .splash-title .t-mobile { display: inline; }
+  .splash-bar { margin: 0; width: 86px; }
   .v-top .title { max-width: 36vw; }
   /* 읽기 모드 상단 바: 좁은 화면에선 로고·제목 숨기고 컴팩트하게 */
   #flipView .v-top { gap: 8px; padding: 0 12px; }
