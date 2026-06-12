@@ -195,6 +195,8 @@
         const textContent = await page.getTextContent();
         const tl = document.createElement('div');
         tl.className = 'textLayer';
+        // PDF.js 3.x: 텍스트 레이어 정렬을 위해 viewport.scale 과 같은 값으로 설정 필요
+        tl.style.setProperty('--scale-factor', viewport.scale);
         wrap.appendChild(tl);
         pdfjsLib.renderTextLayer({
           textContentSource: textContent,
