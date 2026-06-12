@@ -170,8 +170,8 @@ img { display: block; }
 /* 간행물 카드 그리드 */
 .shelf {
   max-width: 1100px; margin: 28px auto 80px; padding: 0 22px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 34px 26px;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 40px 30px;
 }
 .book-card { cursor: pointer; transition: transform .25s ease; min-width: 0; text-align: center; }
 .book-card:hover { transform: translateY(-6px); }
@@ -188,8 +188,8 @@ img { display: block; }
   padding: 4px 10px; border-radius: 980px; backdrop-filter: blur(4px);
 }
 .book-card .badge-type { left: auto; right: 10px; background: var(--red); color: #fff; letter-spacing: .3px; }
-.book-card h3 { margin: 16px 4px 4px; font-size: 16px; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; }
-.book-card .meta { margin: 0 4px; color: var(--muted); font-size: 13px; }
+.book-card h3 { margin: 18px 4px 5px; font-size: 18px; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; }
+.book-card .meta { margin: 0 4px; color: var(--muted); font-size: 14px; }
 
 .empty-state { max-width: 560px; margin: 80px auto; text-align: center; color: var(--muted); line-height: 1.8; font-size: 16px; }
 .empty-state h2 { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
