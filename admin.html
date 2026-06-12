@@ -26,7 +26,8 @@
 
     .console { max-width: 980px; margin: 0 auto; padding: 28px 22px 80px; }
     .admin-banner { background: #fff5f7; border: 1px solid #f3c6d1; color: #8a1230; border-radius: 12px;
-      padding: 12px 16px; font-size: 13.5px; line-height: 1.6; margin-bottom: 26px; }
+      padding: 12px 16px; font-size: 13.5px; line-height: 1.6; margin-bottom: 14px; }
+    .deploy-line { color: var(--muted); font-size: 13px; margin: 0 4px 24px; }
     .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
       padding: 22px 22px 24px; margin-bottom: 22px; }
     .card h2 { font-size: 19px; font-weight: 700; margin: 0 0 4px; letter-spacing: -.01em; }
@@ -40,21 +41,47 @@
       background: #fff; cursor: pointer; font-family: var(--font); margin-left: 6px; }
     .mini:hover { background: var(--bg-soft); }
     .mini.danger { color: var(--red); border-color: #f0c2cd; }
+    .mini:disabled { opacity: .35; cursor: default; }
+    .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 980px; margin-left: 6px; vertical-align: 1px; }
+    .chip.hidden-c { background: #fde8ec; color: #b3123d; }
+    .chip.sched { background: #fff3d6; color: #8a6400; }
+    .chip.new { background: #ffb300; color: #2b1d00; }
     .cat-block-title { font-weight: 700; font-size: 14px; margin: 18px 0 6px; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-top: 6px; }
     .form-grid .full { grid-column: 1 / -1; }
     .form-grid label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
     .form-grid input, .form-grid select { width: 100%; padding: 10px 12px; font-size: 14px; font-family: var(--font);
-      border: 1px solid var(--line); border-radius: 10px; outline: none; background: var(--bg-soft); }
+      border: 1px solid var(--line); border-radius: 10px; outline: none; background: var(--bg-soft); box-sizing: border-box; }
     .form-grid input:focus, .form-grid select:focus { border-color: var(--red); background: #fff; }
+    .check-line { display: flex; align-items: center; gap: 8px; font-size: 14px; padding-top: 26px; }
+    .check-line input { width: auto; }
     .hintbox { background: var(--bg-soft); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.7; color: var(--text); }
     .hintbox code { background: #fff; border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; }
     textarea#out { width: 100%; height: 220px; margin-top: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
-      font-size: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-soft); resize: vertical; }
-    .row-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+      font-size: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-soft); resize: vertical; box-sizing: border-box; }
+    .row-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .check-line { padding-top: 0; } }
 
-    /* 접속현황 통계 */
+    /* 카테고리/로딩이미지 편집 */
+    .edit-row { display: grid; grid-template-columns: 110px 1fr 1.4fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .edit-row input { padding: 8px 10px; font-size: 13.5px; border: 1px solid var(--line); border-radius: 9px;
+      background: var(--bg-soft); font-family: var(--font); outline: none; min-width: 0; box-sizing: border-box; }
+    .edit-row input:focus { border-color: var(--red); background: #fff; }
+    .edit-row .ro { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+    .edit-row .ops { white-space: nowrap; }
+    @media (max-width: 640px) { .edit-row { grid-template-columns: 1fr; } .edit-row .ops { text-align: right; } }
+    .img-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 12px; }
+    .img-item { width: 110px; font-size: 11px; color: var(--muted); text-align: center; }
+    .img-item img { width: 110px; height: 66px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-soft); }
+    .img-item .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 3px 0; }
+
+    /* 점검 결과 */
+    .chk-list { list-style: none; margin: 12px 0 0; padding: 0; font-size: 13.5px; }
+    .chk-list li { padding: 7px 4px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: baseline; }
+    .chk-list .st { flex: none; }
+    .chk-list .sz { color: var(--muted); margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    /* 통계 */
     .stat-nums { display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
     .stat-nums .stat { flex: 1; min-width: 140px; background: var(--bg-soft); border-radius: 12px; padding: 16px 18px; }
     .stat-nums .v { font-size: 30px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
@@ -72,6 +99,13 @@
     .stat-list .p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .stat-list .n { color: var(--muted); font-variant-numeric: tabular-nums; }
     @media (max-width: 640px) { .stat-cols { grid-template-columns: 1fr; } }
+
+    /* QR / 표지 도구 */
+    .tool-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    @media (max-width: 760px) { .tool-cols { grid-template-columns: 1fr; } }
+    .tool-prev { margin-top: 12px; text-align: center; }
+    .tool-prev canvas, .tool-prev img { max-width: 200px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .tool-url { font-size: 12px; color: var(--muted); word-break: break-all; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -102,14 +136,14 @@
 
   <main class="console" id="console" style="display:none">
     <div class="admin-banner">
-      🔐 <b>관리자 모드</b>로 접속했습니다. 이제 PDF 다운로드 버튼이 보이며, 아래에서 간행물을 관리할 수 있습니다.
-      (현재는 테스트용 잠금 — 정적 사이트라 완벽한 보안은 아닙니다.)
+      🔐 <b>관리자 모드</b>로 접속했습니다. PDF 다운로드 버튼이 보이며, 관리자 본인의 열람은 통계에 집계되지 않습니다.
     </div>
+    <p class="deploy-line" id="deployInfo">배포 정보 확인 중…</p>
 
-    <!-- 간행물 관리 -->
+    <!-- ① 간행물 관리 -->
     <div class="card">
       <h2>📚 간행물 관리</h2>
-      <p class="sub">간행물을 추가·수정·삭제한 뒤 <b>books.js 생성</b>으로 적용 파일을 만듭니다.</p>
+      <p class="sub">간행물을 추가·수정·삭제·순서변경한 뒤 아래 <b>적용(books.js)</b> 카드에서 반영합니다.</p>
       <div id="pubTables"></div>
 
       <div class="cat-block-title" style="margin-top:24px">➕ 간행물 추가 / 수정</div>
@@ -119,16 +153,32 @@
           <select id="fCat"></select>
         </div>
         <div>
-          <label>폴더 ID (영문·숫자, 예: safety-star-01)</label>
-          <input id="fId" placeholder="safety-star-01" />
+          <label>폴더 ID (영문·숫자, 예: safety-star-07)</label>
+          <input id="fId" placeholder="safety-star-07" />
         </div>
         <div class="full">
           <label>제목</label>
-          <input id="fTitle" placeholder="예: 객실안전정보툰 Safety Star Vol.1" />
+          <input id="fTitle" placeholder="예: 객실안전정보툰 Safety Star Vol.7" />
         </div>
         <div class="full">
           <label>발행정보 (부제)</label>
-          <input id="fSub" placeholder="예: 2026 봄호" />
+          <input id="fSub" placeholder="예: 2026 여름호" />
+        </div>
+        <div>
+          <label>발행일 (30일간 NEW 뱃지 표시 — 선택)</label>
+          <input id="fDate" type="date" />
+        </div>
+        <div>
+          <label>게시 예약일 (이 날짜부터 자동 공개 — 선택)</label>
+          <input id="fPubAt" type="date" />
+        </div>
+        <div>
+          <label>표지 파일명 (books/폴더ID/ 안)</label>
+          <input id="fCoverName" placeholder="cover.svg" value="cover.svg" />
+        </div>
+        <div class="check-line">
+          <input type="checkbox" id="fPub" checked />
+          <label for="fPub" style="margin:0;font-size:14px;color:var(--text)">메인에 공개 (해제하면 비공개 초안)</label>
         </div>
       </div>
       <div class="row-actions">
@@ -137,28 +187,155 @@
       </div>
     </div>
 
-    <!-- books.js 생성 -->
+    <!-- ② 카테고리 / 로딩 이미지 / 공지 -->
     <div class="card">
-      <h2>💾 변경사항 적용 — books.js 생성</h2>
-      <p class="sub">아래 파일로 <code>books.js</code> 를 교체하면 사이트에 반영됩니다.</p>
-      <div class="hintbox">
-        <b>적용 순서</b><br>
-        ① 새 간행물의 PDF를 <code>books/&lt;폴더ID&gt;/doc.pdf</code> 로, 표지를 <code>books/&lt;폴더ID&gt;/cover.svg</code> 로 넣기<br>
-        ② 아래 <b>books.js 다운로드</b> → 프로젝트의 <code>books.js</code> 교체<br>
-        ③ 깃허브에 반영(푸시) → <b>이 작업(②③·파일 배치)은 저(클로드)에게 알려주시면 대신 해드립니다.</b>
-      </div>
+      <h2>🗂 카테고리 관리</h2>
+      <p class="sub">제목·설명·표지를 바꾸거나 순서를 조정합니다. 간행물이 들어있는 카테고리는 삭제할 수 없습니다.</p>
+      <div id="catRows"></div>
       <div class="row-actions">
-        <button class="btn primary" id="genBtn">books.js 생성</button>
-        <button class="btn" id="copyBtn">복사</button>
-        <button class="btn" id="dlBtn">books.js 다운로드</button>
+        <input id="newCatId" placeholder="새 카테고리 ID (영문)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
+        <input id="newCatTitle" placeholder="새 카테고리 제목" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
+        <button class="btn" id="addCatBtn">카테고리 추가</button>
       </div>
-      <textarea id="out" placeholder="여기에 생성된 books.js 내용이 표시됩니다." readonly></textarea>
     </div>
 
-    <!-- 접속현황 -->
+    <div class="card">
+      <h2>🖼 로딩 화면 이미지</h2>
+      <p class="sub">메인 진입 시 랜덤으로 표출되는 사진 목록입니다. (파일은 <code>assets/planes/</code>에 먼저 업로드)</p>
+      <div class="img-list" id="imgList"></div>
+      <div class="row-actions">
+        <input id="newImgPath" placeholder="assets/planes/파일명.png" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
+        <button class="btn" id="addImgBtn">이미지 추가</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📢 메인 공지 배너</h2>
+      <p class="sub">메인 화면 상단에 공지를 띄웁니다. (신간 안내·점검 공지 등 — 방문자가 ✕로 닫을 수 있음)</p>
+      <div class="form-grid">
+        <div class="check-line" style="padding-top:0">
+          <input type="checkbox" id="nEnabled" />
+          <label for="nEnabled" style="margin:0;font-size:14px;color:var(--text)">공지 표시</label>
+        </div>
+        <div>
+          <label>표시 종료일 (선택 — 이 날짜까지만 표시)</label>
+          <input id="nUntil" type="date" />
+        </div>
+        <div class="full">
+          <label>공지 내용</label>
+          <input id="nText" placeholder="예: SAFETY STAR Rev.07 이 새로 등록되었습니다!" />
+        </div>
+        <div class="full">
+          <label>링크 (선택 — '자세히' 버튼 연결)</label>
+          <input id="nLink" placeholder="예: flip.html?book=safety-star-mag-07#read" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 파일 점검 -->
+    <div class="card">
+      <h2>🩺 파일 점검</h2>
+      <p class="sub">모든 간행물의 PDF·표지·로딩 이미지가 실제로 존재하는지, 용량이 적절한지 확인합니다.</p>
+      <div class="row-actions" style="margin-top:0">
+        <button class="btn primary" id="chkBtn">지금 점검하기</button>
+        <span class="sub" style="margin:0" id="chkSummary"></span>
+      </div>
+      <ul class="chk-list" id="chkList"></ul>
+    </div>
+
+    <!-- ④ 적용 — books.js 생성/게시 -->
+    <div class="card">
+      <h2>💾 변경사항 적용 — books.js</h2>
+      <p class="sub">위에서 수정한 내용(간행물·카테고리·로딩 이미지·공지)을 books.js 로 만들어 반영합니다.</p>
+      <div class="hintbox">
+        <b>방법 A — 바로 게시 (추천):</b> 아래에 GitHub 토큰을 넣고 <b>「books.js 바로 게시」</b>를 누르면 끝. 1~2분 내 자동 배포됩니다.<br>
+        <b>방법 B — 수동:</b> <b>생성</b> → <b>다운로드</b> → 프로젝트의 books.js 교체 후 푸시 (저(클로드)에게 맡겨도 됩니다).<br>
+        새 간행물 파일(PDF·표지)은 아래 <b>파일 업로드</b>로 올리거나 <code>books/폴더ID/</code>에 직접 넣으세요.
+      </div>
+      <div class="form-grid" style="margin-top:14px">
+        <div class="full">
+          <label>GitHub 토큰 (Fine-grained PAT — 이 저장소 Contents: Read and write 권한 · 이 브라우저에만 저장됨)</label>
+          <input id="ghToken" type="password" placeholder="github_pat_…" autocomplete="off" />
+        </div>
+      </div>
+      <div class="row-actions">
+        <button class="btn primary" id="pubBtn">🚀 books.js 바로 게시</button>
+        <button class="btn" id="genBtn">생성(미리보기)</button>
+        <button class="btn" id="copyBtn">복사</button>
+        <button class="btn" id="dlBtn">다운로드</button>
+        <span class="sub" style="margin:0" id="pubMsg"></span>
+      </div>
+      <textarea id="out" placeholder="「생성」을 누르면 books.js 내용이 표시됩니다." readonly></textarea>
+
+      <div class="cat-block-title" style="margin-top:20px">📤 파일 업로드 (PDF·표지를 GitHub에 직접 올리기 — 토큰 필요)</div>
+      <div class="form-grid">
+        <div>
+          <label>폴더 ID</label>
+          <input id="uFolder" placeholder="safety-star-07" />
+        </div>
+        <div>
+          <label>PDF 파일 (doc.pdf 로 저장됨)</label>
+          <input id="uPdf" type="file" accept=".pdf" />
+        </div>
+        <div>
+          <label>표지 파일 (cover.확장자 로 저장됨)</label>
+          <input id="uCover" type="file" accept="image/*" />
+        </div>
+        <div class="check-line">
+          <button class="btn primary" id="uploadBtn" style="margin-top:-4px">업로드</button>
+        </div>
+      </div>
+      <p class="sub" style="margin:8px 2px 0" id="uploadMsg"></p>
+    </div>
+
+    <!-- ⑤ 도구: QR / 표지 생성 -->
+    <div class="card">
+      <h2>🛠 도구</h2>
+      <div class="tool-cols">
+        <div>
+          <h4 style="margin:0 0 4px;font-size:15px">📱 QR 코드 생성 (인쇄용)</h4>
+          <p class="sub">포스터·기내 인쇄물용 QR입니다. 유입 태그를 붙이면 QR로 들어온 방문이 따로 집계됩니다.</p>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <div>
+              <label>대상</label>
+              <select id="qrTarget"></select>
+            </div>
+            <div>
+              <label>유입 태그 (통계 구분용 — 예: qr, poster, sns)</label>
+              <input id="qrFrom" value="qr" />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn primary" id="qrGenBtn">QR 생성</button>
+            <button class="btn" id="qrDlBtn" disabled>PNG 다운로드</button>
+          </div>
+          <div class="tool-prev"><canvas id="qrCanvas" style="display:none"></canvas></div>
+          <div class="tool-url" id="qrUrl"></div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 4px;font-size:15px">🎨 표지 자동 생성</h4>
+          <p class="sub">PDF를 선택하면 1쪽을 표지 이미지(cover.png)로 만들어 줍니다.</p>
+          <input id="cvPdf" type="file" accept=".pdf" style="font-size:13px" />
+          <div class="row-actions">
+            <button class="btn" id="cvDlBtn" disabled>cover.png 다운로드</button>
+          </div>
+          <div class="tool-prev"><canvas id="cvCanvas" style="display:none"></canvas></div>
+          <p class="sub" id="cvMsg" style="margin:8px 0 0"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑥ 간행물별 통계 -->
+    <div class="card">
+      <h2>📖 간행물별 열람 통계</h2>
+      <p class="sub">어떤 간행물이 얼마나 읽히는지 · 평균 어디까지 읽는지 · 어디서 유입되는지 (익명 집계 · 관리자 열람 제외)</p>
+      <div id="bookStatsBox"><div style="color:var(--muted)">불러오는 중…</div></div>
+    </div>
+
+    <!-- ⑦ 접속현황 -->
     <div class="card">
       <h2>📊 접속현황 (방문 통계)</h2>
-      <p class="sub">Cloudflare Web Analytics · 개인 추적 없는 익명 통계</p>
+      <p class="sub">Cloudflare Web Analytics · 개인 추적 없는 익명 통계 · 매월 1일 CSV 자동 보관됨 (stats-archive/)</p>
       <div class="seg" id="statsSeg" style="margin-bottom:14px">
         <button data-g="day" class="active">일별</button>
         <button data-g="month">월별</button>
@@ -169,26 +346,31 @@
   </main>
 
   <script src="books.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
     const $ = id => document.getElementById(id);
     // 비밀번호 SHA-256 해시 (평문 미저장). 변경하려면 새 해시로 교체.
     const PW_HASH = "b4a0623d066292d60ae1eaf4e0d44489df1e9659ce2395ab27b31b71af9e0e21";
 
+    const GH = { owner: 'Min-ss', repo: 'eastarjet-ebook', branch: 'main' };
+    const SITE_BASE = 'https://min-ss.github.io/eastarjet-ebook/';
+    // 통계 API — pages.dev 에서는 같은 주소, github.io 에서는 절대주소(CORS 허용됨)로 호출
+    const API_BASE = location.hostname.endsWith('.pages.dev') ? '' : 'https://eastarjet-ebook.pages.dev';
+
+    if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
     async function sha256hex(s) {
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
       return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, '0')).join('');
     }
-
     function showConsole() {
       $('gate').style.display = 'none';
       $('adminTop').style.display = 'flex';
       $('console').style.display = 'block';
       initConsole();
     }
-    function logout() {
-      localStorage.removeItem('eb_admin');
-      location.reload();
-    }
+    function logout() { localStorage.removeItem('eb_admin'); location.reload(); }
     $('logoutBtn').onclick = logout;
 
     async function tryLogin() {
@@ -196,13 +378,8 @@
       if (!v) return;
       try {
         const h = await sha256hex(v);
-        if (h === PW_HASH) {
-          localStorage.setItem('eb_admin', '1');
-          showConsole();
-        } else {
-          $('gateMsg').textContent = '비밀번호가 올바르지 않습니다.';
-          $('pw').select();
-        }
+        if (h === PW_HASH) { localStorage.setItem('eb_admin', '1'); showConsole(); }
+        else { $('gateMsg').textContent = '비밀번호가 올바르지 않습니다.'; $('pw').select(); }
       } catch (e) {
         $('gateMsg').textContent = '이 환경에서는 보안(https) 컨텍스트가 아니어서 로그인할 수 없습니다. (배포 주소/localhost 에서 이용)';
       }
@@ -210,24 +387,454 @@
     $('loginBtn').onclick = tryLogin;
     $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
-    // (이미 로그인 상태 자동 진입은 스크립트 맨 끝에서 처리 — 모든 변수·함수 선언 이후)
-
-    // ---------- 콘솔 로직 ----------
-    let books = [];
-    const cats = (window.CATEGORIES || []);
+    // ---------- 콘솔 상태 ----------
+    let books = [], cats = [], loadingImgs = [], notice = {};
+    const today = new Date().toISOString().slice(0, 10);
     function catTitle(id) { const c = cats.find(c => c.id === id); return c ? c.title : id; }
 
     function initConsole() {
       books = JSON.parse(JSON.stringify(window.BOOKS || []));
-      $('fCat').innerHTML = cats.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
-      renderTables();
+      cats = JSON.parse(JSON.stringify(window.CATEGORIES || []));
+      loadingImgs = (window.LOADING_IMAGES || []).slice();
+      notice = Object.assign({ enabled: false, text: "", link: "", until: "" }, window.NOTICE || {});
+      $('ghToken').value = localStorage.getItem('eb_gh_token') || '';
+      renderAll();
       bindStatsSeg();
       loadStats();
+      loadBookStats();
+      loadDeploy();
+    }
+    function renderAll() {
+      renderTables(); renderCatRows(); renderImgList(); renderNotice(); renderQrTargets();
     }
 
-    // ---------- 접속현황 (서버리스 /api/stats) ----------
+    // ---------- 배포 상태 ----------
+    async function loadDeploy() {
+      try {
+        const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/commits/${GH.branch}`, { headers: { Accept: 'application/vnd.github+json' } });
+        const d = await r.json();
+        const when = new Date(d.commit.committer.date).toLocaleString('ko-KR');
+        $('deployInfo').innerHTML = `🟢 마지막 반영: <b>${when}</b> — ${esc(d.commit.message.split('\n')[0])} <span style="opacity:.6">(${d.sha.slice(0, 7)})</span> · <a href="https://github.com/${GH.owner}/${GH.repo}/actions" target="_blank" rel="noopener">자동검사 상태 ↗</a>`;
+      } catch (e) { $('deployInfo').textContent = '배포 정보를 불러오지 못했습니다 (오프라인?)'; }
+    }
+
+    // ---------- 간행물 표 ----------
+    function bookChips(b) {
+      let s = '';
+      if (b.published === false) s += '<span class="chip hidden-c">비공개</span>';
+      else if (b.publishAt && b.publishAt > today) s += `<span class="chip sched">예약 ${esc(b.publishAt)}</span>`;
+      if (b.date && (Date.now() - new Date(b.date + 'T00:00:00').getTime()) <= 30 * 86400000) s += '<span class="chip new">NEW</span>';
+      return s;
+    }
+    function renderTables() {
+      const html = cats.map(c => {
+        const rows = books.map((b, i) => ({ b, i })).filter(x => x.b.category === c.id);
+        const body = rows.length ? rows.map(({ b, i }, r) => `
+          <tr>
+            <td><b>${esc(b.title)}</b>${bookChips(b)}<div style="color:var(--muted);font-size:12px">${esc(b.subtitle || '')}${b.date ? ' · 발행 ' + esc(b.date) : ''}</div></td>
+            <td style="color:var(--muted)">${esc(b.id)}</td>
+            <td class="ops">
+              <button class="mini" data-mv="${i}|-1" ${r === 0 ? 'disabled' : ''}>↑</button>
+              <button class="mini" data-mv="${i}|1" ${r === rows.length - 1 ? 'disabled' : ''}>↓</button>
+              <button class="mini" data-edit="${i}">수정</button>
+              <button class="mini danger" data-del="${i}">삭제</button>
+            </td>
+          </tr>`).join('') : `<tr><td colspan="3" style="color:var(--muted)">등록된 간행물이 없습니다.</td></tr>`;
+        return `<div class="cat-block-title">${esc(c.title)} <span class="cat-tag">${rows.length}종</span></div>
+          <table class="pubs"><thead><tr><th>제목 / 상태</th><th>폴더 ID</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+      }).join('');
+      $('pubTables').innerHTML = html;
+      $('pubTables').querySelectorAll('[data-del]').forEach(el => el.onclick = () => {
+        const b = books[+el.dataset.del];
+        if (!confirm(`「${b.title}」을(를) 목록에서 삭제할까요?\n(파일은 남고, 목록에서만 빠집니다)`)) return;
+        books.splice(+el.dataset.del, 1); renderTables(); renderQrTargets();
+      });
+      $('pubTables').querySelectorAll('[data-edit]').forEach(el => el.onclick = () => loadToForm(+el.dataset.edit));
+      $('pubTables').querySelectorAll('[data-mv]').forEach(el => el.onclick = () => {
+        const [i, dir] = el.dataset.mv.split('|').map(Number);
+        const list = books.map((b, idx) => ({ b, idx })).filter(x => x.b.category === books[i].category);
+        const pos = list.findIndex(x => x.idx === i);
+        const other = list[pos + dir];
+        if (!other) return;
+        [books[i], books[other.idx]] = [books[other.idx], books[i]];
+        renderTables();
+      });
+    }
+
+    function loadToForm(i) {
+      const b = books[i];
+      $('fCat').value = b.category; $('fId').value = b.id;
+      $('fTitle').value = b.title || ''; $('fSub').value = b.subtitle || '';
+      $('fDate').value = b.date || ''; $('fPubAt').value = b.publishAt || '';
+      $('fPub').checked = b.published !== false;
+      $('fCoverName').value = (b.cover || '').split('/').pop() || 'cover.svg';
+      $('addBtn').dataset.edit = i;
+      $('addBtn').textContent = '수정 내용 저장';
+      $('addBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function resetForm() {
+      $('fId').value = ''; $('fTitle').value = ''; $('fSub').value = '';
+      $('fDate').value = ''; $('fPubAt').value = ''; $('fPub').checked = true;
+      $('fCoverName').value = 'cover.svg';
+      delete $('addBtn').dataset.edit; $('addBtn').textContent = '목록에 추가/수정';
+    }
+    $('resetFormBtn').onclick = resetForm;
+
+    $('addBtn').onclick = () => {
+      const id = $('fId').value.trim(), title = $('fTitle').value.trim();
+      if (!id || !title) { alert('폴더 ID와 제목은 필수입니다.'); return; }
+      if (!/^[A-Za-z0-9._-]+$/.test(id)) { alert('폴더 ID는 영문·숫자·-_. 만 사용하세요 (한글·공백 X).'); return; }
+      const coverName = $('fCoverName').value.trim() || 'cover.svg';
+      const editIdx = $('addBtn').dataset.edit;
+      // 기존 항목 수정 시 toc 등 다른 필드는 그대로 보존
+      const base = editIdx !== undefined ? books[+editIdx] : {};
+      const entry = Object.assign({}, base, {
+        id, type: 'pdf', category: $('fCat').value,
+        path: 'books/' + id, file: 'doc.pdf',
+        title, subtitle: $('fSub').value.trim(),
+        cover: 'books/' + id + '/' + coverName
+      });
+      const d = $('fDate').value, pa = $('fPubAt').value;
+      if (d) entry.date = d; else delete entry.date;
+      if (pa) entry.publishAt = pa; else delete entry.publishAt;
+      if ($('fPub').checked) delete entry.published; else entry.published = false;
+      if (editIdx !== undefined) { books[+editIdx] = entry; }
+      else {
+        if (books.some(b => b.id === id)) { alert('이미 같은 폴더 ID가 있습니다.'); return; }
+        books.push(entry);
+      }
+      resetForm(); renderTables(); renderQrTargets();
+    };
+
+    // ---------- 카테고리 관리 ----------
+    function renderCatRows() {
+      $('fCat').innerHTML = cats.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('');
+      $('catRows').innerHTML = cats.map((c, i) => `
+        <div class="edit-row">
+          <span class="ro">${esc(c.id)}</span>
+          <input data-ct="${i}" value="${esc(c.title)}" placeholder="제목" />
+          <input data-cd="${i}" value="${esc(c.desc || '')}" placeholder="설명" />
+          <span class="ops">
+            <button class="mini" data-cm="${i}|-1" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button class="mini" data-cm="${i}|1" ${i === cats.length - 1 ? 'disabled' : ''}>↓</button>
+            <button class="mini danger" data-cx="${i}">삭제</button>
+          </span>
+        </div>`).join('');
+      $('catRows').querySelectorAll('[data-ct]').forEach(el => el.oninput = () => { cats[+el.dataset.ct].title = el.value; renderTablesSoon(); });
+      $('catRows').querySelectorAll('[data-cd]').forEach(el => el.oninput = () => { cats[+el.dataset.cd].desc = el.value; });
+      $('catRows').querySelectorAll('[data-cm]').forEach(el => el.onclick = () => {
+        const [i, d] = el.dataset.cm.split('|').map(Number);
+        [cats[i], cats[i + d]] = [cats[i + d], cats[i]];
+        renderCatRows(); renderTables();
+      });
+      $('catRows').querySelectorAll('[data-cx]').forEach(el => el.onclick = () => {
+        const c = cats[+el.dataset.cx];
+        if (books.some(b => b.category === c.id)) { alert('이 카테고리에 간행물이 있어 삭제할 수 없습니다.\n간행물을 먼저 옮기거나 삭제하세요.'); return; }
+        if (!confirm(`카테고리 「${c.title}」을(를) 삭제할까요?`)) return;
+        cats.splice(+el.dataset.cx, 1); renderCatRows(); renderTables();
+      });
+    }
+    let rtT; function renderTablesSoon() { clearTimeout(rtT); rtT = setTimeout(renderTables, 400); }
+    $('addCatBtn').onclick = () => {
+      const id = $('newCatId').value.trim(), title = $('newCatTitle').value.trim();
+      if (!id || !title) { alert('ID와 제목을 입력하세요.'); return; }
+      if (!/^[A-Za-z0-9._-]+$/.test(id)) { alert('ID는 영문·숫자·-_. 만 사용하세요.'); return; }
+      if (cats.some(c => c.id === id)) { alert('이미 같은 ID의 카테고리가 있습니다.'); return; }
+      cats.push({ id, title, desc: '', cover: (loadingImgs[0] || '') });
+      $('newCatId').value = ''; $('newCatTitle').value = '';
+      renderCatRows(); renderTables();
+    };
+
+    // ---------- 로딩 이미지 관리 ----------
+    function renderImgList() {
+      $('imgList').innerHTML = loadingImgs.map((p, i) => `
+        <div class="img-item">
+          <img src="${esc(p)}" onerror="this.style.outline='2px solid var(--red)';this.alt='파일 없음!'" alt="" />
+          <div class="nm" title="${esc(p)}">${esc(p.split('/').pop())}</div>
+          <button class="mini danger" data-ix="${i}" style="margin:0">삭제</button>
+        </div>`).join('') || '<span class="sub">등록된 이미지가 없습니다.</span>';
+      $('imgList').querySelectorAll('[data-ix]').forEach(el => el.onclick = () => { loadingImgs.splice(+el.dataset.ix, 1); renderImgList(); });
+    }
+    $('addImgBtn').onclick = () => {
+      const p = $('newImgPath').value.trim();
+      if (!p) return;
+      if (loadingImgs.includes(p)) { alert('이미 목록에 있습니다.'); return; }
+      loadingImgs.push(p); $('newImgPath').value = ''; renderImgList();
+    };
+
+    // ---------- 공지 배너 ----------
+    function renderNotice() {
+      $('nEnabled').checked = !!notice.enabled;
+      $('nText').value = notice.text || '';
+      $('nLink').value = notice.link || '';
+      $('nUntil').value = notice.until || '';
+    }
+    $('nEnabled').onchange = () => notice.enabled = $('nEnabled').checked;
+    $('nText').oninput = () => notice.text = $('nText').value;
+    $('nLink').oninput = () => notice.link = $('nLink').value.trim();
+    $('nUntil').onchange = () => notice.until = $('nUntil').value;
+
+    // ---------- 파일 점검 ----------
+    async function headInfo(url) {
+      try {
+        const r = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        if (!r.ok) return { ok: false };
+        return { ok: true, size: +(r.headers.get('content-length') || 0) };
+      } catch (e) { return { ok: false }; }
+    }
+    const fmtMB = n => n ? (n / 1048576).toFixed(1) + ' MB' : '';
+    $('chkBtn').onclick = async () => {
+      const list = $('chkList'), sum = $('chkSummary');
+      if (location.protocol === 'file:') { alert('점검은 배포 주소(또는 미리보기 서버)에서 실행하세요.'); return; }
+      $('chkBtn').disabled = true; sum.textContent = '점검 중…'; list.innerHTML = '';
+      const items = [];
+      for (const b of books) {
+        if (b.type === 'pdf') items.push({ label: `${b.title} — PDF`, url: `${b.path}/${b.file || 'doc.pdf'}`, isPdf: true });
+        else (b.pages || []).slice(0, 3).forEach(pg => items.push({ label: `${b.title} — ${pg}`, url: `${b.path}/pages/${pg}` }));
+        if (b.cover) items.push({ label: `${b.title} — 표지`, url: b.cover });
+      }
+      for (const c of cats) if (c.cover) items.push({ label: `카테고리 ${c.title} — 표지`, url: c.cover });
+      for (const p of loadingImgs) items.push({ label: `로딩 이미지 — ${p.split('/').pop()}`, url: p });
+
+      let bad = 0, warn = 0;
+      const results = await Promise.all(items.map(async it => ({ it, r: await headInfo(it.url) })));
+      list.innerHTML = results.map(({ it, r }) => {
+        let st = '✅', note = '';
+        if (!r.ok) { st = '❌'; note = ' — 파일 없음 (경로·대소문자 확인)'; bad++; }
+        else if (it.isPdf && r.size > 30 * 1048576) { st = '❌'; note = ' — 30MB 초과, 압축 필요'; bad++; }
+        else if (it.isPdf && r.size > 8 * 1048576) { st = '⚠️'; note = ' — 모바일 로딩 느릴 수 있음 (8MB 이하 권장, ilovepdf.com 압축)'; warn++; }
+        return `<li><span class="st">${st}</span><span>${esc(it.label)}${note}</span><span class="sz">${fmtMB(r.size)}</span></li>`;
+      }).join('');
+      sum.textContent = bad ? `❌ 문제 ${bad}건 · 경고 ${warn}건` : warn ? `⚠️ 경고 ${warn}건 (게시는 가능)` : '✅ 모두 정상';
+      $('chkBtn').disabled = false;
+    };
+
+    // ---------- books.js 생성 ----------
+    function genBooksJs() {
+      const pretty = v => JSON.stringify(v, null, 2);
+      return `// ============================================================
+//  EASTAR 대외 간행물 e-Book — 데이터
+//  (관리자 콘솔에서 생성됨)
+//  새 PDF는 books/<폴더ID>/doc.pdf, 표지는 books/<폴더ID>/cover.* 로 넣으세요.
+//  간행물 선택 필드: date(발행일→NEW 뱃지) · published:false(비공개) · publishAt(게시 예약일)
+// ============================================================
+
+const LOADING_IMAGES = ${pretty(loadingImgs)};
+
+const NOTICE = ${pretty({ enabled: !!notice.enabled, text: notice.text || "", link: notice.link || "", until: notice.until || "" })};
+
+const CATEGORIES = ${pretty(cats)};
+
+const BOOKS = ${pretty(books)};
+
+window.LOADING_IMAGES = LOADING_IMAGES;
+window.NOTICE = NOTICE;
+window.CATEGORIES = CATEGORIES;
+window.BOOKS = BOOKS;
+`;
+    }
+    $('genBtn').onclick = () => { $('out').value = genBooksJs(); toast('books.js 생성됨'); };
+    $('copyBtn').onclick = async () => {
+      if (!$('out').value) $('out').value = genBooksJs();
+      try { await navigator.clipboard.writeText($('out').value); toast('복사되었습니다'); }
+      catch (e) { $('out').select(); document.execCommand('copy'); toast('복사되었습니다'); }
+    };
+    $('dlBtn').onclick = () => {
+      const content = $('out').value || genBooksJs();
+      const blob = new Blob([content], { type: 'text/javascript' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'books.js';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    };
+
+    // ---------- GitHub API (바로 게시 / 파일 업로드) ----------
+    $('ghToken').addEventListener('change', () => localStorage.setItem('eb_gh_token', $('ghToken').value.trim()));
+    function needToken() {
+      const t = $('ghToken').value.trim();
+      if (!t) { alert('GitHub 토큰을 먼저 입력하세요.\n\n발급: github.com → Settings → Developer settings →\nFine-grained tokens → 이 저장소만 선택 → Contents: Read and write'); return null; }
+      localStorage.setItem('eb_gh_token', t);
+      return t;
+    }
+    const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+    async function ghReq(path, opts = {}) {
+      const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/${path}`, {
+        ...opts,
+        headers: {
+          Authorization: 'Bearer ' + $('ghToken').value.trim(),
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          ...(opts.headers || {})
+        },
+      });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) throw new Error((d && d.message) || ('HTTP ' + r.status));
+      return d;
+    }
+    // 디렉터리 목록으로 기존 파일 sha 조회 (1MB 초과 파일도 동작)
+    async function ghGetSha(filePath) {
+      const dir = filePath.includes('/') ? filePath.slice(0, filePath.lastIndexOf('/')) : '';
+      const name = filePath.split('/').pop();
+      try {
+        const list = await ghReq('contents/' + encPath(dir) + '?ref=' + GH.branch);
+        const f = (Array.isArray(list) ? list : []).find(x => x.name === name);
+        return f ? f.sha : undefined;
+      } catch (e) { return undefined; }
+    }
+    async function ghPutFile(filePath, base64, message) {
+      const sha = await ghGetSha(filePath);
+      const body = { message, content: base64, branch: GH.branch };
+      if (sha) body.sha = sha;
+      return ghReq('contents/' + encPath(filePath), { method: 'PUT', body: JSON.stringify(body) });
+    }
+    const b64Text = s => btoa(unescape(encodeURIComponent(s)));
+    const b64File = f => new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(',')[1]);
+      r.onerror = rej; r.readAsDataURL(f);
+    });
+
+    $('pubBtn').onclick = async () => {
+      if (!needToken()) return;
+      const msg = $('pubMsg');
+      $('pubBtn').disabled = true; msg.textContent = '게시 중…';
+      try {
+        await ghPutFile('books.js', b64Text(genBooksJs()), '📚 간행물 데이터 업데이트 (관리자 콘솔)');
+        msg.textContent = '✅ 게시 완료 — 1~2분 내 사이트에 반영됩니다.';
+        toast('books.js 게시 완료'); loadDeploy();
+      } catch (e) { msg.textContent = '❌ 실패: ' + e.message; }
+      $('pubBtn').disabled = false;
+    };
+
+    $('uploadBtn').onclick = async () => {
+      if (!needToken()) return;
+      const folder = $('uFolder').value.trim();
+      const pdf = $('uPdf').files[0], cover = $('uCover').files[0];
+      const msg = $('uploadMsg');
+      if (!folder || !/^[A-Za-z0-9._-]+$/.test(folder)) { alert('폴더 ID를 영문·숫자로 입력하세요.'); return; }
+      if (!pdf && !cover) { alert('업로드할 파일을 선택하세요.'); return; }
+      if (pdf && pdf.size > 40 * 1048576) { alert('PDF가 40MB를 넘습니다. ilovepdf.com 등으로 압축 후 올려주세요.'); return; }
+      $('uploadBtn').disabled = true;
+      try {
+        if (pdf) {
+          msg.textContent = `PDF 업로드 중… (${fmtMB(pdf.size)})`;
+          await ghPutFile(`books/${folder}/doc.pdf`, await b64File(pdf), `📄 ${folder} PDF 업로드 (관리자 콘솔)`);
+        }
+        if (cover) {
+          msg.textContent = '표지 업로드 중…';
+          const ext = (cover.name.split('.').pop() || 'png').toLowerCase();
+          await ghPutFile(`books/${folder}/cover.${ext}`, await b64File(cover), `🎨 ${folder} 표지 업로드 (관리자 콘솔)`);
+        }
+        msg.textContent = '✅ 업로드 완료 — books.js 에 항목 등록 후 「바로 게시」하면 노출됩니다.';
+        toast('업로드 완료'); loadDeploy();
+      } catch (e) { msg.textContent = '❌ 실패: ' + e.message; }
+      $('uploadBtn').disabled = false;
+    };
+
+    // ---------- QR 생성 ----------
+    function renderQrTargets() {
+      $('qrTarget').innerHTML = '<option value="">메인 페이지</option>' +
+        books.map(b => `<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('');
+    }
+    function qrTargetUrl() {
+      const id = $('qrTarget').value;
+      const from = ($('qrFrom').value.trim() || '').replace(/[^A-Za-z0-9._-]/g, '');
+      if (!id) return SITE_BASE + (from ? '?from=' + from : '');
+      const b = books.find(x => x.id === id);
+      const page = (b && b.type === 'pdf') ? 'flip.html' : 'viewer.html';
+      return SITE_BASE + page + '?book=' + encodeURIComponent(id) + (from ? '&from=' + from : '') + (page === 'flip.html' ? '#read' : '');
+    }
+    $('qrGenBtn').onclick = () => {
+      const url = qrTargetUrl();
+      const qr = qrcode(0, 'M');
+      qr.addData(url); qr.make();
+      const n = qr.getModuleCount(), quiet = 4;
+      const scale = Math.ceil(1024 / (n + quiet * 2));
+      const size = (n + quiet * 2) * scale;
+      const cv = $('qrCanvas'); cv.width = size; cv.height = size;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#000';
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
+        if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+      cv.style.display = 'inline-block';
+      $('qrUrl').textContent = url;
+      $('qrDlBtn').disabled = false;
+    };
+    $('qrDlBtn').onclick = () => {
+      const id = $('qrTarget').value || 'main';
+      const a = document.createElement('a');
+      a.href = $('qrCanvas').toDataURL('image/png');
+      a.download = `qr_${id}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+    };
+
+    // ---------- 표지 자동 생성 ----------
+    $('cvPdf').onchange = async () => {
+      const f = $('cvPdf').files[0];
+      if (!f) return;
+      const msg = $('cvMsg'); msg.textContent = '1쪽 렌더링 중…';
+      try {
+        const buf = await f.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+        const page = await doc.getPage(1);
+        const vp1 = page.getViewport({ scale: 1 });
+        const scale = 900 / vp1.width;                       // 표지 너비 900px
+        const vp = page.getViewport({ scale });
+        const cv = $('cvCanvas'); cv.width = vp.width; cv.height = vp.height;
+        await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+        cv.style.display = 'inline-block';
+        $('cvDlBtn').disabled = false;
+        msg.textContent = `완료 (${doc.numPages}쪽 문서) — 다운로드 후 books/폴더ID/ 에 넣거나 위 「파일 업로드」로 올리세요.`;
+      } catch (e) { msg.textContent = '❌ 실패: ' + e.message; }
+    };
+    $('cvDlBtn').onclick = () => {
+      const a = document.createElement('a');
+      a.href = $('cvCanvas').toDataURL('image/png');
+      a.download = 'cover.png';
+      document.body.appendChild(a); a.click(); a.remove();
+    };
+
+    // ---------- 간행물별 통계 ----------
+    async function loadBookStats() {
+      const box = $('bookStatsBox');
+      try {
+        const r = await fetch(API_BASE + '/api/track-stats', { cache: 'no-store' });
+        const d = await r.json();
+        if (!d.ok) {
+          box.innerHTML = `<div class="hintbox">${esc(d.message || '아직 설정되지 않았습니다.')}</div>`;
+          return;
+        }
+        const title = id => { const b = books.find(x => x.id === id); return b ? b.title : id; };
+        const rows = (d.books || []).map(b => `
+          <tr>
+            <td><b>${esc(title(b.id))}</b><div style="color:var(--muted);font-size:12px">${esc(b.id)}</div></td>
+            <td style="text-align:right">${b.opens.toLocaleString()}</td>
+            <td style="text-align:right">${b.opensMonth.toLocaleString()}</td>
+            <td style="text-align:right">${b.downloads.toLocaleString()}</td>
+            <td style="text-align:right">${b.avgDepth == null ? '—' : b.avgDepth + '%'}</td>
+          </tr>`).join('');
+        const srcs = (d.sources || []).map(s => `<li><span class="p">${esc(s.tag)}</span><span class="n">누적 ${s.total.toLocaleString()} · 이번달 ${s.thisMonth.toLocaleString()}</span></li>`).join('')
+          || '<li style="color:var(--muted);border:none">유입 태그 데이터 없음 (QR 등 ?from= 링크로 들어오면 집계됩니다)</li>';
+        const visits = (d.visits || []).slice(-6).map(v => `<li><span class="p">${esc(v.month)}</span><span class="n">${v.count.toLocaleString()}</span></li>`).join('')
+          || '<li style="color:var(--muted);border:none">데이터 없음</li>';
+        box.innerHTML = `
+          ${rows ? `<table class="pubs"><thead><tr><th>간행물</th><th style="text-align:right">누적 열람</th><th style="text-align:right">이번 달</th><th style="text-align:right">다운로드</th><th style="text-align:right">평균 도달률</th></tr></thead><tbody>${rows}</tbody></table>`
+            : '<div class="hintbox">아직 수집된 열람 데이터가 없습니다. 방문자가 간행물을 열면 집계가 시작됩니다.</div>'}
+          <div class="stat-cols" style="margin-top:18px">
+            <div><h4>유입경로 (?from= 태그)</h4><ul class="stat-list">${srcs}</ul></div>
+            <div><h4>메인 방문 (월별)</h4><ul class="stat-list">${visits}</ul></div>
+          </div>
+          <div class="row-actions" style="margin-top:14px"><button class="btn" id="reloadBookStats">새로고침</button></div>
+          <p class="sub" style="margin:10px 2px 0">💡 평균 도달률 = 독자들이 평균적으로 문서의 몇 %까지 읽었는지. 관리자 본인 열람은 집계되지 않습니다.</p>`;
+        const rb = $('reloadBookStats'); if (rb) rb.onclick = loadBookStats;
+      } catch (e) {
+        box.innerHTML = `<div class="hintbox">간행물 통계 서버에 연결하지 못했습니다: ${esc(e.message)}<br>
+          (Cloudflare Pages 에 KV 바인딩 <code>EB_STATS</code> 설정이 필요합니다 — README 참고)</div>`;
+      }
+    }
+
+    // ---------- 접속현황 (Cloudflare Web Analytics) ----------
     const DASH = 'https://dash.cloudflare.com/?to=/:account/web-analytics';
-    let statsGroup = 'day';   // day | month | year
+    let statsGroup = 'day';
     function bindStatsSeg() {
       $('statsSeg').querySelectorAll('button').forEach(b => b.onclick = () => {
         statsGroup = b.dataset.g;
@@ -239,23 +846,16 @@
       const box = $('statsBox');
       box.innerHTML = '<div style="color:var(--muted)">불러오는 중…</div>';
       try {
-        const r = await fetch('/api/stats?group=' + statsGroup, { cache: 'no-store' });
+        const r = await fetch(API_BASE + '/api/stats?group=' + statsGroup, { cache: 'no-store' });
         const d = await r.json();
         box.innerHTML = d.ok ? renderStats(d) : renderStatsError(d);
       } catch (e) {
-        const onPages = location.hostname.endsWith('.pages.dev');
-        renderStatsErrorRaw(onPages
-          ? '통계 서버에 연결하지 못했습니다: ' + e.message
-          : '이 통계 기능은 <b>Cloudflare Pages 주소(eastarjet-ebook.pages.dev)</b> 에서만 동작합니다. 현재 주소에서는 표시되지 않습니다.');
+        box.innerHTML = `<div class="hintbox">통계 서버에 연결하지 못했습니다: ${esc(e.message)}</div>
+          <div class="row-actions"><button class="btn" id="reloadStats">다시 시도</button>
+          <a class="btn primary" href="${DASH}" target="_blank" rel="noopener">대시보드 열기 ↗</a></div>`;
       }
       const rb = $('reloadStats'); if (rb) rb.onclick = loadStats;
       const db = $('dlStats'); if (db) db.onclick = downloadStatsCSV;
-    }
-    function renderStatsErrorRaw(msg) {
-      $('statsBox').innerHTML =
-        `<div class="hintbox">${msg}</div>
-         <div class="row-actions"><button class="btn" id="reloadStats">다시 시도</button>
-         <a class="btn primary" href="${DASH}" target="_blank" rel="noopener">대시보드 열기 ↗</a></div>`;
     }
     function renderStatsError(d) {
       const setup = d.error === 'missing_env'
@@ -267,9 +867,9 @@
         <a class="btn primary" href="${DASH}" target="_blank" rel="noopener">대시보드 열기 ↗</a></div>`;
     }
     function fmtBucket(label, group) {
-      if (group === 'year') return label;                              // 2026
-      if (group === 'month') return label.slice(2).replace('-', '.');  // 2026-05 → 26.05
-      return label.slice(8);                                           // 2026-05-11 → 11
+      if (group === 'year') return label;
+      if (group === 'month') return label.slice(2).replace('-', '.');
+      return label.slice(8);
     }
     function renderStats(d) {
       const t = d.totals;
@@ -301,22 +901,22 @@
           <button class="btn primary" id="dlStats">📥 CSV 내려받기 (보관용)</button>
           <a class="btn" href="${DASH}" target="_blank" rel="noopener">전체 대시보드 ↗</a>
         </div>
-        <p class="sub" style="margin:10px 2px 0">💡 무료 통계는 약 6개월 뒤 사라집니다. 주기적으로 CSV로 내려받아 보관하세요.</p>`;
+        <p class="sub" style="margin:10px 2px 0">💡 매월 1일 GitHub Actions 가 CSV를 stats-archive/ 폴더에 자동 보관합니다. 필요 시 위 버튼으로 수동 보관도 가능합니다.</p>`;
     }
 
-    // ---------- 통계 CSV 내려받기 (일별 원자료 ~6개월) ----------
+    // ---------- 통계 CSV 내려받기 ----------
     function csvCell(v) { v = (v == null ? '' : String(v)); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
     async function downloadStatsCSV() {
       const btn = $('dlStats'); const orig = btn ? btn.textContent : '';
       if (btn) { btn.disabled = true; btn.textContent = '준비 중…'; }
       try {
-        const r = await fetch('/api/stats?group=day&days=180', { cache: 'no-store' });
+        const r = await fetch(API_BASE + '/api/stats?group=day&days=180', { cache: 'no-store' });
         const d = await r.json();
         if (!d.ok) { alert('데이터를 불러오지 못했습니다: ' + (d.message || d.error || '')); return; }
-        const today = new Date().toISOString().slice(0, 10);
+        const todayStr = new Date().toISOString().slice(0, 10);
         const rows = [];
         rows.push(['이스타항공 e-Book 방문통계']);
-        rows.push(['생성일', today]);
+        rows.push(['생성일', todayStr]);
         rows.push(['집계기간', (d.range && d.range.start || '').slice(0, 10) + ' ~ ' + (d.range && d.range.end || '').slice(0, 10), '(최근 ' + (d.range && d.range.days || 180) + '일)']);
         rows.push(['총 페이지뷰', d.totals.views, '총 방문', d.totals.visits]);
         rows.push([]);
@@ -332,99 +932,13 @@
         const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'eastarjet-ebook_방문통계_' + today + '.csv';
+        a.download = 'eastarjet-ebook_방문통계_' + todayStr + '.csv';
         document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
       } catch (e) { alert('내려받기 실패: ' + e.message); }
       finally { if (btn) { btn.disabled = false; btn.textContent = orig; } }
     }
 
-    function renderTables() {
-      const html = cats.map(c => {
-        const rows = books.map((b, i) => ({ b, i })).filter(x => x.b.category === c.id);
-        const body = rows.length ? rows.map(({ b, i }) => `
-          <tr>
-            <td><b>${esc(b.title)}</b><div style="color:var(--muted);font-size:12px">${esc(b.subtitle || '')}</div></td>
-            <td style="color:var(--muted)">${esc(b.id)}</td>
-            <td class="ops">
-              <button class="mini" data-edit="${i}">수정</button>
-              <button class="mini danger" data-del="${i}">삭제</button>
-            </td>
-          </tr>`).join('') : `<tr><td colspan="3" style="color:var(--muted)">등록된 간행물이 없습니다.</td></tr>`;
-        return `<div class="cat-block-title">${esc(c.title)} <span class="cat-tag">${rows.length}종</span></div>
-          <table class="pubs"><thead><tr><th>제목 / 발행정보</th><th>폴더 ID</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
-      }).join('');
-      $('pubTables').innerHTML = html;
-      $('pubTables').querySelectorAll('[data-del]').forEach(el => el.onclick = () => { books.splice(+el.dataset.del, 1); renderTables(); });
-      $('pubTables').querySelectorAll('[data-edit]').forEach(el => el.onclick = () => loadToForm(+el.dataset.edit));
-    }
-
-    function loadToForm(i) {
-      const b = books[i];
-      $('fCat').value = b.category; $('fId').value = b.id;
-      $('fTitle').value = b.title || ''; $('fSub').value = b.subtitle || '';
-      $('addBtn').dataset.edit = i;
-      $('addBtn').textContent = '수정 내용 저장';
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-    function resetForm() {
-      $('fId').value = ''; $('fTitle').value = ''; $('fSub').value = '';
-      delete $('addBtn').dataset.edit; $('addBtn').textContent = '목록에 추가/수정';
-    }
-    $('resetFormBtn').onclick = resetForm;
-
-    $('addBtn').onclick = () => {
-      const id = $('fId').value.trim(), title = $('fTitle').value.trim();
-      if (!id || !title) { alert('폴더 ID와 제목은 필수입니다.'); return; }
-      if (!/^[A-Za-z0-9._-]+$/.test(id)) { alert('폴더 ID는 영문·숫자·-_. 만 사용하세요 (한글·공백 X).'); return; }
-      const entry = {
-        id, type: 'pdf', category: $('fCat').value,
-        path: 'books/' + id, file: 'doc.pdf',
-        title, subtitle: $('fSub').value.trim(),
-        cover: 'books/' + id + '/cover.svg'
-      };
-      const editIdx = $('addBtn').dataset.edit;
-      if (editIdx !== undefined) { books[+editIdx] = entry; }
-      else {
-        if (books.some(b => b.id === id)) { alert('이미 같은 폴더 ID가 있습니다.'); return; }
-        books.push(entry);
-      }
-      resetForm(); renderTables();
-    };
-
-    // books.js 생성
-    function genBooksJs() {
-      const pretty = v => JSON.stringify(v, null, 2);
-      return `// ============================================================
-//  EASTAR 대외 간행물 e-Book — 데이터
-//  (관리자 콘솔에서 생성됨)
-//  새 PDF는 books/<폴더ID>/doc.pdf, 표지는 books/<폴더ID>/cover.svg 로 넣으세요.
-// ============================================================
-
-const LOADING_IMAGES = ${pretty(window.LOADING_IMAGES || [])};
-
-const CATEGORIES = ${pretty(cats)};
-
-const BOOKS = ${pretty(books)};
-
-window.LOADING_IMAGES = LOADING_IMAGES;
-window.CATEGORIES = CATEGORIES;
-window.BOOKS = BOOKS;
-`;
-    }
-    $('genBtn').onclick = () => { $('out').value = genBooksJs(); toast('books.js 생성됨 — 복사 또는 다운로드'); };
-    $('copyBtn').onclick = async () => {
-      if (!$('out').value) $('out').value = genBooksJs();
-      try { await navigator.clipboard.writeText($('out').value); toast('복사되었습니다'); }
-      catch (e) { $('out').select(); document.execCommand('copy'); toast('복사되었습니다'); }
-    };
-    $('dlBtn').onclick = () => {
-      const content = $('out').value || genBooksJs();
-      const blob = new Blob([content], { type: 'text/javascript' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'books.js';
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
-    };
-
-    function esc(s) { return String(s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
     let toastT;
     function toast(m) {
       let t = document.querySelector('.toast');

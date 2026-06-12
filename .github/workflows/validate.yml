@@ -1,0 +1,18 @@
+# books.js ↔ 실제 파일 정합성 검사 — 깨진 상태로 배포되는 것을 사전에 발견
+# 실패하면 GitHub이 저장소 소유자에게 메일로 알려줍니다 (Actions 탭에서도 확인 가능)
+name: validate
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: books.js 정합성 검사
+        run: node scripts/validate-books.js

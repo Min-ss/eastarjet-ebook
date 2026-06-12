@@ -189,6 +189,24 @@ img { display: block; }
   padding: 4px 10px; border-radius: 980px; backdrop-filter: blur(4px);
 }
 .book-card .badge-type { left: auto; right: 10px; background: var(--red); color: #fff; letter-spacing: .3px; }
+.book-card .badge-new { background: #ffb300; color: #2b1d00; letter-spacing: .5px; }
+
+/* ---------- 공지 배너 (메인 상단 — books.js NOTICE) ---------- */
+.notice-banner {
+  display: flex; align-items: center; gap: 10px;
+  max-width: 980px; margin: 70px auto -52px; padding: 11px 16px;
+  background: #fff8e8; border: 1px solid #f0dcae; border-radius: 12px;
+  font-size: 14px; line-height: 1.5; color: #5b4a17; position: relative; z-index: 5;
+}
+.notice-banner .notice-ico { flex: none; }
+.notice-banner span { min-width: 0; }
+.notice-banner a { color: var(--red); font-weight: 600; white-space: nowrap; }
+.notice-banner button {
+  flex: none; margin-left: auto; border: none; background: none; cursor: pointer;
+  color: #9a8a55; font-size: 14px; padding: 4px 6px; border-radius: 8px;
+}
+.notice-banner button:hover { background: rgba(0, 0, 0, .05); }
+@media (max-width: 640px) { .notice-banner { margin: 62px 14px -36px; font-size: 13px; } }
 .book-card h3 { margin: 18px 4px 5px; font-size: 18px; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; }
 .book-card .meta { margin: 0 4px; color: var(--muted); font-size: 14px; }
 

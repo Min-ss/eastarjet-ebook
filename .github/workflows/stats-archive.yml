@@ -1,0 +1,28 @@
+# 매월 1일 방문통계 CSV 자동 보관 — 무료 통계가 6개월 뒤 사라지는 것에 대비해
+# stats-archive/ 폴더에 매월 스냅샷을 커밋해 둡니다.
+name: stats-archive
+on:
+  schedule:
+    - cron: '17 3 1 * *'   # 매월 1일 03:17 UTC (한국시간 12:17)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 통계 CSV 생성
+        run: node scripts/archive-stats.js
+      - name: 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add stats-archive
+          git diff --cached --quiet || git commit -m "📊 방문통계 자동 보관 ($(date -u +%Y-%m))"
+          git push

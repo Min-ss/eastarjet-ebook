@@ -32,6 +32,14 @@
     <div class="spacer"></div>
   </div>
 
+  <!-- ===== 공지 배너 (books.js 의 NOTICE — 관리자 콘솔에서 편집) ===== -->
+  <div class="notice-banner" id="noticeBanner" style="display:none">
+    <span class="notice-ico">📢</span>
+    <span id="noticeText"></span>
+    <a id="noticeLink" target="_blank" rel="noopener" style="display:none">자세히 ›</a>
+    <button id="noticeClose" aria-label="공지 닫기">✕</button>
+  </div>
+
   <!-- ===== 메인: 카테고리 선택 ===== -->
   <section class="hero">
     <h1>대외 간행물</h1>
@@ -57,11 +65,35 @@
   <footer class="site">© EASTAR JET — 대외 간행물 e-Book. 무단 전재·재배포 금지. <a href="admin.html" class="admin-link">관리자</a></footer>
 
   <script src="books.js"></script>
+  <script src="assets/track.js"></script>
   <script>
     const $ = id => document.getElementById(id);
-    const books = (window.BOOKS || []);
+    const today = new Date().toISOString().slice(0, 10);
+    // 공개 조건: published !== false 이고, 게시 예약일(publishAt)이 지났을 것
+    const isVisible = b => b.published !== false && (!b.publishAt || b.publishAt <= today);
+    // 발행일(date)로부터 30일간 NEW 뱃지
+    const isNew = b => b.date && (Date.now() - new Date(b.date + 'T00:00:00').getTime()) <= 30 * 86400000;
+    const books = (window.BOOKS || []).filter(isVisible);
     const categories = (window.CATEGORIES || []);
     const loadingImages = (window.LOADING_IMAGES || []);
+
+    if (window.ebTrack) ebTrack.visit();
+
+    /* ---------- 공지 배너 ---------- */
+    (function noticeInit() {
+      const n = window.NOTICE || {};
+      if (!n.enabled || !n.text) return;
+      if (n.until && n.until < today) return;
+      const dismissKey = 'eb_notice_' + n.text.slice(0, 40);   // 내용이 바뀌면 다시 표시
+      try { if (localStorage.getItem(dismissKey)) return; } catch (e) {}
+      $('noticeText').textContent = n.text;
+      if (n.link) { $('noticeLink').href = n.link; $('noticeLink').style.display = 'inline'; }
+      $('noticeBanner').style.display = 'flex';
+      $('noticeClose').onclick = () => {
+        $('noticeBanner').style.display = 'none';
+        try { localStorage.setItem(dismissKey, '1'); } catch (e) {}
+      };
+    })();
 
     /* ---------- ① 로딩 스플래시 ---------- */
     (function splashInit() {
@@ -134,6 +166,7 @@
           return `
           <a class="book-card" href="${href}">
             <div class="cover-wrap">
+              ${isNew(b) ? '<span class="badge badge-new">NEW</span>' : ''}
               <span class="badge badge-type">${isPdf ? 'PDF' : '웹진'}</span>
               <img src="${b.cover}" alt="${b.title} 표지" loading="lazy" />
             </div>

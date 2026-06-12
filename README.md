@@ -130,6 +130,29 @@ PDF를 읽지 못해 "웹진을 불러오지 못했습니다" 가 뜹니다. (�
 
 ---
 
+## 🔧 관리자 기능 (admin.html)
+
+관리자 콘솔(`admin.html`)에서 할 수 있는 일:
+- **간행물 관리** — 추가/수정/삭제/순서변경 + 발행일(NEW 뱃지)·비공개(초안)·게시 예약일
+- **카테고리 / 로딩 이미지 / 메인 공지 배너** 편집
+- **파일 점검** — 모든 PDF·표지 존재 여부와 용량 자동 확인 (8MB 초과 경고)
+- **바로 게시** — GitHub 토큰만 넣으면 books.js 커밋·PDF/표지 업로드까지 콘솔에서 완료
+- **도구** — 간행물별 인쇄용 QR 생성(유입 태그 포함), PDF 1쪽으로 표지 자동 생성
+- **간행물별 열람 통계** — 누적/월별 열람 수, 다운로드 수, 평균 도달률, 유입경로(QR 등)
+- **접속현황** — Cloudflare 방문 통계 + CSV 보관
+
+자동화(GitHub Actions — `.github/workflows/`):
+- `validate` — 푸시할 때마다 books.js ↔ 실제 파일 정합성 검사 (`node scripts/validate-books.js` 로 로컬 실행도 가능)
+- `uptime` — 30분마다 사이트 생존 확인, 접속 불가 시 GitHub이 메일 알림
+- `stats-archive` — 매월 1일 방문통계 CSV를 `stats-archive/` 폴더에 자동 커밋
+
+### 1회 설정 (관리자)
+1. **간행물별 통계 (KV)** — Cloudflare 대시보드 → Workers & Pages → KV → 네임스페이스 생성(예: `eastarjet-ebook-stats`) → Pages 프로젝트 → Settings → **Bindings → KV namespace** 추가, Variable name 은 반드시 `EB_STATS` → 재배포(Retry deployment)
+2. **바로 게시 (GitHub 토큰)** — github.com → Settings → Developer settings → **Fine-grained personal access tokens** → 이 저장소만 선택 → Repository permissions 에서 **Contents: Read and write** → 발급된 토큰을 관리자 콘솔의 토큰 칸에 입력 (브라우저에만 저장됨)
+3. **방문 통계 API** — (기존) Cloudflare Pages 환경변수 `CF_API_TOKEN` (Account Analytics: Read)
+
+※ 예약 실행(uptime·stats-archive)은 저장소에 60일간 커밋이 없으면 GitHub이 자동 중지합니다. 안내 메일이 오면 Actions 탭에서 Enable 만 누르면 재개됩니다.
+
 ## ❓ 자주 막히는 곳
 - **책이 안 보여요** → `books.js` 의 `path`/`pages` 파일명이 실제 폴더와 정확히 같은지(대소문자 포함) 확인
 - **이미지가 안 떠요** → 파일명 공백·한글보다 `01.jpg` 같은 영문/숫자 권장

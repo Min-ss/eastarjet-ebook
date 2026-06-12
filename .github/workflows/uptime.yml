@@ -1,0 +1,18 @@
+# 사이트 생존 확인 (30분 간격) — 접속 불가면 워크플로가 실패하고
+# GitHub이 저장소 소유자에게 메일로 알려줍니다.
+# ※ 저장소에 60일간 커밋이 없으면 GitHub이 예약 실행을 자동 중지합니다.
+#   (중지 안내 메일이 오면 Actions 탭에서 Enable 버튼만 누르면 재개)
+name: uptime
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub Pages 확인
+        run: curl -fsSL --retry 3 --retry-delay 20 -o /dev/null https://min-ss.github.io/eastarjet-ebook/
+      - name: Cloudflare Pages 확인
+        run: curl -fsSL --retry 3 --retry-delay 20 -o /dev/null https://eastarjet-ebook.pages.dev/

@@ -33,10 +33,19 @@ const CATEGORIES = [
   }
 ];
 
-// ----- ③ 간행물 목록 -----
+// ----- ③ 메인 상단 공지 배너 (관리자 콘솔에서 편집) -----
+//  enabled 를 true 로 하면 메인 화면 상단에 공지가 표시됩니다.
+//  until(YYYY-MM-DD)을 지정하면 그 날짜까지만 표시됩니다.
+const NOTICE = { enabled: false, text: "", link: "", until: "" };
+
+// ----- ④ 간행물 목록 -----
 //   ● PDF 뷰어형 (법령·보고서) : type "pdf",  file "doc.pdf"
 //   ● 책 넘김형 (잡지·툰)       : type 생략,  pages 배열
 //   category 값은 위 CATEGORIES 의 id 와 같아야 합니다.
+//   선택 필드:
+//     date:      "YYYY-MM-DD" 발행일 — 30일간 메인에 NEW 뱃지 표시
+//     published: false        비공개(초안) — 메인에 노출되지 않음
+//     publishAt: "YYYY-MM-DD" 게시 예약 — 이 날짜부터 자동 노출
 const BOOKS = [
   // ===== 안전정보 간행물 =====
   {
@@ -147,5 +156,6 @@ const BOOKS = [
 
 // index.html / viewer.html / pdf.html 에서 참조
 window.LOADING_IMAGES = LOADING_IMAGES;
+window.NOTICE = NOTICE;
 window.CATEGORIES = CATEGORIES;
 window.BOOKS = BOOKS;

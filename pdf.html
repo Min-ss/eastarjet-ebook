@@ -111,6 +111,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script src="books.js"></script>
+  <script src="assets/track.js"></script>
   <script>
     const $ = id => document.getElementById(id);
     const toast = (msg) => {
@@ -127,6 +128,7 @@
       throw new Error('no pdf book');
     }
     document.title = `${book.title} — 이스타항공`;
+    if (window.ebTrack) ebTrack.open(book.id);
     $('bookTitle').textContent = book.title;
     const pdfUrl = `${book.path}/${book.file}`;
 
@@ -248,7 +250,7 @@
 
     // ---------- 이어읽기: 책별 마지막 페이지 기억 (flip.html 과 키 공유) ----------
     const POS_KEY = 'eb_pos_' + book.id;
-    function savePos(n) { try { localStorage.setItem(POS_KEY, String(n)); } catch (e) {} }
+    function savePos(n) { try { localStorage.setItem(POS_KEY, String(n)); } catch (e) {} if (window.ebTrack) ebTrack.page(book.id, n, numPages); }
     function resumeToast(p) {
       const t = $('toast');
       t.textContent = `${p}페이지부터 이어봅니다 `;
@@ -436,6 +438,7 @@
 
     // ---------- 다운로드 ----------
     $('downloadBtn').onclick = () => {
+      if (window.ebTrack) ebTrack.download(book.id);
       const a = document.createElement('a');
       a.href = pdfUrl; a.download = `${book.title}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();

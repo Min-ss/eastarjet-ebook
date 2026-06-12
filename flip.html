@@ -84,6 +84,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script src="books.js"></script>
+  <script src="assets/track.js"></script>
   <script>
     const $ = id => document.getElementById(id);
     const toast = (m) => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800); };
@@ -96,6 +97,7 @@
       throw new Error('no book');
     }
     document.title = `${book.title} — 이스타항공`;
+    if (window.ebTrack) ebTrack.open(book.id);
     $('bookTitle').textContent = book.title;
     $('flipTitle').textContent = book.title;
     $('titleBig').textContent = book.title;
@@ -117,7 +119,7 @@
       $('pages').innerHTML = '<div id="loadMsg" style="color:#8aa0bd;width:100%;text-align:center;padding-top:120px;font-size:15px">불러오는 중…</div>';
     }
 
-    function download() { const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
+    function download() { if (window.ebTrack) ebTrack.download(book.id); const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
     $('dlBtn1').onclick = download; $('dlBtn2').onclick = download;
     // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
     if (localStorage.getItem('eb_admin') !== '1') { $('dlBtn1').style.display = 'none'; $('dlBtn2').style.display = 'none'; }
@@ -496,7 +498,7 @@
     }
     // ---------- 이어읽기: 책별 마지막 페이지 기억 (pdf.html 과 키 공유) ----------
     const POS_KEY = 'eb_pos_' + book.id;
-    function savePos() { try { localStorage.setItem(POS_KEY, String(cur)); } catch (e) {} }
+    function savePos() { try { localStorage.setItem(POS_KEY, String(cur)); } catch (e) {} if (window.ebTrack) ebTrack.page(book.id, cur, numPages); }
     function resumePage() {
       const v = parseInt(localStorage.getItem(POS_KEY) || '0', 10);
       return (v >= 2 && v <= numPages) ? v : 0;

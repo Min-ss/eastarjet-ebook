@@ -58,6 +58,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
   <script src="books.js"></script>
+  <script src="assets/track.js"></script>
   <script>
     // ---------- 책 선택 ----------
     const params = new URLSearchParams(location.search);
@@ -76,6 +77,7 @@
     }
 
     document.title = `${book.title} — 이스타항공 e-Book`;
+    if (window.ebTrack) ebTrack.open(book.id);
     $('bookTitle').textContent = book.title;
 
     const pagePaths = book.pages.map(p => `${book.path}/pages/${p}`);
@@ -133,6 +135,7 @@
 
     function update() {
       const cur = pageFlip.getCurrentPageIndex() + 1;
+      if (window.ebTrack) ebTrack.page(book.id, cur, total);
       $('pageInfo').textContent = `${cur} / ${total}`;
       slider.value = cur;
       $('prevBtn').disabled = cur <= 1;
@@ -167,6 +170,7 @@
 
     // PDF 다운로드
     $('downloadBtn').onclick = () => {
+      if (window.ebTrack) ebTrack.download(book.id);
       if (book.pdf) {
         const a = document.createElement('a');
         a.href = `${book.path}/${book.pdf}`; a.download = '';

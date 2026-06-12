@@ -17,7 +17,12 @@ const MAX_CHUNK_DAYS = 90;                                     // 단일 쿼리 
 function out(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      // 관리자 콘솔을 GitHub Pages(github.io)에서 열어도 조회되도록 허용
+      "Access-Control-Allow-Origin": "*",
+    },
   });
 }
 
