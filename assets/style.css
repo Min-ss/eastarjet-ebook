@@ -360,6 +360,8 @@ body.viewer { overflow: hidden; height: 100vh; background: var(--bg-soft); }
   .cat-card h3 { font-size: 23px; }
   .cat-detail-head h2 { font-size: 27px; }
   .shelf { grid-template-columns: 1fr; gap: 28px; }
+  /* 세로 화면에선 가로로 긴 비행기 사진의 좌우가 잘리지 않도록 전체를 보여줌 */
+  .splash-img { background-size: contain; background-repeat: no-repeat; }
   .splash-logo { height: 28px; padding: 13px 18px; }
   .v-top .title { max-width: 36vw; }
   /* 읽기 모드 상단 바: 좁은 화면에선 로고·제목 숨기고 컴팩트하게 */
