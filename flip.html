@@ -330,7 +330,7 @@
       const avail = Math.min(stageEl.clientWidth - 20, 900);
       const w = Math.max(120, Math.round(avail * scrollScale));
       scrollPageW = w;
-      pagesEl.style.width = w + 'px';
+      pagesEl.style.width = '';   // 폭은 CSS(max-content/min-width)가 결정 → 확대 시 가로 스크롤 생성
       pagesEl.style.height = '';
       if (scrollIO) scrollIO.disconnect();
       scrollIO = new IntersectionObserver(es => es.forEach(en => {
@@ -347,7 +347,10 @@
         pagesEl.appendChild(d); scrollWraps.push(d); scrollIO.observe(d);
       }
       const zl = $('zoomLabel'); if (zl) zl.textContent = Math.round(scrollScale * 100) + '%';
-      requestAnimationFrame(() => { if (cur > 1 && scrollWraps[cur - 1]) scrollWraps[cur - 1].scrollIntoView({ block: 'start' }); updateScrollBar(); });
+      requestAnimationFrame(() => { if (cur > 1 && scrollWraps[cur - 1]) scrollWraps[cur - 1].scrollIntoView({ block: 'start' }); centerScrollX(); updateScrollBar(); });
+    }
+    function centerScrollX() {
+      stageEl.scrollLeft = Math.max(0, (stageEl.scrollWidth - stageEl.clientWidth) / 2);
     }
     async function renderScrollPage(n) {
       if (scrollRendered.has(n)) return;
@@ -395,10 +398,46 @@
       if (s === scrollScale) return;
       const anchor = cur;
       scrollScale = s; scrollCache.clear(); renderScroll();
-      requestAnimationFrame(() => { if (scrollWraps[anchor - 1]) scrollWraps[anchor - 1].scrollIntoView({ block: 'start' }); });
+      requestAnimationFrame(() => { if (scrollWraps[anchor - 1]) scrollWraps[anchor - 1].scrollIntoView({ block: 'start' }); centerScrollX(); });
     }
     let scrollRaf;
     stageEl.addEventListener('scroll', () => { if (mode === 'scroll') { cancelAnimationFrame(scrollRaf); scrollRaf = requestAnimationFrame(updateScrollCur); } }, { passive: true });
+
+    // ----- 스크롤 모드: 드래그 패닝 (마우스 + 터치 한 손가락, 관성 포함) -----
+    let sDrag = null, sFlingId = 0;
+    function scrollFling(vx, vy) {
+      if (Math.abs(vx) < 0.4 && Math.abs(vy) < 0.4) return;
+      stageEl.scrollLeft += vx;
+      stageEl.scrollTop += vy;
+      sFlingId = requestAnimationFrame(() => scrollFling(vx * 0.95, vy * 0.95));
+    }
+    stageEl.addEventListener('pointerdown', e => {
+      if ($('flipView').hidden || mode !== 'scroll') return;
+      cancelAnimationFrame(sFlingId);
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (sDrag) { sDrag = null; return; }   // 두 번째 손가락이 닿으면 패닝 중단
+      sDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, vx: 0, vy: 0, t: e.timeStamp };
+      try { stageEl.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    stageEl.addEventListener('pointermove', e => {
+      if (!sDrag || e.pointerId !== sDrag.id || mode !== 'scroll') return;
+      const dx = sDrag.x - e.clientX, dy = sDrag.y - e.clientY;
+      stageEl.scrollLeft += dx;
+      stageEl.scrollTop += dy;
+      const dt = Math.max(1, e.timeStamp - sDrag.t);
+      sDrag.vx = dx / dt * 16; sDrag.vy = dy / dt * 16;   // px/frame(60fps) 기준 속도
+      sDrag.x = e.clientX; sDrag.y = e.clientY; sDrag.t = e.timeStamp;
+    });
+    ['pointerup', 'pointercancel'].forEach(ev =>
+      stageEl.addEventListener(ev, e => {
+        if (!sDrag || e.pointerId !== sDrag.id) return;
+        const { vx, vy, t } = sDrag;
+        sDrag = null;
+        // 멈춘 채로 떼면 관성 없음 (마지막 이동 후 80ms 이상 경과)
+        if (ev === 'pointerup' && e.timeStamp - t < 80) scrollFling(vx, vy);
+      }));
+    // 마우스 드래그 시 이미지의 기본 드래그 동작이 패닝을 끊지 않도록
+    stageEl.addEventListener('dragstart', e => e.preventDefault());
 
     // 페이지 넘김 (확대 배율 유지, 새 페이지는 위쪽부터)
     function go(dir) {
