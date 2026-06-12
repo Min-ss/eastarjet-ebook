@@ -124,8 +124,10 @@
         shelf.style.display = 'grid';
         shelf.innerHTML = list.map(b => {
           const isPdf = b.type === 'pdf';
-          // PDF·이미지 모두 웹진(플립북)으로 열람 — PDF는 flip.html
-          const href = (isPdf ? 'flip.html' : 'viewer.html') + '?book=' + encodeURIComponent(b.id);
+          // PDF는 바로 읽기 뷰어로 진입(#read) — 페이지 목록(랜딩) 단계 생략
+          const href = isPdf
+            ? 'flip.html?book=' + encodeURIComponent(b.id) + '#read'
+            : 'viewer.html?book=' + encodeURIComponent(b.id);
           const count = Array.isArray(b.pages) ? ` · ${b.pages.length}p` : '';
           return `
           <a class="book-card" href="${href}">

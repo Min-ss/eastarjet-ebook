@@ -51,6 +51,7 @@
       <button class="btn icon-btn" id="zoomOut" title="축소">－</button>
       <button class="btn" id="fitBtn" title="화면 맞춤"><span id="zoomLabel">100%</span></button>
       <button class="btn icon-btn" id="zoomIn" title="확대">＋</button>
+      <a class="btn icon-btn" id="searchLink3" title="문서 검색·복사 보기">🔍</a>
       <button class="btn icon-btn" id="dlBtn2" title="PDF 다운로드">⬇</button>
       <button class="btn icon-btn" id="fsBtn" title="전체화면">⛶</button>
       <button class="btn icon-btn" id="panelBtn" title="페이지 목록">☰</button>
@@ -102,6 +103,17 @@
     const searchHref = `pdf.html?book=${encodeURIComponent(book.id)}`;
     $('searchLink').href = searchHref;
     $('searchLink2').href = searchHref;
+    $('searchLink3').href = searchHref;
+
+    // 카테고리 목록에서 #read 로 진입하면 랜딩(페이지 목록)을 건너뛰고 바로 뷰어로.
+    // 로딩 중 랜딩이 잠깐 보이는 깜빡임을 막기 위해 즉시 숨김.
+    const directRead = location.hash === '#read';
+    if (directRead) {
+      $('landing').style.display = 'none';
+      $('flipView').hidden = false;
+      $('flipTitle').textContent = book.title;
+      $('pages').innerHTML = '<div style="color:#8aa0bd;width:100%;text-align:center;padding-top:120px;font-size:15px">불러오는 중…</div>';
+    }
 
     function download() { const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
     $('dlBtn1').onclick = download; $('dlBtn2').onclick = download;
@@ -150,6 +162,9 @@
         if (location.hash === '#read') openReader(1);
       } catch (e) {
         const isFile = location.protocol === 'file:';
+        // 바로읽기로 진입해 랜딩을 숨겼다면, 오류 안내를 보이도록 되돌림
+        $('flipView').hidden = true;
+        $('landing').style.display = 'flex';
         $('landing').innerHTML = `<div class="empty-state" style="margin-top:90px">
           <h2>간행물을 불러오지 못했습니다</h2>
           ${isFile
@@ -436,7 +451,12 @@
         setTimeout(() => toast('확대: 핀치·더블탭·＋ · 끌어서 이동  |  상단 「스크롤」로 연속(웹툰) 보기'), 500);
       }
     }
-    function closeReader() { $('flipView').hidden = true; $('landing').style.display = 'flex'; }
+    // 랜딩(페이지 목록) 단계를 건너뛰므로, 뷰어의 뒤로가기는 해당 카테고리 목록으로 이동.
+    // (랜딩으로 직접 들어온 경우엔 랜딩으로 복귀)
+    function closeReader() {
+      if (directRead) { location.href = 'index.html#' + (book.category || ''); }
+      else { $('flipView').hidden = true; $('landing').style.display = 'flex'; }
+    }
     $('playBtn').onclick = () => openReader(1);
     $('openFlip').onclick = () => openReader(1);
     $('closeFlip').onclick = closeReader;
