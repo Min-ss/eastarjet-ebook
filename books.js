@@ -23,9 +23,9 @@ const NOTICE = {
 };
 
 const SITE = {
-  "brandTitle": "대외 간행물 e-Book",
-  "heroTitle": "대외 간행물",
-  "heroSubtitle": "카테고리를 선택하면 간행물을 웹진 형태로 열람할 수 있습니다."
+  "brandTitle": "E-Books",
+  "heroTitle": "E-Books",
+  "heroSubtitle": "카테고리를 선택하면 간행물을 열람할 수 있습니다."
 };
 
 const CATEGORIES = [
