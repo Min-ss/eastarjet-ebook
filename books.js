@@ -39,7 +39,8 @@ const CATEGORIES = [
     "id": "safety-law",
     "title": "항공안전 관련 법령",
     "desc": "항공안전 관련 법령을 열람합니다.",
-    "cover": "assets/planes/20250529_172614.png"
+    "cover": "assets/planes/20250529_172614.png",
+    "coverBook": "aviation-safety-act"
   }
 ];
 
