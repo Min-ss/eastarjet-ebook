@@ -208,17 +208,16 @@
       window.scrollTo(0, 0);
     }
 
-    /* 카드 제목이 길어도 한 줄로 — 칸을 넘치면 자간→글자크기 순으로 살짝 줄여 맞춘다 */
+    /* 카드 제목이 길어도 한 줄로 — 글자 크기는 그대로 두고 자간만 좁혀 카드 폭에 맞춘다 */
     function fitTitles(scope) {
       scope.querySelectorAll('.book-card h3').forEach(h => {
-        h.style.fontSize = '';
+        h.style.fontSize = '';        // 다른 제목과 동일한 글자 크기 유지
         h.style.letterSpacing = '';
         if (!h.clientWidth) return;
         if (h.scrollWidth <= h.clientWidth) return;     // 이미 한 줄이면 그대로
-        h.style.letterSpacing = '-.04em';               // 1차: 자간 좁히기
-        let size = parseFloat(getComputedStyle(h).fontSize), guard = 0;
-        while (h.scrollWidth > h.clientWidth && size > 12 && guard++ < 60) {
-          size -= 0.5; h.style.fontSize = size + 'px';   // 2차: 글자 크기 미세 축소
+        let ls = -0.01, guard = 0;                      // CSS 기본 자간(-.01em)에서 시작
+        while (h.scrollWidth > h.clientWidth && ls > -0.2 && guard++ < 80) {
+          ls -= 0.005; h.style.letterSpacing = ls.toFixed(3) + 'em';
         }
       });
     }
