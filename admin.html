@@ -106,6 +106,35 @@
     .tool-prev { margin-top: 12px; text-align: center; }
     .tool-prev canvas, .tool-prev img { max-width: 200px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
     .tool-url { font-size: 12px; color: var(--muted); word-break: break-all; margin-top: 8px; }
+
+    /* 저장(게시) — 간행물 관리 카드 안 인라인 버튼 + 하단 고정 저장바 */
+    .btn:disabled { opacity: .5; cursor: default; }
+    .console { padding-bottom: 88px; }
+    .save-inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: var(--bg-soft); border: 1px solid var(--line); border-radius: 12px;
+      padding: 11px 14px; margin: 6px 0 14px; }
+    .save-inline .save-state { font-size: 13.5px; font-weight: 600; color: var(--muted); }
+    .save-inline .save-state.dirty { color: var(--red); }
+    .save-inline .btn { margin-left: auto; }
+    .save-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 120;
+      display: flex; align-items: center; gap: 12px; padding: 11px 18px;
+      background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -6px 24px rgba(0, 0, 0, .09);
+      transform: translateY(130%); transition: transform .22s ease; }
+    .save-bar.show { transform: translateY(0); }
+    .save-bar .save-state { margin-right: auto; font-size: 14px; font-weight: 700; color: var(--red); }
+    .save-bar .btn { white-space: nowrap; }
+    @media (max-width: 640px) { .save-bar .save-state { font-size: 12.5px; } }
+
+    /* 일괄 선택/이동 도구막대 */
+    .bulk-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; margin: 0 0 14px; }
+    .bulk-bar label.all { font-size: 13.5px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; }
+    .bulk-bar .bulk-count { font-size: 13px; color: var(--muted); }
+    .bulk-bar .bulk-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .bulk-bar .bulk-actions button:disabled { opacity: .45; cursor: default; }
+    .rowchk { width: 17px; height: 17px; cursor: pointer; accent-color: var(--red); vertical-align: middle; }
+    table.pubs td.chk, table.pubs th.chk { width: 30px; text-align: center; padding-right: 0; }
+    .edit-row .catchk { flex: none; width: 17px; height: 17px; cursor: pointer; accent-color: var(--red); }
   </style>
 </head>
 <body>
@@ -143,7 +172,23 @@
     <!-- ① 간행물 관리 -->
     <div class="card">
       <h2>📚 간행물 관리</h2>
-      <p class="sub">간행물을 추가·수정·삭제·순서변경한 뒤 아래 <b>적용(books.js)</b> 카드에서 반영합니다.</p>
+      <p class="sub">간행물을 추가·수정·삭제·순서변경한 뒤 <b>저장(사이트 반영)</b>을 누르면 메인 화면에 적용됩니다.</p>
+      <div class="save-inline" id="saveInline">
+        <span class="save-state" id="saveInlineState">✓ 모든 변경사항이 저장됨</span>
+        <button class="btn primary" id="saveInlineBtn" disabled>💾 저장(사이트 반영)</button>
+      </div>
+      <div class="bulk-bar" id="pubBulk">
+        <label class="all"><input type="checkbox" id="pubChkAll" class="rowchk" /> 전체선택</label>
+        <span class="bulk-count" id="pubSelCount">0개 선택</span>
+        <span class="bulk-actions">
+          <button class="mini" id="pubUp" disabled>▲ 위로</button>
+          <button class="mini" id="pubDown" disabled>▼ 아래로</button>
+          <button class="mini" id="pubTop" disabled>맨 위로</button>
+          <button class="mini" id="pubBottom" disabled>맨 아래로</button>
+          <button class="mini danger" id="pubDelSel" disabled>선택 삭제</button>
+        </span>
+      </div>
+      <p class="sub" style="margin:-6px 0 12px;font-size:12.5px">※ 위치 이동은 <b>같은 카테고리 안에서만</b> 적용됩니다. 카테고리를 바꾸려면 해당 간행물을 <b>수정</b>에서 변경하세요.</p>
       <div id="pubTables"></div>
 
       <div class="cat-block-title" style="margin-top:24px">➕ 간행물 추가 / 수정</div>
@@ -191,11 +236,41 @@
     <div class="card">
       <h2>🗂 카테고리 관리</h2>
       <p class="sub">제목·설명·표지를 바꾸거나 순서를 조정합니다. 간행물이 들어있는 카테고리는 삭제할 수 없습니다.</p>
+      <div class="bulk-bar" id="catBulk">
+        <label class="all"><input type="checkbox" id="catChkAll" class="rowchk" /> 전체선택</label>
+        <span class="bulk-count" id="catSelCount">0개 선택</span>
+        <span class="bulk-actions">
+          <button class="mini" id="catUp" disabled>▲ 위로</button>
+          <button class="mini" id="catDown" disabled>▼ 아래로</button>
+          <button class="mini" id="catTop" disabled>맨 위로</button>
+          <button class="mini" id="catBottom" disabled>맨 아래로</button>
+          <button class="mini danger" id="catDelSel" disabled>선택 삭제</button>
+        </span>
+      </div>
       <div id="catRows"></div>
+
+      <div class="cat-block-title" style="margin-top:24px">➕ 카테고리 추가 / 수정</div>
+      <div class="form-grid">
+        <div>
+          <label>카테고리 ID (영문·숫자 — 수정 시 변경 불가)</label>
+          <input id="cfId" placeholder="safety-pub" />
+        </div>
+        <div>
+          <label>표지 이미지 경로 (선택 — 메인 카테고리 카드 배경)</label>
+          <input id="cfCover" placeholder="assets/planes/파일명.png" />
+        </div>
+        <div class="full">
+          <label>제목</label>
+          <input id="cfTitle" placeholder="예: 안전정보 간행물" />
+        </div>
+        <div class="full">
+          <label>설명</label>
+          <input id="cfDesc" placeholder="예: 항공안전 관련 법령·간행물을 웹진으로 열람합니다." />
+        </div>
+      </div>
       <div class="row-actions">
-        <input id="newCatId" placeholder="새 카테고리 ID (영문)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
-        <input id="newCatTitle" placeholder="새 카테고리 제목" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
-        <button class="btn" id="addCatBtn">카테고리 추가</button>
+        <button class="btn primary" id="addCatBtn">목록에 추가/수정</button>
+        <button class="btn" id="resetCatFormBtn">입력 초기화</button>
       </div>
     </div>
 
@@ -345,6 +420,12 @@
     </div>
   </main>
 
+  <!-- 저장하지 않은 변경이 있을 때만 떠오르는 하단 고정 저장바 -->
+  <div class="save-bar" id="saveBar">
+    <span class="save-state" id="saveBarState">● 저장하지 않은 변경이 있습니다</span>
+    <button class="btn primary" id="saveBarBtn">💾 저장(사이트 반영)</button>
+  </div>
+
   <script src="books.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
@@ -399,6 +480,8 @@
       notice = Object.assign({ enabled: false, text: "", link: "", until: "" }, window.NOTICE || {});
       $('ghToken').value = localStorage.getItem('eb_gh_token') || '';
       renderAll();
+      savedSnapshot = genBooksJs();   // 로그인 시점의 데이터를 '저장된 기준'으로 잡음
+      refreshDirty();
       bindStatsSeg();
       loadStats();
       loadBookStats();
@@ -407,6 +490,62 @@
     function renderAll() {
       renderTables(); renderCatRows(); renderImgList(); renderNotice(); renderQrTargets();
     }
+
+    // ---------- 저장(게시) · 변경 감지 ----------
+    //  화면의 모든 편집은 메모리에서만 일어나고, 「저장」을 눌러야 books.js 가
+    //  GitHub 에 커밋되어 메인 화면에 반영됩니다. genBooksJs() 결과를 마지막
+    //  저장본(savedSnapshot)과 비교해 '저장 안 된 변경'을 자동으로 감지합니다.
+    let savedSnapshot = null, saving = false;
+    function refreshDirty() {
+      if (savedSnapshot === null || saving) return;
+      const dirty = genBooksJs() !== savedSnapshot;
+      $('saveBar').classList.toggle('show', dirty);
+      $('saveInlineBtn').disabled = !dirty;
+      $('saveBarBtn').disabled = !dirty;
+      $('saveInlineState').textContent = dirty ? '● 저장하지 않은 변경이 있습니다' : '✓ 모든 변경사항이 저장됨';
+      $('saveInlineState').classList.toggle('dirty', dirty);
+      $('saveBarState').textContent = '● 저장하지 않은 변경이 있습니다';
+    }
+    // 클릭(순서·추가·삭제)·입력(제목·설명·공지) 어떤 편집이든 잡아내도록 위임 처리
+    let rdT; function refreshDirtySoon() { clearTimeout(rdT); rdT = setTimeout(refreshDirty, 150); }
+    document.addEventListener('input', refreshDirtySoon, true);
+    document.addEventListener('click', refreshDirtySoon, true);
+
+    async function saveChanges() {
+      if (saving) return;
+      const t = $('ghToken').value.trim();
+      if (!t) {
+        alert('저장하려면 GitHub 토큰이 한 번 필요합니다.\n맨 아래 「변경사항 적용 — books.js」 카드에서 토큰을 입력한 뒤\n다시 「저장」을 눌러주세요. (토큰은 이 브라우저에만 저장됩니다)');
+        const gt = $('ghToken'); gt.scrollIntoView({ behavior: 'smooth', block: 'center' }); gt.focus();
+        return;
+      }
+      localStorage.setItem('eb_gh_token', t);
+      saving = true;
+      $('saveInlineBtn').disabled = $('saveBarBtn').disabled = $('pubBtn').disabled = true;
+      $('saveInlineState').textContent = '저장 중…';
+      $('saveBarState').textContent = '저장 중…';
+      try {
+        const content = genBooksJs();
+        await ghPutFile('books.js', b64Text(content), '📚 간행물 데이터 업데이트 (관리자 콘솔)');
+        savedSnapshot = content;
+        toast('저장 완료 — 1~2분 내 사이트에 반영됩니다');
+        if ($('pubMsg')) $('pubMsg').textContent = '✅ 저장(게시) 완료 — 1~2분 내 사이트에 반영됩니다.';
+        loadDeploy();
+      } catch (e) {
+        alert('저장 실패: ' + e.message);
+        if ($('pubMsg')) $('pubMsg').textContent = '❌ 실패: ' + e.message;
+      }
+      saving = false;
+      $('pubBtn').disabled = false;
+      refreshDirty();
+    }
+    $('saveInlineBtn').onclick = saveChanges;
+    $('saveBarBtn').onclick = saveChanges;
+
+    // 저장하지 않은 변경이 있는 채로 페이지를 닫으려 하면 경고
+    window.addEventListener('beforeunload', e => {
+      if (savedSnapshot !== null && !saving && genBooksJs() !== savedSnapshot) { e.preventDefault(); e.returnValue = ''; }
+    });
 
     // ---------- 배포 상태 ----------
     async function loadDeploy() {
@@ -431,6 +570,7 @@
         const rows = books.map((b, i) => ({ b, i })).filter(x => x.b.category === c.id);
         const body = rows.length ? rows.map(({ b, i }, r) => `
           <tr>
+            <td class="chk"><input type="checkbox" class="rowchk pubchk" data-id="${esc(b.id)}" ${selBooks.has(b.id) ? 'checked' : ''} /></td>
             <td><b>${esc(b.title)}</b>${bookChips(b)}<div style="color:var(--muted);font-size:12px">${esc(b.subtitle || '')}${b.date ? ' · 발행 ' + esc(b.date) : ''}</div></td>
             <td style="color:var(--muted)">${esc(b.id)}</td>
             <td class="ops">
@@ -439,14 +579,19 @@
               <button class="mini" data-edit="${i}">수정</button>
               <button class="mini danger" data-del="${i}">삭제</button>
             </td>
-          </tr>`).join('') : `<tr><td colspan="3" style="color:var(--muted)">등록된 간행물이 없습니다.</td></tr>`;
+          </tr>`).join('') : `<tr><td colspan="4" style="color:var(--muted)">등록된 간행물이 없습니다.</td></tr>`;
         return `<div class="cat-block-title">${esc(c.title)} <span class="cat-tag">${rows.length}종</span></div>
-          <table class="pubs"><thead><tr><th>제목 / 상태</th><th>폴더 ID</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+          <table class="pubs"><thead><tr><th class="chk"></th><th>제목 / 상태</th><th>폴더 ID</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
       }).join('');
       $('pubTables').innerHTML = html;
+      $('pubTables').querySelectorAll('.pubchk').forEach(el => el.onchange = () => {
+        if (el.checked) selBooks.add(el.dataset.id); else selBooks.delete(el.dataset.id);
+        updatePubBulk();
+      });
       $('pubTables').querySelectorAll('[data-del]').forEach(el => el.onclick = () => {
         const b = books[+el.dataset.del];
         if (!confirm(`「${b.title}」을(를) 목록에서 삭제할까요?\n(파일은 남고, 목록에서만 빠집니다)`)) return;
+        selBooks.delete(b.id);
         books.splice(+el.dataset.del, 1); renderTables(); renderQrTargets();
       });
       $('pubTables').querySelectorAll('[data-edit]').forEach(el => el.onclick = () => loadToForm(+el.dataset.edit));
@@ -459,7 +604,55 @@
         [books[i], books[other.idx]] = [books[other.idx], books[i]];
         renderTables();
       });
+      updatePubBulk();
     }
+
+    // ---------- 일괄 선택/이동 (간행물·카테고리 공용) ----------
+    let selBooks = new Set();   // 선택된 간행물 id
+    let selCats = new Set();    // 선택된 카테고리 id
+    // 선택된 항목들을 한 묶음으로 이동시켜 재배열 (sel 속성을 가진 항목 배열)
+    function reorderSeq(seq, dir) {
+      seq = seq.slice();
+      if (dir === 'top') return [...seq.filter(x => x.sel), ...seq.filter(x => !x.sel)];
+      if (dir === 'bottom') return [...seq.filter(x => !x.sel), ...seq.filter(x => x.sel)];
+      if (dir === -1) { for (let i = 1; i < seq.length; i++) if (seq[i].sel && !seq[i - 1].sel) [seq[i - 1], seq[i]] = [seq[i], seq[i - 1]]; }
+      else { for (let i = seq.length - 2; i >= 0; i--) if (seq[i].sel && !seq[i + 1].sel) [seq[i], seq[i + 1]] = [seq[i + 1], seq[i]]; }
+      return seq;
+    }
+    function moveSelBooks(dir) {
+      if (!selBooks.size) return;
+      cats.forEach(c => {
+        const slots = books.map((b, idx) => idx).filter(idx => books[idx].category === c.id);
+        let seq = slots.map(idx => ({ b: books[idx], sel: selBooks.has(books[idx].id) }));
+        seq = reorderSeq(seq, dir);
+        slots.forEach((g, k) => books[g] = seq[k].b);
+      });
+      renderTables(); renderQrTargets();
+    }
+    function bulkDelBooks() {
+      if (!selBooks.size) return;
+      if (!confirm(`선택한 ${selBooks.size}개 간행물을 목록에서 삭제할까요?\n(파일은 남고, 목록에서만 빠집니다)`)) return;
+      books = books.filter(b => !selBooks.has(b.id));
+      selBooks.clear();
+      renderTables(); renderQrTargets();
+    }
+    function updatePubBulk() {
+      const n = books.filter(b => selBooks.has(b.id)).length;
+      // 화면에 없는(삭제된) id 는 정리
+      if (n !== selBooks.size) selBooks = new Set(books.filter(b => selBooks.has(b.id)).map(b => b.id));
+      $('pubSelCount').textContent = n + '개 선택';
+      ['pubUp', 'pubDown', 'pubTop', 'pubBottom', 'pubDelSel'].forEach(id => $(id).disabled = !n);
+      $('pubChkAll').checked = n > 0 && n === books.length;
+    }
+    $('pubChkAll').onchange = () => {
+      if ($('pubChkAll').checked) books.forEach(b => selBooks.add(b.id)); else selBooks.clear();
+      renderTables();
+    };
+    $('pubUp').onclick = () => moveSelBooks(-1);
+    $('pubDown').onclick = () => moveSelBooks(1);
+    $('pubTop').onclick = () => moveSelBooks('top');
+    $('pubBottom').onclick = () => moveSelBooks('bottom');
+    $('pubDelSel').onclick = bulkDelBooks;
 
     function loadToForm(i) {
       const b = books[i];
@@ -509,19 +702,25 @@
     // ---------- 카테고리 관리 ----------
     function renderCatRows() {
       $('fCat').innerHTML = cats.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('');
-      $('catRows').innerHTML = cats.map((c, i) => `
-        <div class="edit-row">
-          <span class="ro">${esc(c.id)}</span>
-          <input data-ct="${i}" value="${esc(c.title)}" placeholder="제목" />
-          <input data-cd="${i}" value="${esc(c.desc || '')}" placeholder="설명" />
-          <span class="ops">
-            <button class="mini" data-cm="${i}|-1" ${i === 0 ? 'disabled' : ''}>↑</button>
-            <button class="mini" data-cm="${i}|1" ${i === cats.length - 1 ? 'disabled' : ''}>↓</button>
-            <button class="mini danger" data-cx="${i}">삭제</button>
-          </span>
-        </div>`).join('');
-      $('catRows').querySelectorAll('[data-ct]').forEach(el => el.oninput = () => { cats[+el.dataset.ct].title = el.value; renderTablesSoon(); });
-      $('catRows').querySelectorAll('[data-cd]').forEach(el => el.oninput = () => { cats[+el.dataset.cd].desc = el.value; });
+      $('catRows').innerHTML = `<table class="pubs"><thead><tr><th class="chk"></th><th>제목 / 설명</th><th>ID</th><th></th></tr></thead><tbody>${
+        cats.length ? cats.map((c, i) => `
+          <tr>
+            <td class="chk"><input type="checkbox" class="rowchk catchk" data-id="${esc(c.id)}" ${selCats.has(c.id) ? 'checked' : ''} /></td>
+            <td><b>${esc(c.title)}</b><div style="color:var(--muted);font-size:12px">${esc(c.desc || '')}</div></td>
+            <td style="color:var(--muted)">${esc(c.id)}</td>
+            <td class="ops">
+              <button class="mini" data-cm="${i}|-1" ${i === 0 ? 'disabled' : ''}>↑</button>
+              <button class="mini" data-cm="${i}|1" ${i === cats.length - 1 ? 'disabled' : ''}>↓</button>
+              <button class="mini" data-cedit="${i}">수정</button>
+              <button class="mini danger" data-cx="${i}">삭제</button>
+            </td>
+          </tr>`).join('') : `<tr><td colspan="4" style="color:var(--muted)">등록된 카테고리가 없습니다.</td></tr>`
+      }</tbody></table>`;
+      $('catRows').querySelectorAll('.catchk').forEach(el => el.onchange = () => {
+        if (el.checked) selCats.add(el.dataset.id); else selCats.delete(el.dataset.id);
+        updateCatBulk();
+      });
+      $('catRows').querySelectorAll('[data-cedit]').forEach(el => el.onclick = () => loadCatToForm(+el.dataset.cedit));
       $('catRows').querySelectorAll('[data-cm]').forEach(el => el.onclick = () => {
         const [i, d] = el.dataset.cm.split('|').map(Number);
         [cats[i], cats[i + d]] = [cats[i + d], cats[i]];
@@ -531,18 +730,74 @@
         const c = cats[+el.dataset.cx];
         if (books.some(b => b.category === c.id)) { alert('이 카테고리에 간행물이 있어 삭제할 수 없습니다.\n간행물을 먼저 옮기거나 삭제하세요.'); return; }
         if (!confirm(`카테고리 「${c.title}」을(를) 삭제할까요?`)) return;
+        selCats.delete(c.id);
         cats.splice(+el.dataset.cx, 1); renderCatRows(); renderTables();
       });
+      updateCatBulk();
     }
+    function loadCatToForm(i) {
+      const c = cats[i];
+      $('cfId').value = c.id; $('cfId').readOnly = true;
+      $('cfTitle').value = c.title || '';
+      $('cfDesc').value = c.desc || '';
+      $('cfCover').value = c.cover || '';
+      $('addCatBtn').dataset.edit = i;
+      $('addCatBtn').textContent = '수정 내용 저장';
+      $('addCatBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function resetCatForm() {
+      $('cfId').value = ''; $('cfId').readOnly = false;
+      $('cfTitle').value = ''; $('cfDesc').value = ''; $('cfCover').value = '';
+      delete $('addCatBtn').dataset.edit; $('addCatBtn').textContent = '목록에 추가/수정';
+    }
+    $('resetCatFormBtn').onclick = resetCatForm;
+    function moveSelCats(dir) {
+      if (!selCats.size) return;
+      let seq = cats.map(c => ({ c, sel: selCats.has(c.id) }));
+      seq = reorderSeq(seq, dir);
+      cats = seq.map(x => x.c);
+      renderCatRows(); renderTables();
+    }
+    function bulkDelCats() {
+      if (!selCats.size) return;
+      const blocked = cats.filter(c => selCats.has(c.id) && books.some(b => b.category === c.id));
+      if (blocked.length) { alert('간행물이 들어있는 카테고리는 삭제할 수 없습니다:\n' + blocked.map(c => '· ' + c.title).join('\n') + '\n\n간행물을 먼저 옮기거나 삭제하세요.'); return; }
+      if (!confirm(`선택한 ${selCats.size}개 카테고리를 삭제할까요?`)) return;
+      cats = cats.filter(c => !selCats.has(c.id));
+      selCats.clear();
+      renderCatRows(); renderTables();
+    }
+    function updateCatBulk() {
+      const n = cats.filter(c => selCats.has(c.id)).length;
+      if (n !== selCats.size) selCats = new Set(cats.filter(c => selCats.has(c.id)).map(c => c.id));
+      $('catSelCount').textContent = n + '개 선택';
+      ['catUp', 'catDown', 'catTop', 'catBottom', 'catDelSel'].forEach(id => $(id).disabled = !n);
+      $('catChkAll').checked = n > 0 && n === cats.length;
+    }
+    $('catChkAll').onchange = () => {
+      if ($('catChkAll').checked) cats.forEach(c => selCats.add(c.id)); else selCats.clear();
+      renderCatRows();
+    };
+    $('catUp').onclick = () => moveSelCats(-1);
+    $('catDown').onclick = () => moveSelCats(1);
+    $('catTop').onclick = () => moveSelCats('top');
+    $('catBottom').onclick = () => moveSelCats('bottom');
+    $('catDelSel').onclick = bulkDelCats;
     let rtT; function renderTablesSoon() { clearTimeout(rtT); rtT = setTimeout(renderTables, 400); }
     $('addCatBtn').onclick = () => {
-      const id = $('newCatId').value.trim(), title = $('newCatTitle').value.trim();
-      if (!id || !title) { alert('ID와 제목을 입력하세요.'); return; }
+      const id = $('cfId').value.trim(), title = $('cfTitle').value.trim();
+      if (!id || !title) { alert('ID와 제목은 필수입니다.'); return; }
       if (!/^[A-Za-z0-9._-]+$/.test(id)) { alert('ID는 영문·숫자·-_. 만 사용하세요.'); return; }
-      if (cats.some(c => c.id === id)) { alert('이미 같은 ID의 카테고리가 있습니다.'); return; }
-      cats.push({ id, title, desc: '', cover: (loadingImgs[0] || '') });
-      $('newCatId').value = ''; $('newCatTitle').value = '';
-      renderCatRows(); renderTables();
+      const editIdx = $('addCatBtn').dataset.edit;
+      const desc = $('cfDesc').value.trim(), cover = $('cfCover').value.trim();
+      if (editIdx !== undefined) {
+        const c = cats[+editIdx];
+        c.title = title; c.desc = desc; c.cover = cover || c.cover || (loadingImgs[0] || '');
+      } else {
+        if (cats.some(c => c.id === id)) { alert('이미 같은 ID의 카테고리가 있습니다.'); return; }
+        cats.push({ id, title, desc, cover: cover || (loadingImgs[0] || '') });
+      }
+      resetCatForm(); renderCatRows(); renderTables();
     };
 
     // ---------- 로딩 이미지 관리 ----------
@@ -692,17 +947,8 @@ window.BOOKS = BOOKS;
       r.onerror = rej; r.readAsDataURL(f);
     });
 
-    $('pubBtn').onclick = async () => {
-      if (!needToken()) return;
-      const msg = $('pubMsg');
-      $('pubBtn').disabled = true; msg.textContent = '게시 중…';
-      try {
-        await ghPutFile('books.js', b64Text(genBooksJs()), '📚 간행물 데이터 업데이트 (관리자 콘솔)');
-        msg.textContent = '✅ 게시 완료 — 1~2분 내 사이트에 반영됩니다.';
-        toast('books.js 게시 완료'); loadDeploy();
-      } catch (e) { msg.textContent = '❌ 실패: ' + e.message; }
-      $('pubBtn').disabled = false;
-    };
+    // 이 카드의 「바로 게시」도 위쪽 「저장」과 완전히 동일하게 동작(스냅샷 갱신 포함)
+    $('pubBtn').onclick = saveChanges;
 
     $('uploadBtn').onclick = async () => {
       if (!needToken()) return;
