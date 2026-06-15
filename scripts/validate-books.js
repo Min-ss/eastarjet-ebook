@@ -20,8 +20,10 @@ const NOTICE = sandbox.window.NOTICE || {};
 
 const errors = [];
 const warns = [];
-const exists = p => fs.existsSync(path.join(root, p));
-const sizeMB = p => { try { return fs.statSync(path.join(root, p)).size / 1048576; } catch (e) { return 0; } };
+// 캐시버스터(?v=...)가 붙은 경로도 실제 파일을 가리키도록 쿼리스트링을 떼고 확인
+const clean = p => String(p).split('?')[0];
+const exists = p => fs.existsSync(path.join(root, clean(p)));
+const sizeMB = p => { try { return fs.statSync(path.join(root, clean(p))).size / 1048576; } catch (e) { return 0; } };
 const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 const seen = new Set();
@@ -54,6 +56,11 @@ for (const b of BOOKS) {
 
 for (const c of CATEGORIES) {
   if (c.cover && !exists(c.cover)) errors.push(`[카테고리 ${c.id}] 표지 없음: ${c.cover}`);
+  if (c.coverBook) {
+    const pin = BOOKS.find(b => b.id === c.coverBook);
+    if (!pin) errors.push(`[카테고리 ${c.id}] coverBook이 가리키는 간행물이 없습니다: ${c.coverBook}`);
+    else if (pin.category !== c.id) warns.push(`[카테고리 ${c.id}] coverBook(${c.coverBook})이 다른 카테고리(${pin.category})의 간행물입니다`);
+  }
 }
 for (const img of LOADING_IMAGES) {
   if (!exists(img)) errors.push(`[로딩 이미지] 파일 없음: ${img}`);

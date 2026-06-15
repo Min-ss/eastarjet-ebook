@@ -6,7 +6,7 @@
   <title>e-Book 뷰어 — 이스타항공</title>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css" />
+<link rel="stylesheet" href="assets/style.css?v=20260615c" />
 </head>
 <body class="viewer">
   <div class="viewer-wrap">
@@ -77,6 +77,12 @@
     }
 
     document.title = `${book.title} — 이스타항공 e-Book`;
+    // PDF 간행물은 전용 뷰어(flip.html)로 안내 — 이 페이지는 페이지 이미지(웹진) 전용
+    if (book.type === 'pdf') { location.replace('flip.html?book=' + encodeURIComponent(book.id) + '#read'); throw new Error('pdf → flip'); }
+    if (!Array.isArray(book.pages) || !book.pages.length) {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>표시할 페이지가 없습니다</h2><p>이 간행물에 페이지 이미지가 등록되지 않았습니다.</p><p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p></div>';
+      throw new Error('no pages');
+    }
     if (window.ebTrack) ebTrack.open(book.id);
     $('bookTitle').textContent = book.title;
 
