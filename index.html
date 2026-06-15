@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css" />
+<link rel="stylesheet" href="assets/style.css?v=20260615b" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -126,6 +126,15 @@
     /* ---------- ② 카테고리 카드 ---------- */
     function countIn(catId) { return books.filter(b => b.category === catId).length; }
 
+    // 카테고리 표지 = 그 카테고리의 '최신본'(목록 맨 끝 공개 간행물) 표지를 자동 사용.
+    // 새 PDF를 맨 아래에 추가하면 그 표지가 자동으로 카테고리 표지가 됩니다.
+    // 간행물이 하나도 없으면 카테고리에 지정된 표지(c.cover)로 폴백.
+    function catCover(c) {
+      const list = books.filter(b => b.category === c.id);
+      const latest = list.length ? list[list.length - 1] : null;
+      return (latest && latest.cover) ? latest.cover : c.cover;
+    }
+
     $('catGrid').innerHTML = categories.map(c => `
       <a class="cat-card" data-cat="${c.id}" href="#${c.id}">
         <span class="cat-count">${countIn(c.id)}종</span>
@@ -135,7 +144,7 @@
           <span class="cat-go">살펴보기 ›</span>
         </div>
         <div class="cat-cover">
-          <img src="${c.cover}" alt="${c.title}" loading="lazy" />
+          <img src="${catCover(c)}" alt="${c.title}" loading="lazy" />
         </div>
       </a>`).join('');
 
