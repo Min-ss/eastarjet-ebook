@@ -175,7 +175,111 @@
     </div>
     <p class="deploy-line" id="deployInfo">배포 정보 확인 중…</p>
 
-    <!-- ① 간행물 관리 -->
+    <!-- 1. 로딩 화면 이미지 -->
+    <div class="card">
+      <h2>🖼 로딩 화면 이미지</h2>
+      <p class="sub">메인 진입 시 랜덤으로 표출되는 사진 목록입니다. (파일은 <code>assets/planes/</code>에 먼저 업로드)</p>
+      <div class="img-list" id="imgList"></div>
+      <div class="row-actions">
+        <input id="newImgPath" placeholder="assets/planes/파일명.png" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
+        <button class="btn" id="addImgBtn">이미지 추가</button>
+      </div>
+    </div>
+
+    <!-- 2. 메인 화면 문구 -->
+    <div class="card">
+      <h2>📝 메인 화면 문구</h2>
+      <p class="sub">메인 페이지 상단의 문구를 수정합니다. (좌측 상단 로고 옆 문구 · 가운데 큰 제목 · 소개글)</p>
+      <div class="form-grid">
+        <div class="full">
+          <label>좌측 상단 로고 옆 문구 <span id="sfBrandCount" class="sub" style="font-weight:400;margin-left:4px">0자</span></label>
+          <input id="sfBrand" placeholder="예: 대외 간행물 e-Book" />
+        </div>
+        <div class="full">
+          <label>가운데 큰 제목 <span id="sfTitleCount" class="sub" style="font-weight:400;margin-left:4px">0자</span></label>
+          <input id="sfTitle" placeholder="예: 대외 간행물" />
+        </div>
+        <div class="full">
+          <label>소개글 <span id="sfSubCount" class="sub" style="font-weight:400;margin-left:4px">0자</span></label>
+          <input id="sfSub" placeholder="예: 카테고리를 선택하면 간행물을 웹진 형태로 열람할 수 있습니다." />
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 메인 공지 배너 -->
+    <div class="card">
+      <h2>📢 메인 공지 배너</h2>
+      <p class="sub">메인 화면 상단에 공지를 띄웁니다. (신간 안내·점검 공지 등 — 방문자가 ✕로 닫을 수 있음)</p>
+      <div class="form-grid">
+        <div class="check-line" style="padding-top:0">
+          <input type="checkbox" id="nEnabled" />
+          <label for="nEnabled" style="margin:0;font-size:14px;color:var(--text)">공지 표시</label>
+        </div>
+        <div>
+          <label>표시 종료일 (선택 — 이 날짜까지만 표시)</label>
+          <input id="nUntil" type="date" />
+        </div>
+        <div class="full">
+          <label>공지 내용</label>
+          <input id="nText" placeholder="예: SAFETY STAR Rev.07 이 새로 등록되었습니다!" />
+        </div>
+        <div class="full">
+          <label>링크 (선택 — '자세히' 버튼 연결)</label>
+          <input id="nLink" placeholder="예: flip.html?book=safety-star-mag-07#read" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 카테고리 관리 -->
+    <div class="card">
+      <h2>🗂 카테고리 관리</h2>
+      <p class="sub">제목·설명·표지를 바꾸거나 순서를 조정합니다. 간행물이 들어있는 카테고리는 삭제할 수 없습니다.</p>
+      <div class="bulk-bar" id="catBulk">
+        <label class="all"><input type="checkbox" id="catChkAll" class="rowchk" /> 전체선택</label>
+        <span class="bulk-count" id="catSelCount">0개 선택</span>
+        <span class="bulk-actions">
+          <button class="mini" id="catUp" disabled>▲ 위로</button>
+          <button class="mini" id="catDown" disabled>▼ 아래로</button>
+          <button class="mini" id="catTop" disabled>맨 위로</button>
+          <button class="mini" id="catBottom" disabled>맨 아래로</button>
+          <button class="mini danger" id="catDelSel" disabled>선택 삭제</button>
+        </span>
+      </div>
+      <div id="catRows"></div>
+
+      <div class="cat-block-title" style="margin-top:24px">➕ 카테고리 추가 / 수정</div>
+      <div class="form-grid">
+        <div>
+          <label>카테고리 ID (영문·숫자 — 수정 시 변경 불가)</label>
+          <input id="cfId" placeholder="safety-pub" />
+        </div>
+        <div class="full">
+          <label>제목</label>
+          <input id="cfTitle" placeholder="예: 안전정보 간행물" />
+        </div>
+        <div class="full">
+          <label>설명 <span id="cfDescCount" class="sub" style="font-weight:400;margin-left:4px">0자</span></label>
+          <input id="cfDesc" placeholder="예: 항공안전 관련 법령·간행물을 웹진으로 열람합니다." />
+          <p class="sub" id="cfDescHint" style="margin:6px 2px 0">메인 카드에서 <b>한 줄</b>로 표시됩니다. 한 줄 권장 길이 <b>약 20자</b>(공백 포함) — 넘으면 끝이 …로 잘립니다.</p>
+        </div>
+        <div class="full">
+          <label>표지 이미지 (선택 — 메인 카테고리 카드 배경)</label>
+          <input id="cfCover" placeholder="경로 직접 입력: assets/planes/파일명.png" />
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
+            <span class="sub" style="margin:0">또는 PDF로 표지 자동 생성 (1쪽을 표지로) →</span>
+            <input id="cfCoverPdf" type="file" accept=".pdf" style="font-size:13px" />
+            <canvas id="cfCoverCanvas" style="display:none;height:54px;width:auto;border:1px solid var(--line);border-radius:6px;background:#fff"></canvas>
+          </div>
+          <p class="sub" id="cfCoverMsg" style="margin:6px 2px 0"></p>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button class="btn primary" id="addCatBtn">목록에 추가/수정</button>
+        <button class="btn" id="resetCatFormBtn">입력 초기화</button>
+      </div>
+    </div>
+
+    <!-- 5. 간행물 관리 -->
     <div class="card">
       <h2>📚 간행물 관리</h2>
       <p class="sub">간행물을 추가·수정·삭제·순서변경한 뒤 <b>저장(사이트 반영)</b>을 누르면 메인 화면에 적용됩니다.</p>
@@ -242,88 +346,6 @@
       </div>
     </div>
 
-    <!-- ② 카테고리 / 로딩 이미지 / 공지 -->
-    <div class="card">
-      <h2>🗂 카테고리 관리</h2>
-      <p class="sub">제목·설명·표지를 바꾸거나 순서를 조정합니다. 간행물이 들어있는 카테고리는 삭제할 수 없습니다.</p>
-      <div class="bulk-bar" id="catBulk">
-        <label class="all"><input type="checkbox" id="catChkAll" class="rowchk" /> 전체선택</label>
-        <span class="bulk-count" id="catSelCount">0개 선택</span>
-        <span class="bulk-actions">
-          <button class="mini" id="catUp" disabled>▲ 위로</button>
-          <button class="mini" id="catDown" disabled>▼ 아래로</button>
-          <button class="mini" id="catTop" disabled>맨 위로</button>
-          <button class="mini" id="catBottom" disabled>맨 아래로</button>
-          <button class="mini danger" id="catDelSel" disabled>선택 삭제</button>
-        </span>
-      </div>
-      <div id="catRows"></div>
-
-      <div class="cat-block-title" style="margin-top:24px">➕ 카테고리 추가 / 수정</div>
-      <div class="form-grid">
-        <div>
-          <label>카테고리 ID (영문·숫자 — 수정 시 변경 불가)</label>
-          <input id="cfId" placeholder="safety-pub" />
-        </div>
-        <div class="full">
-          <label>제목</label>
-          <input id="cfTitle" placeholder="예: 안전정보 간행물" />
-        </div>
-        <div class="full">
-          <label>설명 <span id="cfDescCount" class="sub" style="font-weight:400;margin-left:4px">0자</span></label>
-          <input id="cfDesc" placeholder="예: 항공안전 관련 법령·간행물을 웹진으로 열람합니다." />
-          <p class="sub" id="cfDescHint" style="margin:6px 2px 0">메인 카드에서 <b>한 줄</b>로 표시됩니다. 한 줄 권장 길이 <b>약 20자</b>(공백 포함) — 넘으면 끝이 …로 잘립니다.</p>
-        </div>
-        <div class="full">
-          <label>표지 이미지 (선택 — 메인 카테고리 카드 배경)</label>
-          <input id="cfCover" placeholder="경로 직접 입력: assets/planes/파일명.png" />
-          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
-            <span class="sub" style="margin:0">또는 PDF로 표지 자동 생성 (1쪽을 표지로) →</span>
-            <input id="cfCoverPdf" type="file" accept=".pdf" style="font-size:13px" />
-            <canvas id="cfCoverCanvas" style="display:none;height:54px;width:auto;border:1px solid var(--line);border-radius:6px;background:#fff"></canvas>
-          </div>
-          <p class="sub" id="cfCoverMsg" style="margin:6px 2px 0"></p>
-        </div>
-      </div>
-      <div class="row-actions">
-        <button class="btn primary" id="addCatBtn">목록에 추가/수정</button>
-        <button class="btn" id="resetCatFormBtn">입력 초기화</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>🖼 로딩 화면 이미지</h2>
-      <p class="sub">메인 진입 시 랜덤으로 표출되는 사진 목록입니다. (파일은 <code>assets/planes/</code>에 먼저 업로드)</p>
-      <div class="img-list" id="imgList"></div>
-      <div class="row-actions">
-        <input id="newImgPath" placeholder="assets/planes/파일명.png" style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-family:var(--font);font-size:13.5px;background:var(--bg-soft)" />
-        <button class="btn" id="addImgBtn">이미지 추가</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>📢 메인 공지 배너</h2>
-      <p class="sub">메인 화면 상단에 공지를 띄웁니다. (신간 안내·점검 공지 등 — 방문자가 ✕로 닫을 수 있음)</p>
-      <div class="form-grid">
-        <div class="check-line" style="padding-top:0">
-          <input type="checkbox" id="nEnabled" />
-          <label for="nEnabled" style="margin:0;font-size:14px;color:var(--text)">공지 표시</label>
-        </div>
-        <div>
-          <label>표시 종료일 (선택 — 이 날짜까지만 표시)</label>
-          <input id="nUntil" type="date" />
-        </div>
-        <div class="full">
-          <label>공지 내용</label>
-          <input id="nText" placeholder="예: SAFETY STAR Rev.07 이 새로 등록되었습니다!" />
-        </div>
-        <div class="full">
-          <label>링크 (선택 — '자세히' 버튼 연결)</label>
-          <input id="nLink" placeholder="예: flip.html?book=safety-star-mag-07#read" />
-        </div>
-      </div>
-    </div>
-
     <!-- ③ 파일 점검 -->
     <div class="card">
       <h2>🩺 파일 점검</h2>
@@ -335,7 +357,44 @@
       <ul class="chk-list" id="chkList"></ul>
     </div>
 
-    <!-- ④ 적용 — books.js 생성/게시 -->
+    <!-- 7. 도구: QR / 표지 생성 -->
+    <div class="card">
+      <h2>🛠 도구</h2>
+      <div class="tool-cols">
+        <div>
+          <h4 style="margin:0 0 4px;font-size:15px">📱 QR 코드 생성 (인쇄용)</h4>
+          <p class="sub">포스터·기내 인쇄물용 QR입니다. 유입 태그를 붙이면 QR로 들어온 방문이 따로 집계됩니다.</p>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <div>
+              <label>대상</label>
+              <select id="qrTarget"></select>
+            </div>
+            <div>
+              <label>유입 태그 (통계 구분용 — 예: qr, poster, sns)</label>
+              <input id="qrFrom" value="qr" />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn primary" id="qrGenBtn">QR 생성</button>
+            <button class="btn" id="qrDlBtn" disabled>PNG 다운로드</button>
+          </div>
+          <div class="tool-prev"><canvas id="qrCanvas" style="display:none"></canvas></div>
+          <div class="tool-url" id="qrUrl"></div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 4px;font-size:15px">🎨 표지 자동 생성</h4>
+          <p class="sub">PDF를 선택하면 1쪽을 표지 이미지(cover.png)로 만들어 줍니다.</p>
+          <input id="cvPdf" type="file" accept=".pdf" style="font-size:13px" />
+          <div class="row-actions">
+            <button class="btn" id="cvDlBtn" disabled>cover.png 다운로드</button>
+          </div>
+          <div class="tool-prev"><canvas id="cvCanvas" style="display:none"></canvas></div>
+          <p class="sub" id="cvMsg" style="margin:8px 0 0"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 변경사항 적용 — books.js 생성/게시 -->
     <div class="card">
       <h2>💾 변경사항 적용 — books.js</h2>
       <p class="sub">위에서 수정한 내용(간행물·카테고리·로딩 이미지·공지)을 books.js 로 만들어 반영합니다.</p>
@@ -380,44 +439,7 @@
       <p class="sub" style="margin:8px 2px 0" id="uploadMsg"></p>
     </div>
 
-    <!-- ⑤ 도구: QR / 표지 생성 -->
-    <div class="card">
-      <h2>🛠 도구</h2>
-      <div class="tool-cols">
-        <div>
-          <h4 style="margin:0 0 4px;font-size:15px">📱 QR 코드 생성 (인쇄용)</h4>
-          <p class="sub">포스터·기내 인쇄물용 QR입니다. 유입 태그를 붙이면 QR로 들어온 방문이 따로 집계됩니다.</p>
-          <div class="form-grid" style="grid-template-columns:1fr">
-            <div>
-              <label>대상</label>
-              <select id="qrTarget"></select>
-            </div>
-            <div>
-              <label>유입 태그 (통계 구분용 — 예: qr, poster, sns)</label>
-              <input id="qrFrom" value="qr" />
-            </div>
-          </div>
-          <div class="row-actions">
-            <button class="btn primary" id="qrGenBtn">QR 생성</button>
-            <button class="btn" id="qrDlBtn" disabled>PNG 다운로드</button>
-          </div>
-          <div class="tool-prev"><canvas id="qrCanvas" style="display:none"></canvas></div>
-          <div class="tool-url" id="qrUrl"></div>
-        </div>
-        <div>
-          <h4 style="margin:0 0 4px;font-size:15px">🎨 표지 자동 생성</h4>
-          <p class="sub">PDF를 선택하면 1쪽을 표지 이미지(cover.png)로 만들어 줍니다.</p>
-          <input id="cvPdf" type="file" accept=".pdf" style="font-size:13px" />
-          <div class="row-actions">
-            <button class="btn" id="cvDlBtn" disabled>cover.png 다운로드</button>
-          </div>
-          <div class="tool-prev"><canvas id="cvCanvas" style="display:none"></canvas></div>
-          <p class="sub" id="cvMsg" style="margin:8px 0 0"></p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ⑥ 간행물별 통계 -->
+    <!-- 9. 간행물별 통계 -->
     <div class="card">
       <h2>📖 간행물별 열람 통계</h2>
       <p class="sub">어떤 간행물이 얼마나 읽히는지 · 평균 어디까지 읽는지 · 어디서 유입되는지 (익명 집계 · 관리자 열람 제외)</p>
@@ -486,7 +508,7 @@
     $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
     // ---------- 콘솔 상태 ----------
-    let books = [], cats = [], loadingImgs = [], notice = {};
+    let books = [], cats = [], loadingImgs = [], notice = {}, site = {};
     const today = new Date().toISOString().slice(0, 10);
     function catTitle(id) { const c = cats.find(c => c.id === id); return c ? c.title : id; }
 
@@ -495,6 +517,7 @@
       cats = JSON.parse(JSON.stringify(window.CATEGORIES || []));
       loadingImgs = (window.LOADING_IMAGES || []).slice();
       notice = Object.assign({ enabled: false, text: "", link: "", until: "" }, window.NOTICE || {});
+      site = Object.assign({ brandTitle: "대외 간행물 e-Book", heroTitle: "대외 간행물", heroSubtitle: "카테고리를 선택하면 간행물을 웹진 형태로 열람할 수 있습니다." }, window.SITE || {});
       $('ghToken').value = localStorage.getItem('eb_gh_token') || '';
       renderAll();
       pendingCovers = {};
@@ -506,7 +529,7 @@
       loadDeploy();
     }
     function renderAll() {
-      renderTables(); renderCatRows(); renderImgList(); renderNotice(); renderQrTargets();
+      renderTables(); renderCatRows(); renderImgList(); renderNotice(); renderSite(); renderQrTargets();
     }
 
     // ---------- 저장(게시) · 변경 감지 ----------
@@ -1001,6 +1024,28 @@
     $('nLink').oninput = () => notice.link = $('nLink').value.trim();
     $('nUntil').onchange = () => notice.until = $('nUntil').value;
 
+    // ---------- 메인 화면 문구 ----------
+    function renderSite() {
+      $('sfBrand').value = site.brandTitle || '';
+      $('sfTitle').value = site.heroTitle || '';
+      $('sfSub').value = site.heroSubtitle || '';
+      $('sfBrandCount').textContent = ($('sfBrand').value).length + '자';
+      $('sfTitleCount').textContent = ($('sfTitle').value).length + '자';
+      $('sfSubCount').textContent = ($('sfSub').value).length + '자';
+    }
+    $('sfBrand').oninput = () => {
+      site.brandTitle = $('sfBrand').value;
+      $('sfBrandCount').textContent = $('sfBrand').value.length + '자';
+    };
+    $('sfTitle').oninput = () => {
+      site.heroTitle = $('sfTitle').value;
+      $('sfTitleCount').textContent = $('sfTitle').value.length + '자';
+    };
+    $('sfSub').oninput = () => {
+      site.heroSubtitle = $('sfSub').value;
+      $('sfSubCount').textContent = $('sfSub').value.length + '자';
+    };
+
     // ---------- 파일 점검 ----------
     async function headInfo(url) {
       try {
@@ -1050,12 +1095,15 @@ const LOADING_IMAGES = ${pretty(loadingImgs)};
 
 const NOTICE = ${pretty({ enabled: !!notice.enabled, text: notice.text || "", link: notice.link || "", until: notice.until || "" })};
 
+const SITE = ${pretty({ brandTitle: site.brandTitle || "", heroTitle: site.heroTitle || "", heroSubtitle: site.heroSubtitle || "" })};
+
 const CATEGORIES = ${pretty(cats)};
 
 const BOOKS = ${pretty(books)};
 
 window.LOADING_IMAGES = LOADING_IMAGES;
 window.NOTICE = NOTICE;
+window.SITE = SITE;
 window.CATEGORIES = CATEGORIES;
 window.BOOKS = BOOKS;
 `;

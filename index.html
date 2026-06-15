@@ -27,7 +27,7 @@
     <a class="brand" href="index.html">
       <img class="brand-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
       <span class="brand-divider"></span>
-      <span class="brand-title">대외 간행물 e-Book</span>
+      <span class="brand-title" id="brandTitle">대외 간행물 e-Book</span>
     </a>
     <div class="spacer"></div>
   </div>
@@ -42,8 +42,8 @@
 
   <!-- ===== 메인: 카테고리 선택 ===== -->
   <section class="hero">
-    <h1>대외 간행물</h1>
-    <p>카테고리를 선택하면 간행물을 웹진 형태로 열람할 수 있습니다.</p>
+    <h1 id="heroTitle">대외 간행물</h1>
+    <p id="heroSubtitle">카테고리를 선택하면 간행물을 웹진 형태로 열람할 수 있습니다.</p>
   </section>
 
   <main class="cat-grid" id="catGrid"></main>
@@ -76,6 +76,14 @@
     const books = (window.BOOKS || []).filter(isVisible);
     const categories = (window.CATEGORIES || []);
     const loadingImages = (window.LOADING_IMAGES || []);
+
+    /* ---------- 메인 상단 문구(관리자 콘솔에서 편집) ---------- */
+    (function siteInit() {
+      const s = window.SITE || {};
+      if (s.brandTitle) $('brandTitle').textContent = s.brandTitle;
+      if (s.heroTitle) $('heroTitle').textContent = s.heroTitle;
+      if (s.heroSubtitle) $('heroSubtitle').textContent = s.heroSubtitle;
+    })();
 
     if (window.ebTrack) ebTrack.visit();
 
