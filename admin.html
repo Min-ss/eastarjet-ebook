@@ -1069,6 +1069,7 @@ window.BOOKS = BOOKS;
     const encPath = p => p.split('/').map(encodeURIComponent).join('/');
     async function ghReq(path, opts = {}) {
       const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/${path}`, {
+        cache: 'no-store',   // 옛 sha 를 집지 않도록 캐시 사용 안 함
         ...opts,
         headers: {
           Authorization: 'Bearer ' + $('ghToken').value.trim(),
@@ -1092,10 +1093,18 @@ window.BOOKS = BOOKS;
       } catch (e) { return undefined; }
     }
     async function ghPutFile(filePath, base64, message) {
-      const sha = await ghGetSha(filePath);
-      const body = { message, content: base64, branch: GH.branch };
-      if (sha) body.sha = sha;
-      return ghReq('contents/' + encPath(filePath), { method: 'PUT', body: JSON.stringify(body) });
+      async function put() {
+        const sha = await ghGetSha(filePath);
+        const body = { message, content: base64, branch: GH.branch };
+        if (sha) body.sha = sha;
+        return ghReq('contents/' + encPath(filePath), { method: 'PUT', body: JSON.stringify(body) });
+      }
+      try { return await put(); }
+      catch (e) {
+        // sha 불일치(does not match / 409)면 최신 sha 를 다시 읽어 한 번 재시도
+        if (/does not match|409|409 |sha/i.test(e.message)) return await put();
+        throw e;
+      }
     }
     const b64Text = s => btoa(unescape(encodeURIComponent(s)));
     const b64File = f => new Promise((res, rej) => {
