@@ -270,8 +270,9 @@
           <input id="cfTitle" placeholder="예: 안전정보 간행물" />
         </div>
         <div class="full">
-          <label>설명</label>
+          <label>설명 <span id="cfDescCount" class="sub" style="font-weight:400;margin-left:4px">0자</span></label>
           <input id="cfDesc" placeholder="예: 항공안전 관련 법령·간행물을 웹진으로 열람합니다." />
+          <p class="sub" id="cfDescHint" style="margin:6px 2px 0">메인 카드에서 <b>한 줄</b>로 표시됩니다. 한 줄 권장 길이 <b>약 20자</b>(공백 포함) — 넘으면 끝이 …로 잘립니다.</p>
         </div>
         <div class="full">
           <label>표지 이미지 (선택 — 메인 카테고리 카드 배경)</label>
@@ -857,11 +858,24 @@
       });
       updateCatBulk();
     }
+    // 설명 글자 수 카운터 (공백 포함). 한 줄 권장 20자.
+    const DESC_ONE_LINE = 20;
+    function updateDescCount() {
+      const n = ($('cfDesc').value || '').length;
+      const el = $('cfDescCount');
+      el.textContent = n + '자';
+      const over = n > DESC_ONE_LINE;
+      el.style.color = over ? 'var(--red)' : 'var(--muted)';
+      el.style.fontWeight = over ? '600' : '400';
+      el.textContent = over ? `${n}자 · 한 줄 초과(약 ${DESC_ONE_LINE}자 권장)` : `${n}자`;
+    }
+    $('cfDesc').addEventListener('input', updateDescCount);
     function loadCatToForm(i) {
       const c = cats[i];
       $('cfId').value = c.id; $('cfId').readOnly = true;
       $('cfTitle').value = c.title || '';
       $('cfDesc').value = c.desc || '';
+      updateDescCount();
       $('cfCover').value = c.cover || '';
       clearCatCoverPdf();
       $('addCatBtn').dataset.edit = i;
@@ -871,6 +885,7 @@
     function resetCatForm() {
       $('cfId').value = ''; $('cfId').readOnly = false;
       $('cfTitle').value = ''; $('cfDesc').value = ''; $('cfCover').value = '';
+      updateDescCount();
       clearCatCoverPdf();
       delete $('addCatBtn').dataset.edit; $('addCatBtn').textContent = '목록에 추가/수정';
     }

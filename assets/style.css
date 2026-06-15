@@ -139,7 +139,10 @@ img { display: block; }
 .cat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
 .cat-card .cat-body { position: relative; z-index: 2; text-align: center; padding: 30px 22px 22px; }
 .cat-card h3 { margin: 0 0 8px; font-size: 23px; font-weight: 700; letter-spacing: -.012em; line-height: 1.2; }
-.cat-card .cat-body p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+.cat-card .cat-body p {
+  margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .cat-card .cat-go { color: var(--red); font-size: 15px; font-weight: 500; }
 .cat-card .cat-cover {
   position: relative; width: 100%; margin-top: auto;
