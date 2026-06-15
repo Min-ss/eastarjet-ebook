@@ -170,8 +170,11 @@
               <span class="badge badge-type">${isPdf ? 'PDF' : '웹진'}</span>
               <img src="${b.cover}" alt="${b.title} 표지" loading="lazy" />
             </div>
-            <h3>${b.title}</h3>
-            <div class="meta">${b.subtitle || ''}${count}</div>
+            <div class="book-info">
+              <h3>${b.title}</h3>
+              <div class="meta">${b.subtitle || ''}${count}</div>
+            </div>
+            <span class="book-chevron" aria-hidden="true">›</span>
           </a>`;
         }).join('');
       }
