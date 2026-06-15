@@ -215,7 +215,7 @@ img { display: block; }
 }
 .notice-banner button:hover { background: rgba(0, 0, 0, .05); }
 @media (max-width: 640px) { .notice-banner { margin: 62px 14px -36px; font-size: 13px; } }
-.book-card h3 { margin: 18px 4px 5px; font-size: 18px; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; }
+.book-card h3 { margin: 18px 4px 5px; font-size: 18px; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; }
 .book-card .meta { margin: 0 4px; color: var(--muted); font-size: 14px; }
 /* 모바일 웹툰형 목록에서만 쓰는 우측 화살표 — PC(3열 그리드)에선 숨김 */
 .book-card .book-chevron { display: none; }

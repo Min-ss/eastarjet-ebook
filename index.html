@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260615c" />
+<link rel="stylesheet" href="assets/style.css?v=20260615d" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -204,8 +204,27 @@
       $('catGrid').style.display = 'none';
       document.querySelector('.hero').style.display = 'none';
       $('catDetail').style.display = 'block';
+      fitTitles(shelf);            // 컨테이너 표시 후라야 폭이 잡혀 한 줄 맞춤이 동작
       window.scrollTo(0, 0);
     }
+
+    /* 카드 제목이 길어도 한 줄로 — 칸을 넘치면 자간→글자크기 순으로 살짝 줄여 맞춘다 */
+    function fitTitles(scope) {
+      scope.querySelectorAll('.book-card h3').forEach(h => {
+        h.style.fontSize = '';
+        h.style.letterSpacing = '';
+        if (!h.clientWidth) return;
+        if (h.scrollWidth <= h.clientWidth) return;     // 이미 한 줄이면 그대로
+        h.style.letterSpacing = '-.04em';               // 1차: 자간 좁히기
+        let size = parseFloat(getComputedStyle(h).fontSize), guard = 0;
+        while (h.scrollWidth > h.clientWidth && size > 12 && guard++ < 60) {
+          size -= 0.5; h.style.fontSize = size + 'px';   // 2차: 글자 크기 미세 축소
+        }
+      });
+    }
+    // 글꼴 로드 완료/창 크기 변경 후 다시 맞춤
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTitles(document));
+    let _ftT; window.addEventListener('resize', () => { clearTimeout(_ftT); _ftT = setTimeout(() => fitTitles(document), 150); });
 
     function showHome() {
       $('catDetail').style.display = 'none';
