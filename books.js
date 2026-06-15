@@ -119,7 +119,7 @@ const BOOKS = [
     "file": "doc.pdf",
     "title": "1화 · 세이프티 히어로즈",
     "subtitle": "기내 안전 정보 툰",
-    "cover": "books/safety-star-01/cover.jpg"
+    "cover": "books/safety-star-01/cover.png"
   },
   {
     "id": "safety-star-02",
@@ -129,7 +129,7 @@ const BOOKS = [
     "file": "doc.pdf",
     "title": "2화 · 보조배터리",
     "subtitle": "기내 안전 정보 툰",
-    "cover": "books/safety-star-02/cover.jpg"
+    "cover": "books/safety-star-02/cover.png"
   },
   {
     "id": "safety-star-03",
@@ -139,7 +139,7 @@ const BOOKS = [
     "file": "doc.pdf",
     "title": "3화 · 전자담배",
     "subtitle": "기내 안전 정보 툰",
-    "cover": "books/safety-star-03/cover.jpg"
+    "cover": "books/safety-star-03/cover.png"
   },
   {
     "id": "safety-star-04",
@@ -149,7 +149,7 @@ const BOOKS = [
     "file": "doc.pdf",
     "title": "4화 · 승객 탑승 준비",
     "subtitle": "기내 안전 정보 툰",
-    "cover": "books/safety-star-04/cover.jpg"
+    "cover": "books/safety-star-04/cover.png"
   },
   {
     "id": "safety-star-05",
@@ -159,7 +159,7 @@ const BOOKS = [
     "file": "doc.pdf",
     "title": "5화 · 탈출 상황에서는?",
     "subtitle": "기내 안전 정보 툰",
-    "cover": "books/safety-star-05/cover.jpg"
+    "cover": "books/safety-star-05/cover.png"
   },
   {
     "id": "safety-star-06",
@@ -169,7 +169,7 @@ const BOOKS = [
     "file": "doc.pdf",
     "title": "6화 · 승객 안전 브리핑",
     "subtitle": "기내 안전 정보 툰",
-    "cover": "books/safety-star-06/cover.jpg"
+    "cover": "books/safety-star-06/cover.png"
   },
   {
     "id": "safety-star-07",
