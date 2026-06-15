@@ -26,13 +26,13 @@ const CATEGORIES = [
   {
     "id": "safety-pub",
     "title": "안전정보 간행물",
-    "desc": "항공안전 관련 법령·간행물을 웹진으로 열람합니다.",
+    "desc": "항공안전 관련 간행물을 열람합니다.",
     "cover": "assets/planes/20250529_172701.png"
   },
   {
     "id": "safety-star",
     "title": "객실안전정보툰 Safety Star",
-    "desc": "객실 안전 정보를 만화(툰)로 쉽고 재미있게 전합니다.",
+    "desc": "객실안전정보를 만화로 쉽게 전합니다.",
     "cover": "assets/planes/20250529_172733.png"
   },
   {
