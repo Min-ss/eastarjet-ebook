@@ -172,6 +172,36 @@ const BOOKS = [
     "cover": "books/safety-star-06/cover.jpg"
   },
   {
+    "id": "safety-star-07",
+    "type": "pdf",
+    "category": "safety-star",
+    "path": "books/safety-star-07",
+    "file": "doc.pdf",
+    "title": "7화 · 반려동물과 함께하는 안전한 여행",
+    "subtitle": "기내 안전 정보 툰",
+    "cover": "books/safety-star-07/cover.jpg"
+  },
+  {
+    "id": "safety-star-08",
+    "type": "pdf",
+    "category": "safety-star",
+    "path": "books/safety-star-08",
+    "file": "doc.pdf",
+    "title": "8화 · 비상구 좌석, 당신도 세이프티 히어로즈",
+    "subtitle": "기내 안전 정보 툰",
+    "cover": "books/safety-star-08/cover.jpg"
+  },
+  {
+    "id": "safety-star-09",
+    "type": "pdf",
+    "category": "safety-star",
+    "path": "books/safety-star-09",
+    "file": "doc.pdf",
+    "title": "9화 · 항공 안전, 무엇이든 물어보세요",
+    "subtitle": "기내 안전 정보 툰",
+    "cover": "books/safety-star-09/cover.jpg"
+  },
+  {
     "id": "aviation-safety-act",
     "type": "pdf",
     "category": "safety-law",
