@@ -12,7 +12,23 @@ const LOADING_IMAGES = [
   "assets/planes/20250529_172717.png",
   "assets/planes/20250529_172733.png",
   "assets/planes/20250529_172748.png",
-  "assets/planes/20250529_172803.png"
+  "assets/planes/20250529_172803.png",
+  "assets/planes/plane-01.jpg",
+  "assets/planes/plane-02.jpg",
+  "assets/planes/plane-03.jpg",
+  "assets/planes/plane-04.jpg",
+  "assets/planes/plane-05.jpg",
+  "assets/planes/plane-06.jpg",
+  "assets/planes/plane-07.jpg",
+  "assets/planes/plane-08.jpg",
+  "assets/planes/plane-09.jpg",
+  "assets/planes/plane-10.jpg",
+  "assets/planes/plane-11.jpg",
+  "assets/planes/plane-12.jpg",
+  "assets/planes/plane-13.jpg",
+  "assets/planes/plane-14.jpg",
+  "assets/planes/plane-15.jpg",
+  "assets/planes/plane-16.jpg"
 ];
 
 const NOTICE = {
