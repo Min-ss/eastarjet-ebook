@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 공식 상품몰 Eastar SHOP — 모형 항공기·굿즈·리빙·의류" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-  <link rel="stylesheet" href="assets/style.css?v=20260619f" />
+  <link rel="stylesheet" href="assets/style.css?v=20260619g" />
   <style>
     /* 하위 카테고리(콜라보 브랜드) 칩 — 상위 '굿즈' 선택 시 노출 */
     .shop-subcats { max-width: 1180px; margin: 2px auto 6px; padding: 0 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -51,7 +51,7 @@
     <div class="shop-hero-bg" id="shopHeroBg"></div>
     <div class="shop-hero-scrim"></div>
     <div class="shop-hero-text">
-      <span class="shop-hero-kicker">EASTAR SHOP</span>
+      <span class="shop-hero-kicker" id="heroKicker">EASTAR SHOP</span>
       <h1 id="heroHeadline">이스타항공 공식 굿즈</h1>
       <p id="heroSub">하늘 위의 설렘을 일상에서도.</p>
       <a id="heroLink" class="shop-hero-btn" style="display:none" target="_blank" rel="noopener">바로가기 ›</a>
@@ -121,11 +121,40 @@
       $('shopBrand').textContent = shop.title;   // 좌측 상단 탭 글자에 반영
     }
     const hero = shop.hero || {};
-    if (hero.headline) $('heroHeadline').textContent = hero.headline;
-    if (hero.sub) $('heroSub').textContent = hero.sub;
-    if (hero.image) $('shopHeroBg').style.backgroundImage = `url("${hero.image}")`;
-    else $('shopHero').classList.add('no-img');
+    // 문구: 값이 있으면 표시, 키가 있는데 빈 값이면 숨김(관리자에서 지우면 사라짐)
+    const setHeroText = (el, val, hasKey) => {
+      if (hasKey) { if (val) { el.textContent = val; el.style.display = ''; } else { el.style.display = 'none'; } }
+      else if (val) { el.textContent = val; }
+    };
+    setHeroText($('heroKicker'), hero.kicker, 'kicker' in hero);
+    setHeroText($('heroHeadline'), hero.headline, 'headline' in hero);
+    setHeroText($('heroSub'), hero.sub, 'sub' in hero);
     if (hero.link) { $('heroLink').href = hero.link; $('heroLink').style.display = 'inline-flex'; }
+    // 문구가 하나도 없으면 어두운 그라데이션(스크림)도 숨겨 사진이 잘 보이게
+    const hasHeroText = !!(hero.kicker || hero.headline || hero.sub || hero.link);
+    if (!hasHeroText) document.querySelector('.shop-hero-scrim').style.display = 'none';
+    // 배경 이미지: 여러 장이면 4초마다 크로스페이드로 전환
+    const heroImgs = (Array.isArray(hero.images) && hero.images.length ? hero.images : (hero.image ? [hero.image] : [])).filter(Boolean);
+    if (!heroImgs.length) { $('shopHero').classList.add('no-img'); }
+    else {
+      let front = $('shopHeroBg');
+      front.style.backgroundImage = `url("${heroImgs[0]}")`;
+      if (heroImgs.length > 1) {
+        heroImgs.forEach(src => { const im = new Image(); im.src = src; });   // 미리 로드(전환 깜빡임 방지)
+        let back = document.createElement('div');
+        back.className = 'shop-hero-bg';
+        back.style.opacity = '0';
+        front.parentNode.insertBefore(back, front.nextSibling);   // 스크림보다 아래에 위치
+        let idx = 0;
+        setInterval(() => {
+          idx = (idx + 1) % heroImgs.length;
+          back.style.backgroundImage = `url("${heroImgs[idx]}")`;
+          back.style.opacity = '1';
+          front.style.opacity = '0';
+          const t = front; front = back; back = t;
+        }, 4000);
+      }
+    }
 
     /* ---------- 공지 배너 ---------- */
     (function noticeInit() {

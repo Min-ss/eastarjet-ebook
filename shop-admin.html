@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eastar SHOP 상품 관리</title>
-  <link rel="stylesheet" href="assets/style.css?v=20260619f" />
+  <link rel="stylesheet" href="assets/style.css?v=20260619g" />
   <style>
     .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .gate-box { width: 100%; max-width: 360px; text-align: center; }
@@ -93,9 +93,10 @@
       <div class="form-grid">
         <div><label>SHOP 제목</label><input type="text" id="sTitle" placeholder="Eastar SHOP" /></div>
         <div><label>소개글(내부용)</label><input type="text" id="sSubtitle" placeholder="이스타항공 공식 상품을 만나보세요." /></div>
-        <div class="full"><label>히어로 큰 제목</label><input type="text" id="hHeadline" placeholder="이스타항공 공식 굿즈" /></div>
-        <div class="full"><label>히어로 소개 문구</label><input type="text" id="hSub" placeholder="하늘 위의 설렘을 일상에서도." /></div>
-        <div class="full"><label>히어로 배경 이미지 경로/URL (선택 — 비우면 레드 그라데이션)</label><input type="text" id="hImage" placeholder="assets/planes/plane-05.jpg" /></div>
+        <div class="full"><label>히어로 작은 라벨 (비우면 숨김)</label><input type="text" id="hKicker" placeholder="EASTAR SHOP" /></div>
+        <div class="full"><label>히어로 큰 제목 (비우면 숨김)</label><input type="text" id="hHeadline" placeholder="이스타항공 공식 굿즈" /></div>
+        <div class="full"><label>히어로 소개 문구 (비우면 숨김)</label><input type="text" id="hSub" placeholder="하늘 위의 설렘을 일상에서도." /></div>
+        <div class="full"><label>히어로 배경 이미지 (한 줄에 하나씩 · 여러 장이면 4초마다 자동 전환 · 비우면 레드 그라데이션)</label><textarea id="hImages" rows="3" placeholder="assets/planes/plane-05.jpg&#10;assets/planes/plane-02.jpg"></textarea></div>
         <div class="full"><label>히어로 버튼 링크 (선택)</label><input type="url" id="hLink" placeholder="https://..." /></div>
       </div>
     </div>
@@ -217,16 +218,22 @@
       const h = s.hero || {};
       meta = {
         title: s.title || 'Eastar SHOP', subtitle: s.subtitle || '',
-        hero: { headline: h.headline || '', sub: h.sub || '', image: h.image || '', link: h.link || '' },
+        hero: {
+          kicker: h.kicker !== undefined ? h.kicker : 'EASTAR SHOP',
+          headline: h.headline || '', sub: h.sub || '',
+          images: Array.isArray(h.images) ? h.images.slice() : (h.image ? [h.image] : []),
+          link: h.link || ''
+        },
         notice: Object.assign({ enabled: false, text: '', link: '', until: '' }, s.notice || {})
       };
       products = JSON.parse(JSON.stringify(window.PRODUCTS || []));
       cats = JSON.parse(JSON.stringify(window.SHOP_CATEGORIES || []));
       $('sTitle').value = meta.title;
       $('sSubtitle').value = meta.subtitle;
+      $('hKicker').value = meta.hero.kicker;
       $('hHeadline').value = meta.hero.headline;
       $('hSub').value = meta.hero.sub;
-      $('hImage').value = meta.hero.image;
+      $('hImages').value = (meta.hero.images || []).join('\n');
       $('hLink').value = meta.hero.link;
       $('ghToken').value = localStorage.getItem('eb_gh_token') || '';
       pendingImages = {};
@@ -241,9 +248,10 @@
 
     $('sTitle').addEventListener('input', () => { meta.title = $('sTitle').value; });
     $('sSubtitle').addEventListener('input', () => { meta.subtitle = $('sSubtitle').value; });
+    $('hKicker').addEventListener('input', () => { meta.hero.kicker = $('hKicker').value; });
     $('hHeadline').addEventListener('input', () => { meta.hero.headline = $('hHeadline').value; });
     $('hSub').addEventListener('input', () => { meta.hero.sub = $('hSub').value; });
-    $('hImage').addEventListener('input', () => { meta.hero.image = $('hImage').value; });
+    $('hImages').addEventListener('input', () => { meta.hero.images = $('hImages').value.split('\n').map(s => s.trim()).filter(Boolean); });
     $('hLink').addEventListener('input', () => { meta.hero.link = $('hLink').value; });
 
     /* ---------- 카테고리 ---------- */
@@ -421,7 +429,10 @@
       const shopObj = {
         title: meta.title || 'Eastar SHOP',
         subtitle: meta.subtitle || '',
-        hero: { headline: meta.hero.headline || '', sub: meta.hero.sub || '', image: meta.hero.image || '', link: meta.hero.link || '' },
+        hero: (() => {
+          const imgs = (meta.hero.images || []).map(s => String(s).trim()).filter(Boolean);
+          return { kicker: meta.hero.kicker || '', headline: meta.hero.headline || '', sub: meta.hero.sub || '', images: imgs, image: imgs[0] || '', link: meta.hero.link || '' };
+        })(),
         notice: { enabled: !!(meta.notice && meta.notice.enabled), text: (meta.notice && meta.notice.text) || '', link: (meta.notice && meta.notice.link) || '', until: (meta.notice && meta.notice.until) || '' }
       };
       return `// ============================================================

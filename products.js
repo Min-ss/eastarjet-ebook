@@ -11,8 +11,16 @@ const SHOP = {
   "title": "E-Shop",
   "subtitle": "이스타항공 공식 상품을 만나보세요.",
   "hero": {
+    "kicker": "",
     "headline": "",
     "sub": "",
+    "images": [
+      "assets/planes/plane-05.jpg",
+      "assets/planes/plane-07.jpg",
+      "assets/planes/plane-08.jpg",
+      "assets/planes/plane-01.jpg",
+      "assets/planes/plane-03.jpg"
+    ],
     "image": "assets/planes/plane-05.jpg",
     "link": ""
   },

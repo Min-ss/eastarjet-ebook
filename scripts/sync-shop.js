@@ -229,7 +229,7 @@ window.PRODUCTS = PRODUCTS;
   // SHOP 메타 보존(없으면 기본값)
   const meta = readExistingShopMeta() || {
     title: 'Eastar SHOP', subtitle: '이스타항공 공식 상품을 만나보세요.',
-    hero: { headline: '이스타항공 공식 굿즈', sub: '하늘 위의 설렘을 일상에서도.', image: '', link: '' },
+    hero: { kicker: 'EASTAR SHOP', headline: '이스타항공 공식 굿즈', sub: '하늘 위의 설렘을 일상에서도.', images: [], image: '', link: '' },
     notice: { enabled: false, text: '', link: '', until: '' }
   };
 
