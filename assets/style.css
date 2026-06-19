@@ -152,10 +152,11 @@ img { display: block; }
   background: linear-gradient(180deg, rgba(5, 7, 12, .26), rgba(5, 7, 12, .52));
 }
 .shop-splash .splash-title { letter-spacing: 3px; }
-/* 모바일: 세로 3분할(1열 3행) — 상품 3장 노출 */
+/* 모바일: 세로 3분할(1열 3행) — 상품 3장 + EASTAR SHOP/게이지바는 3번째 사진 아래(하단 띠)에 배치 */
 @media (max-width: 640px) {
-  .shop-splash-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; }
+  .shop-splash-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; bottom: 92px; }
   .shop-splash-cell:nth-child(n+4) { display: none; }
+  .splash.shop-splash { align-items: flex-end; padding-bottom: 24px; }
 }
 
 /* ============================================================
