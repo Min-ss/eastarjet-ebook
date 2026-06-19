@@ -1,0 +1,33 @@
+# Eastar SHOP 자동 동기화 — 자사몰(eastarjetshop.com)의 굿즈를 매일 긁어
+# products.js(상품·카테고리)와 shop/ 이미지를 자동 갱신·커밋합니다.
+# 여행상품(호텔·액티비티·골프)은 제외. SHOP 제목·히어로·공지 문구는 보존됩니다.
+name: sync-shop
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 매일 18:00 UTC (한국시간 03:00)
+  workflow_dispatch:        # Actions 탭에서 수동 실행 가능
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-shop
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 자사몰 굿즈 동기화
+        run: node scripts/sync-shop.js
+      - name: 변경사항 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add products.js shop
+          git diff --cached --quiet || git commit -m "🛍 자사몰 굿즈 자동 동기화 ($(date -u +%Y-%m-%d))"
+          git push

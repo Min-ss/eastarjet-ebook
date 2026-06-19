@@ -8,6 +8,15 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
   <link rel="stylesheet" href="assets/style.css?v=20260619d" />
+  <style>
+    /* 하위 카테고리(콜라보 브랜드) 칩 — 상위 '굿즈' 선택 시 노출 */
+    .shop-subcats { max-width: 1180px; margin: 2px auto 6px; padding: 0 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .shop-subcats .sub-label { font-size: 12.5px; color: var(--muted); margin-right: 2px; }
+    .shop-subchip { padding: 5px 13px; border-radius: 980px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+    .shop-subchip:hover { border-color: var(--red); color: var(--red); }
+    .shop-subchip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    @media (max-width: 640px) { .shop-subcats { padding: 0 14px; } }
+  </style>
 </head>
 <body class="shop-body">
   <!-- ===== 커머스 상단바 ===== -->
@@ -51,6 +60,8 @@
 
   <!-- ===== 카테고리 칩 ===== -->
   <nav class="shop-cats" id="shopCats" aria-label="카테고리"></nav>
+  <!-- ===== 하위 카테고리 칩 (콜라보 브랜드 등) ===== -->
+  <nav class="shop-subcats" id="shopSubCats" aria-label="하위 카테고리" style="display:none"></nav>
 
   <!-- ===== 상품 그리드 ===== -->
   <main class="shop-grid" id="shopGrid"></main>
@@ -87,8 +98,15 @@
     const won = n => (Number(n) || 0).toLocaleString('ko-KR') + '원';
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
     const catName = id => { const c = shopCats.find(c => c.id === id); return c ? c.name : ''; };
+    const catParent = id => { const c = shopCats.find(c => c.id === id); return c ? c.parent : undefined; };
+    const childrenOf = pid => shopCats.filter(c => c.parent === pid);
+    // 상품이 속한 최상위 카테고리(하위면 부모로 승격)
+    const topOf = p => catParent(p.category) || p.category;
+    // 상품이 특정 상위 카테고리(직속 또는 하위 포함)에 속하는지
+    const inTop = (p, t) => p.category === t || catParent(p.category) === t;
 
-    let activeCat = 'all';
+    let activeCat = 'all';   // 상위(또는 'all')
+    let activeSub = 'all';   // 하위(콜라보 브랜드)
     let query = '';
 
     /* ---------- 상단 문구 / 히어로 ---------- */
@@ -119,23 +137,47 @@
       };
     })();
 
-    /* ---------- 카테고리 칩 (상품이 있는 카테고리만) ---------- */
+    /* ---------- 카테고리 칩 (상위: 상품이 있는 카테고리만) ---------- */
     function renderCats() {
-      const used = new Set(products.map(p => p.category).filter(Boolean));
-      const chips = [{ id: 'all', name: '전체' }].concat(shopCats.filter(c => used.has(c.id)));
-      if (chips.length <= 1) { $('shopCats').style.display = 'none'; return; }
-      $('shopCats').innerHTML = chips.map(c =>
-        `<button class="shop-chip${c.id === activeCat ? ' active' : ''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`).join('');
+      const usedTop = new Set(products.map(topOf).filter(Boolean));
+      const tops = shopCats.filter(c => !c.parent && usedTop.has(c.id));
+      const chips = [{ id: 'all', name: '전체' }].concat(tops);
+      if (chips.length <= 1) { $('shopCats').style.display = 'none'; }
+      else {
+        $('shopCats').style.display = 'flex';
+        $('shopCats').innerHTML = chips.map(c =>
+          `<button class="shop-chip${c.id === activeCat ? ' active' : ''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`).join('');
+      }
+      renderSubCats();
+    }
+    /* 하위 칩: 선택된 상위 카테고리에 '상품이 있는' 하위만 노출 */
+    function renderSubCats() {
+      const nav = $('shopSubCats');
+      const kids = activeCat !== 'all'
+        ? childrenOf(activeCat).filter(c => products.some(p => p.category === c.id)) : [];
+      if (!kids.length) { nav.style.display = 'none'; nav.innerHTML = ''; return; }
+      const chips = [{ id: 'all', name: '전체' }].concat(kids);
+      nav.style.display = 'flex';
+      nav.innerHTML = '<span class="sub-label">브랜드</span>' + chips.map(c =>
+        `<button class="shop-subchip${c.id === activeSub ? ' active' : ''}" data-sub="${esc(c.id)}">${esc(c.name)}</button>`).join('');
     }
     $('shopCats').addEventListener('click', e => {
       const b = e.target.closest('.shop-chip'); if (!b) return;
-      activeCat = b.dataset.cat; renderCats(); renderGrid();
+      activeCat = b.dataset.cat; activeSub = 'all';
+      renderCats(); renderGrid();
+    });
+    $('shopSubCats').addEventListener('click', e => {
+      const b = e.target.closest('.shop-subchip'); if (!b) return;
+      activeSub = b.dataset.sub; renderSubCats(); renderGrid();
     });
 
     /* ---------- 상품 카드 ---------- */
     function filtered() {
       return products.filter(p => {
-        if (activeCat !== 'all' && p.category !== activeCat) return false;
+        if (activeCat !== 'all') {
+          if (!inTop(p, activeCat)) return false;
+          if (activeSub !== 'all' && p.category !== activeSub) return false;
+        }
         if (query) {
           const hay = (p.name + ' ' + (p.desc || '') + ' ' + catName(p.category)).toLowerCase();
           if (!hay.includes(query)) return false;
