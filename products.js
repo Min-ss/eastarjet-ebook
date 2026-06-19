@@ -8,7 +8,7 @@
 // ============================================================
 
 const SHOP = {
-  "title": "Eastar SHOP",
+  "title": "E-Shop",
   "subtitle": "이스타항공 공식 상품을 만나보세요.",
   "hero": {
     "headline": "이스타항공 공식 굿즈",
@@ -16,17 +16,33 @@ const SHOP = {
     "image": "assets/planes/plane-05.jpg",
     "link": ""
   },
-  "notice": { "enabled": false, "text": "", "link": "", "until": "" }
+  "notice": {
+    "enabled": false,
+    "text": "",
+    "link": "",
+    "until": ""
+  }
 };
 
 const SHOP_CATEGORIES = [
-  { "id": "model", "name": "모형 항공기" },
-  { "id": "goods", "name": "굿즈" },
-  { "id": "living", "name": "리빙" },
-  { "id": "apparel", "name": "의류" }
+  {
+    "id": "model",
+    "name": "모형 항공기"
+  },
+  {
+    "id": "goods",
+    "name": "굿즈"
+  },
+  {
+    "id": "living",
+    "name": "리빙"
+  },
+  {
+    "id": "apparel",
+    "name": "의류"
+  }
 ];
 
-// 샘플 상품 — 관리자 콘솔에서 실제 상품으로 교체/삭제하세요.
 const PRODUCTS = [
   {
     "id": "sample-goods-01",
