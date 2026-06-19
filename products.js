@@ -1,10 +1,9 @@
 // ============================================================
 //  EASTAR SHOP — 판매상품 데이터
-//  (관리자 콘솔의 「SHOP 상품 관리」에서 생성됨)
-//  상품 이미지는 shop/<상품ID>/img.* 로 업로드됩니다.
-//  상품 선택 필드: category(카테고리 ID) · published:false(비공개) ·
-//                  soldOut:true(품절) · badge(뱃지 문구)
-//  가격은 원(KRW) 숫자. salePrice 가 있으면 정가(price)에 취소선이 표시됩니다.
+//  ⚙️ 이 파일의 PRODUCTS·SHOP_CATEGORIES 는 scripts/sync-shop.js 가
+//     자사몰(eastarjetshop.com)에서 자동 동기화합니다. 직접 수정하지 마세요.
+//     (SHOP 제목·히어로·공지 문구는 관리콘솔 shop-admin.html 에서 편집 → 보존됨)
+//  여행상품(호텔·액티비티·골프)은 제외됩니다.
 // ============================================================
 
 const SHOP = {
