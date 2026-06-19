@@ -152,10 +152,10 @@ img { display: block; }
   background: linear-gradient(180deg, rgba(5, 7, 12, .26), rgba(5, 7, 12, .52));
 }
 .shop-splash .splash-title { letter-spacing: 3px; }
-/* 모바일: 위/아래 2분할(1열 2행) — 상품 2장만 노출 */
+/* 모바일: 세로 3분할(1열 3행) — 상품 3장 노출 */
 @media (max-width: 640px) {
-  .shop-splash-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
-  .shop-splash-cell:nth-child(n+3) { display: none; }
+  .shop-splash-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; }
+  .shop-splash-cell:nth-child(n+4) { display: none; }
 }
 
 /* ============================================================
