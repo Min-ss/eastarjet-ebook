@@ -19,7 +19,7 @@
       <span class="brand-divider"></span>
       <nav class="topnav">
         <a class="topnav-link" href="index.html">E-Books</a>
-        <a class="topnav-link active" href="shop.html" aria-current="page">Eastar SHOP</a>
+        <a class="topnav-link active" id="shopBrand" href="shop.html" aria-current="page">Eastar SHOP</a>
       </nav>
       <div class="spacer"></div>
       <div class="shop-search">
@@ -92,7 +92,10 @@
     let query = '';
 
     /* ---------- 상단 문구 / 히어로 ---------- */
-    if (shop.title) document.title = shop.title + ' — 이스타항공 공식 상품몰';
+    if (shop.title) {
+      document.title = shop.title + ' — 이스타항공 공식 상품몰';
+      $('shopBrand').textContent = shop.title;   // 좌측 상단 탭 글자에 반영
+    }
     const hero = shop.hero || {};
     if (hero.headline) $('heroHeadline').textContent = hero.headline;
     if (hero.sub) $('heroSub').textContent = hero.sub;
