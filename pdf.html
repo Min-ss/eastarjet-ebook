@@ -6,7 +6,8 @@
   <title>PDF 뷰어 — 이스타항공</title>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260615e" />
+<link rel="stylesheet" href="assets/style.css?v=20260619d" />
+<link rel="stylesheet" href="assets/reader.css?v=20260619a" />
   <style>
     /* ---------- PDF 뷰어 전용 ---------- */
     #pdfScroll {
@@ -112,6 +113,7 @@
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script src="books.js"></script>
   <script src="assets/track.js"></script>
+  <script src="assets/reader.js?v=20260619a"></script>
   <script>
     const $ = id => document.getElementById(id);
     const toast = (msg) => {
@@ -142,6 +144,7 @@
     let baseW = 0, baseH = 0;          // 1페이지 기준 크기(스케일 1)
     let zoom = 1;                       // 사용자 배율
     let cssScale = 1;                   // 컨테이너에 맞춘 기본 배율
+    let pageGap = 14;                   // 페이지 간격(px) — 읽기 설정 '줄 간격'
     const wrappers = [];               // 페이지 래퍼 div 목록
     const rendered = new Set();        // 그려진 페이지 번호
     const renderTasks = {};            // 진행 중 렌더 취소용
@@ -250,7 +253,7 @@
 
     // ---------- 이어읽기: 책별 마지막 페이지 기억 (flip.html 과 키 공유) ----------
     const POS_KEY = 'eb_pos_' + book.id;
-    function savePos(n) { try { localStorage.setItem(POS_KEY, String(n)); } catch (e) {} if (window.ebTrack) ebTrack.page(book.id, n, numPages); }
+    function savePos(n) { try { localStorage.setItem(POS_KEY, String(n)); } catch (e) {} if (window.ebTrack) ebTrack.page(book.id, n, numPages); if (window.EBReader) EBReader.setProgress(n, numPages); }
     function resumeToast(p) {
       const t = $('toast');
       t.textContent = `${p}페이지부터 이어봅니다 `;
@@ -264,7 +267,9 @@
     }
 
     // ---------- 초기 로딩 ----------
+    const LOAD_TIMEOUT_MS = 45000;   // 느린 네트워크에서 무한 대기 방지
     (async () => {
+      let timedOut = false, timer = 0;
       try {
         scrollEl.innerHTML = '<div class="empty-state" id="loadMsg" style="margin-top:90px">불러오는 중…</div>';
         const task = pdfjsLib.getDocument({
@@ -277,7 +282,9 @@
           const el = $('loadMsg');
           if (el && p.total) el.textContent = `불러오는 중… ${Math.min(99, Math.round(p.loaded / p.total * 100))}%`;
         };
+        timer = setTimeout(() => { timedOut = true; try { task.destroy(); } catch (e) {} }, LOAD_TIMEOUT_MS);
         pdf = await task.promise;
+        clearTimeout(timer);
         numPages = pdf.numPages;
         const first = await pdf.getPage(1);
         const vp1 = first.getViewport({ scale: 1 });
@@ -286,6 +293,7 @@
         $('pageInfo').textContent = `/ ${numPages}`;
         $('zoomLabel').textContent = Math.round(zoom * 100) + '%';
         buildPlaceholders();
+        if (window.EBReader) EBReader.setProgress(curPage, numPages);
         // 저장된 위치가 있으면 그 페이지로 이동
         const saved = parseInt(localStorage.getItem(POS_KEY) || '0', 10);
         if (saved >= 2 && saved <= numPages) {
@@ -295,14 +303,17 @@
           });
         }
       } catch (e) {
+        clearTimeout(timer);
         const isFile = location.protocol === 'file:';
+        const retryBtn = `<button class="btn primary" onclick="location.reload()" style="margin-right:8px">다시 시도</button>`;
         scrollEl.innerHTML = `<div class="empty-state" style="margin-top:90px">
           <h2>PDF를 불러오지 못했습니다</h2>
           ${isFile
             ? `<p>파일을 더블클릭(<code>file://</code>)으로 열면 브라우저 보안 정책상 PDF를 읽지 못합니다.<br>
                같은 폴더의 <b>「미리보기.bat」</b> 을 실행하거나, GitHub Pages 등 웹주소(http/https)로 열면 정상 동작합니다.</p>
                <p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p>`
-            : `<p>${e.message || e}</p>`}
+            : `<p>${timedOut ? '연결이 지연되고 있습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.' : (e.message || e)}</p>
+               <p style="margin-top:18px">${retryBtn}<a class="btn" href="index.html">← 목록으로</a></p>`}
         </div>`;
       }
     })();
@@ -313,7 +324,7 @@
       const mid = scrollEl.scrollTop + scrollEl.clientHeight / 2;
       let acc = 0, p = 1;
       for (let i = 0; i < wrappers.length; i++) {
-        const h = wrappers[i].offsetHeight + 14;
+        const h = wrappers[i].offsetHeight + pageGap;
         if (acc + h > mid) { p = i + 1; break; }
         acc += h; p = i + 1;
       }
@@ -498,6 +509,14 @@
     window.addEventListener('resize', () => {
       clearTimeout(rT);
       rT = setTimeout(() => { if (!numPages) return; const a = curPage; cssScale = fitScale(); buildPlaceholders(); centerHorizontally(); setTimeout(() => { goToPage(a); centerHorizontally(); }, 50); }, 250);
+    });
+
+    // ---------- 읽기 설정(테마·야간·글자크기·줄간격·몰입·진행률) ----------
+    if (window.EBReader) EBReader.init({
+      features: { font: true, gap: true },
+      onFont: (f) => { if (!numPages) { zoom = f; $('zoomLabel').textContent = Math.round(f * 100) + '%'; } else applyZoom(f); },
+      onGap: (px) => { pageGap = px; },   // .pdf-page 여백은 reader.css --reader-gap 가 자동 반영, 여기선 현재페이지 계산 보정
+      onImmersive: () => { if (!numPages) return; const a = curPage; cssScale = fitScale(); buildPlaceholders(); requestAnimationFrame(() => { goToPage(a); centerHorizontally(); }); }
     });
   </script>
 

@@ -6,7 +6,8 @@
   <title>간행물 뷰어 — 이스타항공</title>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260615e" />
+<link rel="stylesheet" href="assets/style.css?v=20260619d" />
+<link rel="stylesheet" href="assets/reader.css?v=20260619a" />
 </head>
 <body class="viewer flipbook">
   <!-- ===== ① 표지 랜딩 + 전체 페이지 미리보기 ===== -->
@@ -85,6 +86,7 @@
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script src="books.js"></script>
   <script src="assets/track.js"></script>
+  <script src="assets/reader.js?v=20260619a"></script>
   <script>
     const $ = id => document.getElementById(id);
     const toast = (m) => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800); };
@@ -153,7 +155,9 @@
     }
 
     // ---------- 초기 로딩 ----------
+    const LOAD_TIMEOUT_MS = 45000;   // 느린 네트워크에서 무한 대기 방지
     (async () => {
+      let timedOut = false, timer = 0;
       try {
         const task = pdfjsLib.getDocument({ url: pdfUrl, cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked: true });
         // 다운로드 진행률 표시 (Pages는 Range 미지원 → 전체 수신 후 표시되므로 진행률이 체감에 중요)
@@ -161,7 +165,9 @@
           const el = $('loadMsg');
           if (el && p.total) el.textContent = `불러오는 중… ${Math.min(99, Math.round(p.loaded / p.total * 100))}%`;
         };
+        timer = setTimeout(() => { timedOut = true; try { task.destroy(); } catch (e) {} }, LOAD_TIMEOUT_MS);
         pdf = await task.promise;
+        clearTimeout(timer);
         numPages = pdf.numPages;
         const p1 = await pdf.getPage(1);
         const vp = p1.getViewport({ scale: 1 });
@@ -171,17 +177,20 @@
         buildThumbs();
         if (location.hash === '#read') openWithResume();
       } catch (e) {
+        clearTimeout(timer);
         const isFile = location.protocol === 'file:';
         // 바로읽기로 진입해 랜딩을 숨겼다면, 오류 안내를 보이도록 되돌림
         $('flipView').hidden = true;
         $('landing').style.display = 'flex';
+        const retryBtn = `<button class="btn primary" onclick="location.reload()" style="margin-right:8px">다시 시도</button>`;
         $('landing').innerHTML = `<div class="empty-state" style="margin-top:90px">
           <h2>간행물을 불러오지 못했습니다</h2>
           ${isFile
             ? `<p>파일을 더블클릭(<code>file://</code>)으로 열면 브라우저 보안 정책상 PDF를 읽지 못합니다.<br>
                같은 폴더의 <b>「미리보기.bat」</b> 을 실행하거나, GitHub Pages 등 웹주소(http/https)로 열면 정상 동작합니다.</p>
                <p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p>`
-            : `<p>${e.message || e}</p><p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p>`}
+            : `<p>${timedOut ? '연결이 지연되고 있습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.' : (e.message || e)}</p>
+               <p style="margin-top:18px">${retryBtn}<a class="btn" href="index.html">← 목록으로</a></p>`}
         </div>`;
       }
     })();
@@ -321,6 +330,7 @@
       $('pageInfo').textContent = (list.length === 2 ? `${list[0]}-${list[1]}` : `${cur}`) + ` / ${total}`;
       $('prevBtn').disabled = cur <= 1;
       $('nextBtn').disabled = cur >= total;
+      if (window.EBReader) EBReader.setProgress(list.length === 2 ? list[list.length - 1] : cur, total);
     }
 
     // ----- 스크롤(연속/웹툰) 모드 -----
@@ -383,6 +393,7 @@
       $('slider').value = cur;
       $('pageInfo').textContent = `${cur} / ${numPages}`;
       $('prevBtn').disabled = cur <= 1; $('nextBtn').disabled = cur >= numPages;
+      if (window.EBReader) EBReader.setProgress(cur, numPages);
     }
     function updateScrollCur() {
       if (mode !== 'scroll' || !scrollWraps.length) return;
@@ -554,11 +565,19 @@
     $('zoomOut').onclick = () => mode === 'scroll' ? setScrollScale(scrollScale / 1.2) : zoomTo(CENTER, scale / 1.35);
     $('fitBtn').onclick = () => { if (mode === 'scroll') setScrollScale(1); else { scale = 1; tx = 0; ty = 0; applyTransform(); } };
 
+    // ---------- 읽기 설정: 글자 크기(=기본 배율) ----------
+    let readerFont = 1;
+    function applyReaderFont() {
+      if (!numPages || $('flipView').hidden) return;
+      if (mode === 'scroll') { if (Math.abs(scrollScale - readerFont) > 0.01) setScrollScale(readerFont); }
+      else { scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, readerFont)); tx = 0; ty = 0; applyTransform(); }
+    }
+
     // 보기 방식 토글
     function applyMode(m) {
       mode = m; localStorage.setItem('eb_pdf_mode', m);
       $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
-      fullCache.clear(); render();
+      fullCache.clear(); render(); applyReaderFont();
     }
     $('modeSeg').querySelectorAll('button').forEach(b => b.onclick = () => applyMode(b.dataset.m));
 
@@ -570,7 +589,7 @@
       $('landing').style.display = 'none';
       $('flipView').hidden = false;
       $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === mode));
-      requestAnimationFrame(() => render(true));
+      requestAnimationFrame(() => { render(true); applyReaderFont(); });
       if (!sessionStorage.getItem('eb_reader_hint')) {
         sessionStorage.setItem('eb_reader_hint', '1');
         // 이어읽기 토스트가 떠 있으면 힌트는 건너뜀 (같은 토스트 영역 공유)
@@ -681,6 +700,14 @@
     window.addEventListener('resize', () => {
       clearTimeout(rT);
       rT = setTimeout(() => { if (!$('flipView').hidden) { fullCache.clear(); render(true); } }, 200);
+    });
+
+    // ---------- 읽기 설정(테마·야간·글자크기·줄간격·몰입·진행률) ----------
+    if (window.EBReader) EBReader.init({
+      features: { font: true, gap: true },
+      onFont: (f) => { readerFont = f; applyReaderFont(); },
+      onImmersive: () => { if (!$('flipView').hidden) { fullCache.clear(); render(true); applyReaderFont(); } }
+      // 줄 간격(gap)은 reader.css 의 --reader-gap 변수가 스크롤 모드 .spage 여백에 자동 반영됨
     });
   </script>
 

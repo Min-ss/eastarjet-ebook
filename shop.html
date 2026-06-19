@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eastar SHOP — 이스타항공 공식 상품몰</title>
+  <meta name="description" content="이스타항공 공식 상품몰 Eastar SHOP — 모형 항공기·굿즈·리빙·의류" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
+  <link rel="stylesheet" href="assets/style.css?v=20260619d" />
+</head>
+<body class="shop-body">
+  <!-- ===== 커머스 상단바 ===== -->
+  <header class="shop-top">
+    <div class="shop-top-inner">
+      <a class="brand" href="index.html">
+        <img class="brand-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
+      </a>
+      <span class="brand-divider"></span>
+      <nav class="topnav">
+        <a class="topnav-link" href="index.html">E-Books</a>
+        <a class="topnav-link active" href="shop.html" aria-current="page">Eastar SHOP</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="shop-search">
+        <span class="shop-search-ico" aria-hidden="true">🔍</span>
+        <input type="search" id="searchInput" placeholder="상품 검색" aria-label="상품 검색" />
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== 공지 배너 ===== -->
+  <div class="notice-banner" id="noticeBanner" style="display:none">
+    <span class="notice-ico">📢</span>
+    <span id="noticeText"></span>
+    <a id="noticeLink" target="_blank" rel="noopener" style="display:none">자세히 ›</a>
+    <button id="noticeClose" aria-label="공지 닫기">✕</button>
+  </div>
+
+  <!-- ===== 히어로 배너 ===== -->
+  <section class="shop-hero" id="shopHero">
+    <div class="shop-hero-bg" id="shopHeroBg"></div>
+    <div class="shop-hero-scrim"></div>
+    <div class="shop-hero-text">
+      <span class="shop-hero-kicker">EASTAR SHOP</span>
+      <h1 id="heroHeadline">이스타항공 공식 굿즈</h1>
+      <p id="heroSub">하늘 위의 설렘을 일상에서도.</p>
+      <a id="heroLink" class="shop-hero-btn" style="display:none" target="_blank" rel="noopener">바로가기 ›</a>
+    </div>
+  </section>
+
+  <!-- ===== 카테고리 칩 ===== -->
+  <nav class="shop-cats" id="shopCats" aria-label="카테고리"></nav>
+
+  <!-- ===== 상품 그리드 ===== -->
+  <main class="shop-grid" id="shopGrid"></main>
+
+  <div class="shop-empty" id="shopEmpty" style="display:none">
+    <h2>🛍 준비 중입니다</h2>
+    <p>판매 상품이 곧 등록될 예정입니다.</p>
+  </div>
+
+  <footer class="site">© EASTAR JET — Eastar SHOP. 무단 전재·재배포 금지. <a href="shop-admin.html" class="admin-link">상품 관리</a></footer>
+
+  <!-- ===== 상품 상세 모달 ===== -->
+  <div class="pd-overlay" id="pdOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pdName">
+    <div class="pd-modal">
+      <button class="pd-close" id="pdClose" aria-label="닫기">✕</button>
+      <div class="pd-img" id="pdImg"></div>
+      <div class="pd-info">
+        <span class="pd-cat" id="pdCat"></span>
+        <h2 class="pd-name" id="pdName"></h2>
+        <div class="pd-price" id="pdPrice"></div>
+        <p class="pd-detail" id="pdDetail"></p>
+        <div class="pd-actions" id="pdActions"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="products.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const today = new Date().toISOString().slice(0, 10);
+    const shop = window.SHOP || {};
+    const shopCats = window.SHOP_CATEGORIES || [];
+    const products = (window.PRODUCTS || []).filter(p => p.published !== false);
+    const won = n => (Number(n) || 0).toLocaleString('ko-KR') + '원';
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+    const catName = id => { const c = shopCats.find(c => c.id === id); return c ? c.name : ''; };
+
+    let activeCat = 'all';
+    let query = '';
+
+    /* ---------- 상단 문구 / 히어로 ---------- */
+    if (shop.title) document.title = shop.title + ' — 이스타항공 공식 상품몰';
+    const hero = shop.hero || {};
+    if (hero.headline) $('heroHeadline').textContent = hero.headline;
+    if (hero.sub) $('heroSub').textContent = hero.sub;
+    if (hero.image) $('shopHeroBg').style.backgroundImage = `url("${hero.image}")`;
+    else $('shopHero').classList.add('no-img');
+    if (hero.link) { $('heroLink').href = hero.link; $('heroLink').style.display = 'inline-flex'; }
+
+    /* ---------- 공지 배너 ---------- */
+    (function noticeInit() {
+      const n = shop.notice || {};
+      if (!n.enabled || !n.text) return;
+      if (n.until && n.until < today) return;
+      const dismissKey = 'eb_shop_notice_' + n.text.slice(0, 40);
+      try { if (localStorage.getItem(dismissKey)) return; } catch (e) {}
+      $('noticeText').textContent = n.text;
+      if (n.link) { $('noticeLink').href = n.link; $('noticeLink').style.display = 'inline'; }
+      $('noticeBanner').style.display = 'flex';
+      $('noticeClose').onclick = () => {
+        $('noticeBanner').style.display = 'none';
+        try { localStorage.setItem(dismissKey, '1'); } catch (e) {}
+      };
+    })();
+
+    /* ---------- 카테고리 칩 (상품이 있는 카테고리만) ---------- */
+    function renderCats() {
+      const used = new Set(products.map(p => p.category).filter(Boolean));
+      const chips = [{ id: 'all', name: '전체' }].concat(shopCats.filter(c => used.has(c.id)));
+      if (chips.length <= 1) { $('shopCats').style.display = 'none'; return; }
+      $('shopCats').innerHTML = chips.map(c =>
+        `<button class="shop-chip${c.id === activeCat ? ' active' : ''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`).join('');
+    }
+    $('shopCats').addEventListener('click', e => {
+      const b = e.target.closest('.shop-chip'); if (!b) return;
+      activeCat = b.dataset.cat; renderCats(); renderGrid();
+    });
+
+    /* ---------- 상품 카드 ---------- */
+    function filtered() {
+      return products.filter(p => {
+        if (activeCat !== 'all' && p.category !== activeCat) return false;
+        if (query) {
+          const hay = (p.name + ' ' + (p.desc || '') + ' ' + catName(p.category)).toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
+        return true;
+      });
+    }
+    function priceHtml(p) {
+      const hasSale = p.salePrice != null && p.salePrice !== '' && Number(p.salePrice) < Number(p.price);
+      if (hasSale) {
+        const off = Math.round((1 - Number(p.salePrice) / Number(p.price)) * 100);
+        return `<span class="p-off">${off}%</span><span class="p-orig">${won(p.price)}</span><span class="p-now">${won(p.salePrice)}</span>`;
+      }
+      return `<span class="p-now">${won(p.price)}</span>`;
+    }
+    function renderGrid() {
+      const grid = $('shopGrid'), empty = $('shopEmpty');
+      const list = filtered();
+      if (!products.length) { grid.style.display = 'none'; empty.style.display = 'block'; empty.querySelector('h2').textContent = '🛍 준비 중입니다'; empty.querySelector('p').textContent = '판매 상품이 곧 등록될 예정입니다.'; return; }
+      if (!list.length) { grid.style.display = 'none'; empty.style.display = 'block'; empty.querySelector('h2').textContent = '🔍 결과가 없습니다'; empty.querySelector('p').textContent = '다른 카테고리나 검색어를 사용해 보세요.'; return; }
+      empty.style.display = 'none'; grid.style.display = 'grid';
+      grid.innerHTML = list.map(p => {
+        const badges =
+          (p.soldOut ? '<span class="p-badge p-sold">품절</span>' : '') +
+          (!p.soldOut && p.badge ? `<span class="p-badge">${esc(p.badge)}</span>` : '');
+        return `
+          <article class="product-card${p.soldOut ? ' is-sold' : ''}" data-id="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.name)} 상세 보기">
+            <div class="p-img">
+              ${badges}
+              ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />` : '<div class="p-noimg">이미지 준비 중</div>'}
+            </div>
+            <div class="p-info">
+              ${p.category ? `<span class="p-cat">${esc(catName(p.category))}</span>` : ''}
+              <h3 class="p-name">${esc(p.name)}</h3>
+              <div class="p-price">${priceHtml(p)}</div>
+            </div>
+          </article>`;
+      }).join('');
+    }
+
+    /* ---------- 상품 상세 모달 ---------- */
+    function openDetail(id) {
+      const p = products.find(x => x.id === id); if (!p) return;
+      $('pdImg').innerHTML = p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" />` : '<div class="p-noimg">이미지 준비 중</div>';
+      $('pdImg').className = 'pd-img' + (p.soldOut ? ' is-sold' : '');
+      $('pdCat').textContent = catName(p.category) || '';
+      $('pdCat').style.display = p.category ? 'inline-block' : 'none';
+      $('pdName').textContent = p.name;
+      $('pdPrice').innerHTML = priceHtml(p);
+      $('pdDetail').textContent = p.detail || p.desc || '';
+      $('pdActions').innerHTML = p.soldOut
+        ? `<span class="p-buy disabled">품절</span>`
+        : (p.buyUrl
+            ? `<a class="p-buy" href="${esc(p.buyUrl)}" target="_blank" rel="noopener">구매하기 ›</a>`
+            : `<span class="p-buy disabled">구매 준비 중</span>`);
+      $('pdOverlay').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      $('pdClose').focus();
+    }
+    function closeDetail() { $('pdOverlay').style.display = 'none'; document.body.style.overflow = ''; }
+    $('pdClose').onclick = closeDetail;
+    $('pdOverlay').addEventListener('click', e => { if (e.target === $('pdOverlay')) closeDetail(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('pdOverlay').style.display === 'flex') closeDetail(); });
+
+    $('shopGrid').addEventListener('click', e => {
+      const card = e.target.closest('.product-card'); if (card) openDetail(card.dataset.id);
+    });
+    $('shopGrid').addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('product-card')) { e.preventDefault(); openDetail(e.target.dataset.id); }
+    });
+
+    /* ---------- 검색 ---------- */
+    let sT; $('searchInput').addEventListener('input', e => {
+      clearTimeout(sT); sT = setTimeout(() => { query = e.target.value.trim().toLowerCase(); renderGrid(); }, 120);
+    });
+
+    renderCats();
+    renderGrid();
+  </script>
+</body>
+</html>

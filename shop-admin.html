@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eastar SHOP 상품 관리</title>
+  <link rel="stylesheet" href="assets/style.css?v=20260619d" />
+  <style>
+    .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .gate-box { width: 100%; max-width: 360px; text-align: center; }
+    .gate-box img { height: 30px; margin-bottom: 18px; }
+    .gate-box h1 { font-size: 20px; margin: 0 0 6px; }
+    .gate-box .desc { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+    .gate-box input { width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; font-size: 15px; margin-bottom: 10px; background: var(--bg-soft); font-family: var(--font); }
+    .gate-box .btn { width: 100%; justify-content: center; }
+    .gate-msg { color: var(--red); font-size: 13px; min-height: 18px; margin-top: 8px; }
+    .gate-back { display: inline-block; margin-top: 16px; color: var(--muted); font-size: 13px; }
+    .console { max-width: 980px; margin: 0 auto; padding: 20px 22px 80px; }
+    .admin-banner { background: var(--bg-soft); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 16px; }
+    .card { background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow); }
+    .card h2 { margin: 0 0 4px; font-size: 18px; }
+    .card .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-grid label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .form-grid input[type=text], .form-grid input[type=number], .form-grid input[type=url], .form-grid textarea, .form-grid input[type=file] {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; background: var(--bg-soft); font-family: var(--font); box-sizing: border-box;
+    }
+    .form-grid textarea { resize: vertical; min-height: 64px; }
+    .check-line { display: flex; align-items: center; gap: 8px; }
+    .check-line label { margin: 0; font-weight: 500; }
+    table.pubs { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
+    table.pubs th, table.pubs td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    table.pubs th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+    table.pubs td.ops { white-space: nowrap; text-align: right; }
+    table.pubs .pthumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--bg-soft); border: 1px solid var(--line); }
+    .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 980px; margin-left: 6px; }
+    .chip.hidden-c { background: #ddd; color: #555; }
+    .chip.sold { background: #555; color: #fff; }
+    .chip.badge { background: var(--red); color: #fff; }
+    .mini { font-size: 12.5px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+    .mini.danger { color: var(--red); border-color: rgba(209,33,73,.4); }
+    .mini:disabled { opacity: .4; cursor: default; }
+    .row-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .save-bar { position: sticky; bottom: 0; background: rgba(255,255,255,.9); backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding: 12px 22px; display: none; align-items: center; gap: 14px; z-index: 40; }
+    .save-bar.show { display: flex; }
+    .save-bar .state { font-size: 13px; color: var(--muted); }
+    .save-bar .state.dirty { color: var(--red); font-weight: 600; }
+    textarea#out { width: 100%; min-height: 160px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--bg-soft); box-sizing: border-box; }
+    .toast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: #222; color: #fff; padding: 11px 20px; border-radius: 980px; font-size: 14px; opacity: 0; transition: opacity .2s; z-index: 100; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+    @media (prefers-color-scheme: dark) { .save-bar { background: rgba(18,18,22,.9); } .chip.hidden-c { background: #444; color: #ccc; } }
+  </style>
+</head>
+<body>
+  <!-- ===== 로그인 게이트 ===== -->
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <img src="assets/eastar_logo.svg" alt="이스타항공" />
+      <h1>SHOP 상품 관리</h1>
+      <p class="desc">Eastar SHOP 상품 관리 전용 페이지입니다.</p>
+      <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" />
+      <button class="btn primary" id="loginBtn">로그인</button>
+      <div class="gate-msg" id="gateMsg"></div>
+      <a href="shop.html" class="gate-back">← SHOP 화면으로</a>
+    </div>
+  </div>
+
+  <!-- ===== 상단바 ===== -->
+  <div class="topbar" id="adminTop" style="display:none">
+    <a class="brand" href="shop.html">
+      <img class="brand-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
+    </a>
+    <span class="brand-divider"></span>
+    <nav class="topnav">
+      <a class="topnav-link" href="admin.html">E-Books 관리</a>
+      <a class="topnav-link active" href="shop-admin.html" aria-current="page">SHOP 관리</a>
+    </nav>
+    <div class="spacer"></div>
+    <button class="btn" id="logoutBtn">로그아웃</button>
+  </div>
+
+  <!-- ===== 콘솔 ===== -->
+  <main class="console" id="console" style="display:none">
+    <div class="admin-banner">🛍 <b>Eastar SHOP 상품 관리</b> — 상품을 추가/수정하고 「저장(게시)」을 누르면 1~2분 내 SHOP 화면에 반영됩니다.</div>
+    <p class="sub" id="deployInfo" style="color:var(--muted);font-size:13px;margin:0 0 16px"></p>
+
+    <!-- SHOP 문구 + 히어로 배너 -->
+    <div class="card">
+      <h2>📝 SHOP 화면 문구 · 히어로 배너</h2>
+      <p class="sub">SHOP 페이지 상단 제목과 큰 배너(히어로) 문구·이미지입니다.</p>
+      <div class="form-grid">
+        <div><label>SHOP 제목</label><input type="text" id="sTitle" placeholder="Eastar SHOP" /></div>
+        <div><label>소개글(내부용)</label><input type="text" id="sSubtitle" placeholder="이스타항공 공식 상품을 만나보세요." /></div>
+        <div class="full"><label>히어로 큰 제목</label><input type="text" id="hHeadline" placeholder="이스타항공 공식 굿즈" /></div>
+        <div class="full"><label>히어로 소개 문구</label><input type="text" id="hSub" placeholder="하늘 위의 설렘을 일상에서도." /></div>
+        <div class="full"><label>히어로 배경 이미지 경로/URL (선택 — 비우면 레드 그라데이션)</label><input type="text" id="hImage" placeholder="assets/planes/plane-05.jpg" /></div>
+        <div class="full"><label>히어로 버튼 링크 (선택)</label><input type="url" id="hLink" placeholder="https://..." /></div>
+      </div>
+    </div>
+
+    <!-- 카테고리 관리 -->
+    <div class="card">
+      <h2>🗂 카테고리</h2>
+      <p class="sub">상품 분류 카테고리입니다. SHOP 화면 상단 칩으로 표시됩니다. (상품이 연결된 카테고리는 삭제 시 그 상품의 분류가 비워집니다)</p>
+      <table class="pubs"><thead><tr><th>이름</th><th>ID</th><th></th></tr></thead><tbody id="catRows"></tbody></table>
+      <div class="row-actions">
+        <input type="text" id="newCatId" placeholder="ID (영문·숫자, 예: goods)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);font-family:var(--font);font-size:13.5px" />
+        <input type="text" id="newCatName" placeholder="이름 (예: 굿즈)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);font-family:var(--font);font-size:13.5px" />
+        <button class="btn" id="addCatBtn">카테고리 추가</button>
+      </div>
+    </div>
+
+    <!-- 상품 목록 -->
+    <div class="card">
+      <h2>🛍 상품 목록</h2>
+      <p class="sub">순서 변경(▲▼) · 공개/비공개 · 품절 · 수정 · 삭제. 카드 순서가 SHOP 화면 노출 순서입니다.</p>
+      <table class="pubs"><thead><tr><th></th><th>상품</th><th>가격</th><th>상태</th><th></th></tr></thead><tbody id="prodRows"></tbody></table>
+      <p class="sub" id="emptyHint" style="margin-top:14px;display:none">등록된 상품이 없습니다. 아래에서 추가하세요.</p>
+    </div>
+
+    <!-- 추가 / 수정 -->
+    <div class="card">
+      <h2 id="formTitle">➕ 상품 추가</h2>
+      <p class="sub">상품 정보를 입력하고 「상품 저장(목록에 반영)」을 누르세요. 마지막에 위/아래 「저장(게시)」로 사이트에 반영합니다.</p>
+      <div class="form-grid">
+        <div><label>상품 ID (영문·숫자 — 수정 시 변경 불가)</label><input type="text" id="fId" placeholder="goods-01" /></div>
+        <div><label>카테고리</label><select id="fCat" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:var(--bg-soft);font-family:var(--font);box-sizing:border-box"></select></div>
+        <div class="full"><label>상품명</label><input type="text" id="fName" placeholder="예: 이스타항공 모형 항공기" /></div>
+        <div><label>뱃지 (선택 — 예: BEST, NEW)</label><input type="text" id="fBadge" placeholder="" /></div>
+        <div></div>
+        <div><label>정가 (원)</label><input type="number" id="fPrice" min="0" step="100" placeholder="39000" /></div>
+        <div><label>할인가 (선택 — 비우면 정가만 표시)</label><input type="number" id="fSale" min="0" step="100" placeholder="29000" /></div>
+        <div class="full"><label>한 줄 설명 (카드에 2줄까지 표시)</label><textarea id="fDesc" placeholder="상품 간단 설명"></textarea></div>
+        <div class="full"><label>상세 설명 (선택 — 상세 모달에 표시. 비우면 한 줄 설명 사용)</label><textarea id="fDetail" placeholder="상품 상세 설명"></textarea></div>
+        <div class="full"><label>구매 링크 URL (선택 — 외부 쇼핑몰/스토어. 비우면 '준비 중')</label><input type="url" id="fBuy" placeholder="https://..." /></div>
+        <div class="full">
+          <label>상품 이미지</label>
+          <input type="text" id="fImage" placeholder="이미지 경로/URL 직접 입력 (예: shop/goods-01/img.jpg)" />
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
+            <span class="sub" style="margin:0">또는 이미지 파일 업로드 (저장 시 shop/&lt;상품ID&gt;/img.* 로 업로드) →</span>
+            <input type="file" id="fImageFile" accept="image/*" style="flex:1;min-width:200px" />
+          </div>
+          <div id="imgPreview" style="margin-top:10px"></div>
+        </div>
+        <div class="check-line"><input type="checkbox" id="fPublished" checked /><label for="fPublished">공개</label></div>
+        <div class="check-line"><input type="checkbox" id="fSoldOut" /><label for="fSoldOut">품절</label></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn primary" id="saveProdBtn">상품 저장 (목록에 반영)</button>
+        <button class="btn" id="resetFormBtn">새 상품 (입력 초기화)</button>
+      </div>
+    </div>
+
+    <!-- 게시 -->
+    <div class="card">
+      <h2>💾 변경사항 적용 — products.js</h2>
+      <p class="sub">GitHub 토큰을 넣고 「저장(게시)」을 누르면 products.js(및 업로드한 이미지)가 반영됩니다. 토큰은 이 브라우저에만 저장됩니다.</p>
+      <div class="form-grid">
+        <div class="full"><label>GitHub 토큰 (Fine-grained · 이 저장소 · Contents: Read and write)</label><input type="text" id="ghToken" placeholder="github_pat_..." /></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn primary" id="pubBtn">🚀 저장(게시)</button>
+        <button class="btn" id="genBtn">미리보기 생성</button>
+        <button class="btn" id="dlBtn">다운로드</button>
+      </div>
+      <div id="pubMsg" class="sub" style="margin-top:10px"></div>
+      <textarea id="out" style="margin-top:12px;display:none" readonly></textarea>
+    </div>
+  </main>
+
+  <div class="save-bar" id="saveBar">
+    <span class="state" id="saveBarState">● 저장하지 않은 변경이 있습니다</span>
+    <div style="flex:1"></div>
+    <button class="btn primary" id="saveBarBtn">저장(게시)</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="products.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    // admin.html 과 동일한 비밀번호 해시
+    const PW_HASH = "b4a0623d066292d60ae1eaf4e0d44489df1e9659ce2395ab27b31b71af9e0e21";
+    const GH = { owner: 'Min-ss', repo: 'eastarjet-ebook', branch: 'main' };
+
+    async function sha256hex(s) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+    function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2200); }
+    const won = n => (Number(n) || 0).toLocaleString('ko-KR') + '원';
+
+    /* ---------- 로그인 ---------- */
+    function showConsole() { $('gate').style.display = 'none'; $('adminTop').style.display = 'flex'; $('console').style.display = 'block'; initConsole(); }
+    function logout() { localStorage.removeItem('eb_admin'); location.reload(); }
+    $('logoutBtn').onclick = logout;
+    async function tryLogin() {
+      const v = $('pw').value; if (!v) return;
+      try {
+        const h = await sha256hex(v);
+        if (h === PW_HASH) { localStorage.setItem('eb_admin', '1'); showConsole(); }
+        else { $('gateMsg').textContent = '비밀번호가 올바르지 않습니다.'; $('pw').select(); }
+      } catch (e) { $('gateMsg').textContent = '보안(https) 컨텍스트가 아니어서 로그인할 수 없습니다. (배포 주소/localhost 에서 이용)'; }
+    }
+    $('loginBtn').onclick = tryLogin;
+    $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+    /* ---------- 상태 ---------- */
+    let meta = {}, products = [], cats = [], pendingImages = {};   // pendingImages: id -> File
+    let editingId = null, savedSnapshot = null, saving = false;
+
+    function initConsole() {
+      const s = window.SHOP || {};
+      const h = s.hero || {};
+      meta = {
+        title: s.title || 'Eastar SHOP', subtitle: s.subtitle || '',
+        hero: { headline: h.headline || '', sub: h.sub || '', image: h.image || '', link: h.link || '' },
+        notice: Object.assign({ enabled: false, text: '', link: '', until: '' }, s.notice || {})
+      };
+      products = JSON.parse(JSON.stringify(window.PRODUCTS || []));
+      cats = JSON.parse(JSON.stringify(window.SHOP_CATEGORIES || []));
+      $('sTitle').value = meta.title;
+      $('sSubtitle').value = meta.subtitle;
+      $('hHeadline').value = meta.hero.headline;
+      $('hSub').value = meta.hero.sub;
+      $('hImage').value = meta.hero.image;
+      $('hLink').value = meta.hero.link;
+      $('ghToken').value = localStorage.getItem('eb_gh_token') || '';
+      pendingImages = {};
+      renderCats();
+      fillCatSelect();
+      renderList();
+      resetForm();
+      savedSnapshot = genProductsJs();
+      refreshDirty();
+      loadDeploy();
+    }
+
+    $('sTitle').addEventListener('input', () => { meta.title = $('sTitle').value; });
+    $('sSubtitle').addEventListener('input', () => { meta.subtitle = $('sSubtitle').value; });
+    $('hHeadline').addEventListener('input', () => { meta.hero.headline = $('hHeadline').value; });
+    $('hSub').addEventListener('input', () => { meta.hero.sub = $('hSub').value; });
+    $('hImage').addEventListener('input', () => { meta.hero.image = $('hImage').value; });
+    $('hLink').addEventListener('input', () => { meta.hero.link = $('hLink').value; });
+
+    /* ---------- 카테고리 ---------- */
+    const catName = id => { const c = cats.find(c => c.id === id); return c ? c.name : ''; };
+    function fillCatSelect() {
+      const cur = $('fCat').value;
+      $('fCat').innerHTML = '<option value="">(분류 없음)</option>' + cats.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+      if (cur && cats.some(c => c.id === cur)) $('fCat').value = cur;
+    }
+    function renderCats() {
+      $('catRows').innerHTML = cats.length ? cats.map(c => `
+        <tr data-id="${esc(c.id)}">
+          <td><input type="text" class="catname" value="${esc(c.name)}" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg-soft);font-family:var(--font);font-size:13.5px" /></td>
+          <td style="color:var(--muted);font-size:12px">${esc(c.id)}</td>
+          <td class="ops"><button class="mini danger" data-cdel="${esc(c.id)}">삭제</button></td>
+        </tr>`).join('') : '<tr><td colspan="3" style="color:var(--muted);font-size:13px">카테고리가 없습니다.</td></tr>';
+    }
+    $('addCatBtn').onclick = () => {
+      const id = $('newCatId').value.trim(), name = $('newCatName').value.trim();
+      if (!id || !/^[A-Za-z0-9._-]+$/.test(id)) { alert('카테고리 ID를 영문·숫자(- _ .)로 입력하세요.'); return; }
+      if (!name) { alert('카테고리 이름을 입력하세요.'); return; }
+      if (cats.some(c => c.id === id)) { alert('이미 있는 카테고리 ID입니다.'); return; }
+      cats.push({ id, name });
+      $('newCatId').value = ''; $('newCatName').value = '';
+      renderCats(); fillCatSelect(); refreshDirty();
+    };
+    $('catRows').addEventListener('input', e => {
+      if (!e.target.classList.contains('catname')) return;
+      const id = e.target.closest('tr').dataset.id; const c = cats.find(c => c.id === id);
+      if (c) { c.name = e.target.value; fillCatSelect(); }
+    });
+    $('catRows').addEventListener('click', e => {
+      const id = e.target.getAttribute('data-cdel'); if (!id) return;
+      const used = products.filter(p => p.category === id).length;
+      if (!confirm(`'${catName(id)}' 카테고리를 삭제할까요?` + (used ? `\n연결된 상품 ${used}개의 분류가 비워집니다.` : ''))) return;
+      cats = cats.filter(c => c.id !== id);
+      products.forEach(p => { if (p.category === id) delete p.category; });
+      renderCats(); fillCatSelect(); renderList(); refreshDirty();
+    });
+
+    /* ---------- 목록 ---------- */
+    function prodChips(p) {
+      let s = '';
+      if (p.published === false) s += '<span class="chip hidden-c">비공개</span>';
+      if (p.soldOut) s += '<span class="chip sold">품절</span>';
+      if (p.badge) s += `<span class="chip badge">${esc(p.badge)}</span>`;
+      return s;
+    }
+    function priceText(p) {
+      const hasSale = p.salePrice != null && p.salePrice !== '' && Number(p.salePrice) < Number(p.price);
+      return hasSale ? `<s style="color:var(--muted)">${won(p.price)}</s> <b>${won(p.salePrice)}</b>` : `<b>${won(p.price)}</b>`;
+    }
+    function renderList() {
+      const tb = $('prodRows');
+      $('emptyHint').style.display = products.length ? 'none' : 'block';
+      tb.innerHTML = products.map((p, i) => `
+        <tr data-id="${esc(p.id)}">
+          <td><img class="pthumb" src="${esc(p.image || '')}" alt="" onerror="this.style.visibility='hidden'" /></td>
+          <td><b>${esc(p.name || '(이름 없음)')}</b>${prodChips(p)}<div style="color:var(--muted);font-size:12px">${esc(p.id)}${p.category ? ' · ' + esc(catName(p.category)) : ''}</div></td>
+          <td>${priceText(p)}</td>
+          <td style="color:var(--muted);font-size:12px">${p.buyUrl ? '🔗 링크' : '— 링크없음'}</td>
+          <td class="ops">
+            <button class="mini" data-act="up" ${i === 0 ? 'disabled' : ''}>▲</button>
+            <button class="mini" data-act="down" ${i === products.length - 1 ? 'disabled' : ''}>▼</button>
+            <button class="mini" data-act="edit">수정</button>
+            <button class="mini danger" data-act="del">삭제</button>
+          </td>
+        </tr>`).join('');
+    }
+    $('prodRows').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-act]'); if (!btn) return;
+      const id = btn.closest('tr').dataset.id;
+      const i = products.findIndex(p => p.id === id); if (i < 0) return;
+      const act = btn.dataset.act;
+      if (act === 'up' && i > 0) { [products[i - 1], products[i]] = [products[i], products[i - 1]]; }
+      else if (act === 'down' && i < products.length - 1) { [products[i + 1], products[i]] = [products[i], products[i + 1]]; }
+      else if (act === 'edit') { fillForm(products[i]); window.scrollTo({ top: $('formTitle').offsetTop - 80, behavior: 'smooth' }); return; }
+      else if (act === 'del') {
+        if (!confirm(`'${products[i].name}' 상품을 목록에서 삭제할까요?`)) return;
+        delete pendingImages[products[i].id]; products.splice(i, 1);
+        if (editingId === id) resetForm();
+      }
+      renderList(); refreshDirty();
+    });
+
+    /* ---------- 폼 ---------- */
+    function fillForm(p) {
+      editingId = p.id;
+      $('formTitle').textContent = '✏️ 상품 수정 — ' + p.name;
+      $('fId').value = p.id; $('fId').disabled = true;
+      fillCatSelect(); $('fCat').value = p.category || '';
+      $('fName').value = p.name || ''; $('fBadge').value = p.badge || '';
+      $('fPrice').value = p.price != null ? p.price : '';
+      $('fSale').value = p.salePrice != null ? p.salePrice : '';
+      $('fDesc').value = p.desc || ''; $('fDetail').value = p.detail || ''; $('fBuy').value = p.buyUrl || '';
+      $('fImage').value = p.image || ''; $('fImageFile').value = '';
+      $('fPublished').checked = p.published !== false; $('fSoldOut').checked = !!p.soldOut;
+      renderPreview(p.image, pendingImages[p.id]);
+    }
+    function resetForm() {
+      editingId = null;
+      $('formTitle').textContent = '➕ 상품 추가';
+      $('fId').disabled = false;
+      ['fId', 'fName', 'fBadge', 'fPrice', 'fSale', 'fDesc', 'fDetail', 'fBuy', 'fImage'].forEach(k => $(k).value = '');
+      $('fCat').value = ''; $('fImageFile').value = ''; $('fPublished').checked = true; $('fSoldOut').checked = false;
+      $('imgPreview').innerHTML = '';
+    }
+    $('resetFormBtn').onclick = resetForm;
+
+    function renderPreview(url, file) {
+      const box = $('imgPreview');
+      if (file) { box.innerHTML = `<img src="${URL.createObjectURL(file)}" style="height:90px;border-radius:10px;border:1px solid var(--line)" /> <span class="sub">새 업로드 (저장 시 반영)</span>`; }
+      else if (url) { box.innerHTML = `<img src="${esc(url)}" style="height:90px;border-radius:10px;border:1px solid var(--line)" onerror="this.style.display='none'" />`; }
+      else box.innerHTML = '';
+    }
+    $('fImageFile').addEventListener('change', () => renderPreview($('fImage').value.trim(), $('fImageFile').files[0]));
+    $('fImage').addEventListener('input', () => { if (!$('fImageFile').files[0]) renderPreview($('fImage').value.trim(), null); });
+
+    $('saveProdBtn').onclick = () => {
+      const id = $('fId').value.trim();
+      const name = $('fName').value.trim();
+      if (!id || !/^[A-Za-z0-9._-]+$/.test(id)) { alert('상품 ID를 영문·숫자(- _ .)로 입력하세요.'); return; }
+      if (!name) { alert('상품명을 입력하세요.'); return; }
+      const price = $('fPrice').value === '' ? 0 : Number($('fPrice').value);
+      if (isNaN(price) || price < 0) { alert('정가를 올바르게 입력하세요.'); return; }
+      const saleRaw = $('fSale').value.trim();
+      const file = $('fImageFile').files[0];
+      let image = $('fImage').value.trim();
+      const ext = file ? (file.name.split('.').pop().toLowerCase().replace('jpeg', 'jpg') || 'jpg') : '';
+      if (file) image = `shop/${id}/img.${ext}`;   // 업로드 파일 경로로 설정
+
+      const p = {
+        id, name,
+        ...( $('fCat').value ? { category: $('fCat').value } : {}),
+        price,
+        ...(saleRaw !== '' ? { salePrice: Number(saleRaw) } : {}),
+        ...(image ? { image } : {}),
+        ...( $('fDesc').value.trim() ? { desc: $('fDesc').value.trim() } : {}),
+        ...( $('fDetail').value.trim() ? { detail: $('fDetail').value.trim() } : {}),
+        ...( $('fBuy').value.trim() ? { buyUrl: $('fBuy').value.trim() } : {}),
+        ...( $('fBadge').value.trim() ? { badge: $('fBadge').value.trim() } : {}),
+        ...( $('fSoldOut').checked ? { soldOut: true } : {}),
+        published: $('fPublished').checked
+      };
+
+      const existing = products.findIndex(x => x.id === id);
+      if (editingId && editingId === id && existing >= 0) { products[existing] = p; }
+      else if (existing >= 0) {
+        if (!confirm(`이미 '${id}' 상품이 있습니다. 덮어쓸까요?`)) return;
+        products[existing] = p;
+      } else { products.push(p); }
+
+      if (file) pendingImages[id] = file; else if (editingId === id) { /* keep prior pending if any */ }
+      toast('목록에 반영됨 — 마지막에 「저장(게시)」 하세요');
+      renderList(); resetForm(); refreshDirty();
+    };
+
+    /* ---------- products.js 생성 ---------- */
+    function cleanProduct(p) {
+      const o = { id: p.id, name: p.name };
+      if (p.category) o.category = p.category;
+      o.price = Number(p.price) || 0;
+      if (p.salePrice != null && p.salePrice !== '') o.salePrice = Number(p.salePrice);
+      if (p.image) o.image = p.image;
+      if (p.desc) o.desc = p.desc;
+      if (p.detail) o.detail = p.detail;
+      o.buyUrl = p.buyUrl || '';
+      o.badge = p.badge || '';
+      o.soldOut = !!p.soldOut;
+      o.published = p.published !== false;
+      return o;
+    }
+    function genProductsJs() {
+      const pretty = v => JSON.stringify(v, null, 2);
+      const shopObj = {
+        title: meta.title || 'Eastar SHOP',
+        subtitle: meta.subtitle || '',
+        hero: { headline: meta.hero.headline || '', sub: meta.hero.sub || '', image: meta.hero.image || '', link: meta.hero.link || '' },
+        notice: { enabled: !!(meta.notice && meta.notice.enabled), text: (meta.notice && meta.notice.text) || '', link: (meta.notice && meta.notice.link) || '', until: (meta.notice && meta.notice.until) || '' }
+      };
+      return `// ============================================================
+//  EASTAR SHOP — 판매상품 데이터
+//  (관리자 콘솔의 「SHOP 상품 관리」에서 생성됨)
+//  상품 이미지는 shop/<상품ID>/img.* 로 업로드됩니다.
+//  상품 선택 필드: category(카테고리 ID) · published:false(비공개) ·
+//                  soldOut:true(품절) · badge(뱃지 문구)
+//  가격은 원(KRW) 숫자. salePrice 가 있으면 정가(price)에 취소선이 표시됩니다.
+// ============================================================
+
+const SHOP = ${pretty(shopObj)};
+
+const SHOP_CATEGORIES = ${pretty(cats)};
+
+const PRODUCTS = ${pretty(products.map(cleanProduct))};
+
+window.SHOP = SHOP;
+window.SHOP_CATEGORIES = SHOP_CATEGORIES;
+window.PRODUCTS = PRODUCTS;
+`;
+    }
+    $('genBtn').onclick = () => { $('out').style.display = 'block'; $('out').value = genProductsJs(); toast('products.js 생성됨'); };
+    $('dlBtn').onclick = () => {
+      const content = genProductsJs();
+      const blob = new Blob([content], { type: 'text/javascript' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'products.js';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    };
+
+    /* ---------- 변경 감지 ---------- */
+    function refreshDirty() {
+      if (savedSnapshot === null || saving) return;
+      const dirty = genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length > 0;
+      $('saveBar').classList.toggle('show', dirty);
+      $('saveBarState').textContent = dirty ? '● 저장하지 않은 변경이 있습니다' : '✓ 모든 변경사항이 저장됨';
+      $('saveBarState').classList.toggle('dirty', dirty);
+    }
+    document.addEventListener('input', () => { clearTimeout(window._rd); window._rd = setTimeout(refreshDirty, 150); }, true);
+    window.addEventListener('beforeunload', e => { if (savedSnapshot !== null && !saving && (genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length)) { e.preventDefault(); e.returnValue = ''; } });
+
+    /* ---------- GitHub ---------- */
+    $('ghToken').addEventListener('change', () => localStorage.setItem('eb_gh_token', $('ghToken').value.trim()));
+    const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+    async function ghReq(path, opts = {}) {
+      const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/${path}`, {
+        cache: 'no-store', ...opts,
+        headers: { Authorization: 'Bearer ' + $('ghToken').value.trim(), Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(opts.headers || {}) }
+      });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) throw new Error((d && d.message) || ('HTTP ' + r.status));
+      return d;
+    }
+    async function ghGetSha(filePath) {
+      const dir = filePath.includes('/') ? filePath.slice(0, filePath.lastIndexOf('/')) : '';
+      const name = filePath.split('/').pop();
+      try { const list = await ghReq('contents/' + encPath(dir) + '?ref=' + GH.branch); const f = (Array.isArray(list) ? list : []).find(x => x.name === name); return f ? f.sha : undefined; }
+      catch (e) { return undefined; }
+    }
+    async function ghPutFile(filePath, base64, message) {
+      async function put() {
+        const sha = await ghGetSha(filePath);
+        const body = { message, content: base64, branch: GH.branch }; if (sha) body.sha = sha;
+        return ghReq('contents/' + encPath(filePath), { method: 'PUT', body: JSON.stringify(body) });
+      }
+      try { return await put(); } catch (e) { if (/does not match|409|sha/i.test(e.message)) return await put(); throw e; }
+    }
+    const b64Text = s => btoa(unescape(encodeURIComponent(s)));
+    const b64File = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
+
+    async function saveChanges() {
+      if (saving) return;
+      const t = $('ghToken').value.trim();
+      if (!t) { alert('GitHub 토큰을 먼저 입력하세요.\n발급: github.com → Settings → Developer settings → Fine-grained tokens → 이 저장소 → Contents: Read and write'); $('ghToken').focus(); return; }
+      localStorage.setItem('eb_gh_token', t);
+      saving = true; $('pubBtn').disabled = $('saveBarBtn').disabled = true;
+      $('pubMsg').textContent = '저장 중…'; $('saveBarState').textContent = '저장 중…';
+      try {
+        // 1) 대기 중인 상품 이미지 업로드
+        for (const id of Object.keys(pendingImages)) {
+          const p = products.find(x => x.id === id); if (!p || !p.image) { delete pendingImages[id]; continue; }
+          $('saveBarState').textContent = '이미지 업로드 중…';
+          await ghPutFile(p.image.split('?')[0], await b64File(pendingImages[id]), `🖼 ${id} 상품 이미지 업로드 (SHOP 관리)`);
+          delete pendingImages[id];
+        }
+        // 2) products.js 게시
+        const content = genProductsJs();
+        await ghPutFile('products.js', b64Text(content), '🛍 SHOP 상품 데이터 업데이트 (관리자 콘솔)');
+        savedSnapshot = content;
+        toast('저장 완료 — 1~2분 내 SHOP 화면에 반영됩니다');
+        $('pubMsg').textContent = '✅ 저장(게시) 완료 — 1~2분 내 사이트에 반영됩니다.';
+        loadDeploy();
+      } catch (e) { alert('저장 실패: ' + e.message); $('pubMsg').textContent = '❌ 실패: ' + e.message; }
+      saving = false; $('pubBtn').disabled = $('saveBarBtn').disabled = false; refreshDirty();
+    }
+    $('pubBtn').onclick = saveChanges;
+    $('saveBarBtn').onclick = saveChanges;
+
+    async function loadDeploy() {
+      try {
+        const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/commits/${GH.branch}`, { headers: { Accept: 'application/vnd.github+json' } });
+        const d = await r.json();
+        const when = new Date(d.commit.committer.date).toLocaleString('ko-KR');
+        $('deployInfo').innerHTML = `🟢 마지막 반영: <b>${when}</b> — ${esc(d.commit.message.split('\n')[0])} <span style="opacity:.6">(${d.sha.slice(0, 7)})</span>`;
+      } catch (e) { $('deployInfo').textContent = '배포 정보를 불러오지 못했습니다 (오프라인?)'; }
+    }
+
+    // 이미 로그인된 상태면 바로 콘솔
+    if (localStorage.getItem('eb_admin') === '1') showConsole();
+  </script>
+</body>
+</html>

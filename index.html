@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260615e" />
+<link rel="stylesheet" href="assets/style.css?v=20260619d" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -26,9 +26,12 @@
   <div class="topbar">
     <a class="brand" href="index.html">
       <img class="brand-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
-      <span class="brand-divider"></span>
-      <span class="brand-title" id="brandTitle">대외 간행물 e-Book</span>
     </a>
+    <span class="brand-divider"></span>
+    <nav class="topnav">
+      <a class="topnav-link active" id="brandTitle" href="index.html" aria-current="page">E-Books</a>
+      <a class="topnav-link" href="shop.html">Eastar SHOP</a>
+    </nav>
     <div class="spacer"></div>
   </div>
 
@@ -47,6 +50,15 @@
   </section>
 
   <main class="cat-grid" id="catGrid"></main>
+
+  <!-- ===== 지금 핫한 책 (이번 달 열람수 기준 — /api/track-stats) ===== -->
+  <section class="hot-shelf" id="hotShelf" style="display:none">
+    <div class="hot-head">
+      <h2>🔥 지금 핫한 책</h2>
+      <span class="hot-sub">이번 달 다른 독자들이 가장 많이 읽고 있어요</span>
+    </div>
+    <div class="hot-row" id="hotRow"></div>
+  </section>
 
   <!-- ===== 카테고리 상세: 간행물 목록(웹진) ===== -->
   <main class="cat-detail" id="catDetail" style="display:none">
@@ -203,6 +215,7 @@
 
       $('catGrid').style.display = 'none';
       document.querySelector('.hero').style.display = 'none';
+      $('hotShelf').style.display = 'none';
       $('catDetail').style.display = 'block';
       fitTitles(shelf);            // 컨테이너 표시 후라야 폭이 잡혀 한 줄 맞춤이 동작
       window.scrollTo(0, 0);
@@ -229,6 +242,41 @@
       $('catDetail').style.display = 'none';
       $('catGrid').style.display = 'grid';
       document.querySelector('.hero').style.display = 'block';
+      if (hotReady) $('hotShelf').style.display = 'block';
+    }
+
+    /* ---------- 지금 핫한 책 (이번 달 열람수 — /api/track-stats) ---------- */
+    const API_BASE = location.hostname.endsWith('.pages.dev') ? '' : 'https://eastarjet-ebook.pages.dev';
+    let hotReady = false;
+    async function loadHot() {
+      try {
+        const r = await fetch(API_BASE + '/api/track-stats');
+        const d = await r.json();
+        if (!d || !d.ok || !Array.isArray(d.books)) return;
+        const byId = {}; books.forEach(b => byId[b.id] = b);   // 공개된 간행물만
+        const hot = d.books
+          .filter(s => s.opensMonth > 0 && byId[s.id])
+          .sort((a, b) => b.opensMonth - a.opensMonth)
+          .slice(0, 5);
+        if (!hot.length) return;
+        $('hotRow').innerHTML = hot.map((s, i) => {
+          const b = byId[s.id];
+          const href = (b.type === 'pdf')
+            ? 'flip.html?book=' + encodeURIComponent(b.id) + '#read'
+            : 'viewer.html?book=' + encodeURIComponent(b.id);
+          return `
+            <a class="hot-card" href="${href}">
+              <span class="hot-rank">${i + 1}</span>
+              <div class="hot-cover"><img src="${b.cover}" alt="${b.title} 표지" loading="lazy"></div>
+              <div class="hot-meta">
+                <h3>${b.title}</h3>
+                <span class="hot-count">이번 달 ${s.opensMonth}회 열람</span>
+              </div>
+            </a>`;
+        }).join('');
+        hotReady = true;
+        if (!location.hash) $('hotShelf').style.display = 'block';   // 홈 화면일 때만 노출
+      } catch (e) { /* 통계 불가 시 섹션 미표시 */ }
     }
 
     $('catGrid').querySelectorAll('.cat-card').forEach(el => {
@@ -244,6 +292,7 @@
     }
     window.addEventListener('hashchange', route);
     route();
+    loadHot();
   </script>
 
   <!-- Cloudflare Web Analytics -->

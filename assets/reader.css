@@ -1,0 +1,156 @@
+/* ============================================================
+   EASTAR e-Book — 읽기 환경(reader) 공통 UI
+   · 배경 테마(라이트/세피아/다크) · 야간 모드
+   · 글자 크기 · 줄 간격 · 몰입 모드 · 진행률 게이지
+   reader.js 가 패널/버튼/게이지 DOM을 주입하고 이 파일이 스타일을 입힙니다.
+   뷰어 3종(flip/pdf/viewer)에서 공유합니다.
+   ============================================================ */
+
+/* ---------- 페이지 색감(테마/야간) — reader.js가 --page-filter / --stage-bg 를 계산해 body에 세팅 ---------- */
+#pages .rpage .pimg,
+#pages .spage .pimg,
+#pdfScroll .pdf-page canvas,
+#book .page img {
+  filter: var(--page-filter, none);
+  transition: filter .2s ease;
+}
+/* 무대(stage) 배경색 — 라이트가 아닐 때만 테마색으로 */
+body[data-reader-theme="sepia"] #stage,
+body[data-reader-theme="dark"]  #stage,
+body[data-reader-theme="sepia"] #pdfScroll,
+body[data-reader-theme="dark"]  #pdfScroll {
+  background: var(--stage-bg) !important;
+  transition: background .2s ease;
+}
+body[data-reader-theme="sepia"].viewer { background: var(--stage-bg); }
+body[data-reader-theme="dark"].viewer  { background: var(--stage-bg); }
+
+/* 줄 간격(스크롤 모드 페이지 간격) — reader.js가 --reader-gap 세팅 */
+#pages.scroll .spage { margin-bottom: var(--reader-gap, 8px); }
+#pdfScroll .pdf-page { margin-bottom: var(--reader-gap, 14px); }
+
+/* ============================================================
+   진행률 게이지 (화면 최상단 가로 바)
+   ============================================================ */
+.ebr-progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 95;
+  background: rgba(0, 0, 0, .08); pointer-events: none;
+}
+.ebr-progress > span {
+  display: block; height: 100%; width: 0;
+  background: var(--red, #ed1c24); transition: width .25s ease;
+}
+.ebr-progress > em {
+  position: absolute; right: 8px; top: 7px;
+  font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  color: var(--red, #ed1c24); background: rgba(255, 255, 255, .82);
+  padding: 1px 7px; border-radius: 980px; line-height: 1.5;
+  opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s;
+}
+.ebr-progress.show-pct > em { opacity: 1; transform: none; }
+
+/* ============================================================
+   설정 버튼(FAB) + 몰입 해제 핀
+   ============================================================ */
+.ebr-fab {
+  position: fixed; right: 16px; bottom: 84px; z-index: 92;
+  width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--card, #fff); color: var(--text, #0f172a);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18); font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, bottom .25s, opacity .25s;
+}
+.ebr-fab:hover { transform: scale(1.06); }
+.ebr-fab:active { transform: scale(.95); }
+
+.ebr-imm-exit {
+  position: fixed; left: 50%; top: 12px; transform: translateX(-50%) translateY(-8px); z-index: 93;
+  background: rgba(15, 23, 42, .82); color: #fff; font-size: 13px; font-weight: 600;
+  padding: 7px 16px; border-radius: 980px; cursor: pointer; backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
+}
+body.reader-immersive .ebr-imm-exit { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
+
+/* ============================================================
+   몰입 모드 — 상·하단 UI 최소화
+   ============================================================ */
+body.reader-immersive .v-top,
+body.reader-immersive .v-bottom,
+body.reader-immersive .findbar { display: none !important; }
+body.reader-immersive .ebr-fab { bottom: 20px; opacity: .55; }
+body.reader-immersive .ebr-fab:hover { opacity: 1; }
+
+/* ============================================================
+   설정 패널 (하단 시트)
+   ============================================================ */
+.ebr-backdrop {
+  position: fixed; inset: 0; z-index: 96; background: rgba(0, 0, 0, .4);
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.ebr-backdrop.show { opacity: 1; pointer-events: auto; }
+.ebr-panel {
+  position: fixed; z-index: 97; left: 50%; bottom: 0;
+  width: min(440px, 100%); transform: translateX(-50%) translateY(110%);
+  background: var(--card, #fff); color: var(--text, #0f172a);
+  border-radius: 18px 18px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .25);
+  padding: 8px 22px 26px; transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+  font-family: var(--font, sans-serif);
+}
+.ebr-panel.show { transform: translateX(-50%) translateY(0); }
+.ebr-grip { width: 40px; height: 4px; border-radius: 99px; background: var(--line, #e2e8f0); margin: 8px auto 4px; }
+.ebr-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ebr-panel-head span { font-size: 16px; font-weight: 700; }
+.ebr-x {
+  border: none; background: none; cursor: pointer; font-size: 16px; color: var(--muted, #475569);
+  width: 34px; height: 34px; border-radius: 50%;
+}
+.ebr-x:hover { background: var(--bg-soft, #f1f3f5); }
+
+.ebr-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 0; border-top: 1px solid var(--line, #e2e8f0);
+}
+.ebr-row > label { font-size: 15px; font-weight: 600; display: flex; flex-direction: column; gap: 2px; }
+.ebr-row > label small { font-size: 12px; font-weight: 500; color: var(--muted, #475569); }
+
+/* 세그먼트(테마 선택) */
+.ebr-seg { display: inline-flex; background: var(--bg-soft, #f1f3f5); border-radius: 980px; padding: 3px; gap: 2px; }
+.ebr-seg button {
+  border: none; background: none; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 600; color: var(--muted, #475569);
+  padding: 7px 14px; border-radius: 980px; transition: .15s; white-space: nowrap;
+}
+.ebr-seg button.active { background: var(--card, #fff); color: var(--text, #0f172a); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); }
+
+/* 스위치 토글 */
+.ebr-switch {
+  position: relative; width: 50px; height: 28px; flex: none; border: none; cursor: pointer;
+  background: var(--line, #cbd5e1); border-radius: 999px; transition: background .2s;
+}
+.ebr-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+  background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform .2s;
+}
+.ebr-switch[aria-checked="true"] { background: var(--red, #ed1c24); }
+.ebr-switch[aria-checked="true"]::after { transform: translateX(22px); }
+
+/* 스테퍼(글자 크기·줄 간격) */
+.ebr-stepper { display: inline-flex; align-items: center; gap: 4px; }
+.ebr-stepper button {
+  width: 36px; height: 36px; border: 1px solid var(--line, #e2e8f0); background: var(--card, #fff);
+  border-radius: 10px; cursor: pointer; font-size: 18px; color: var(--text, #0f172a); line-height: 1;
+}
+.ebr-stepper button:hover { background: var(--bg-soft, #f1f3f5); }
+.ebr-stepper button:disabled { opacity: .35; cursor: default; }
+.ebr-stepper span { min-width: 64px; text-align: center; font-size: 14px; font-weight: 600; }
+
+/* 뷰어가 지원하지 않는 항목 숨김 (reader.js가 data-feat 로 토글) */
+.ebr-row[hidden] { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  .ebr-progress { background: rgba(255, 255, 255, .12); }
+  .ebr-progress > em { background: rgba(28, 28, 33, .9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ebr-panel, .ebr-backdrop, .ebr-progress > span, .ebr-fab { transition-duration: .01ms !important; }
+}

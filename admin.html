@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>관리자 콘솔 — 이스타항공 e-Book</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="assets/style.css?v=20260615e" />
+  <link rel="stylesheet" href="assets/style.css?v=20260619d" />
   <style>
     /* ---------- 관리자 콘솔 전용 ---------- */
     .admin-gate { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
@@ -162,9 +162,12 @@
   <div class="topbar" id="adminTop" style="display:none">
     <a class="brand" href="index.html">
       <img class="brand-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
-      <span class="brand-divider"></span>
-      <span class="brand-title">관리자 콘솔</span>
     </a>
+    <span class="brand-divider"></span>
+    <nav class="topnav">
+      <a class="topnav-link active" href="admin.html" aria-current="page">E-Books 관리</a>
+      <a class="topnav-link" href="shop-admin.html">SHOP 관리</a>
+    </nav>
     <div class="spacer"></div>
     <button class="btn" id="logoutBtn">로그아웃</button>
   </div>

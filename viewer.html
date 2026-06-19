@@ -6,7 +6,8 @@
   <title>e-Book 뷰어 — 이스타항공</title>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260615e" />
+<link rel="stylesheet" href="assets/style.css?v=20260619d" />
+<link rel="stylesheet" href="assets/reader.css?v=20260619a" />
 </head>
 <body class="viewer">
   <div class="viewer-wrap">
@@ -59,6 +60,7 @@
   <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
   <script src="books.js"></script>
   <script src="assets/track.js"></script>
+  <script src="assets/reader.js?v=20260619a"></script>
   <script>
     // ---------- 책 선택 ----------
     const params = new URLSearchParams(location.search);
@@ -142,6 +144,7 @@
     function update() {
       const cur = pageFlip.getCurrentPageIndex() + 1;
       if (window.ebTrack) ebTrack.page(book.id, cur, total);
+      if (window.EBReader) EBReader.setProgress(cur, total);
       $('pageInfo').textContent = `${cur} / ${total}`;
       slider.value = cur;
       $('prevBtn').disabled = cur <= 1;
@@ -174,12 +177,12 @@
       else document.exitFullscreen?.();
     };
 
-    // PDF 다운로드
+    // PDF 다운로드 (원본 PDF가 등록된 경우 — books.js 의 file 필드)
     $('downloadBtn').onclick = () => {
       if (window.ebTrack) ebTrack.download(book.id);
-      if (book.pdf) {
+      if (book.file) {
         const a = document.createElement('a');
-        a.href = `${book.path}/${book.pdf}`; a.download = '';
+        a.href = `${book.path}/${book.file}`; a.download = `${book.title}.pdf`;
         document.body.appendChild(a); a.click(); a.remove();
       } else {
         toast('다운로드용 PDF가 등록되지 않았습니다');
@@ -241,14 +244,18 @@
 
     // 회전/리사이즈 대응 — 현재 페이지를 유지한 채 크기 재계산 후 다시 생성
     let rT;
-    window.addEventListener('resize', () => {
-      clearTimeout(rT);
-      rT = setTimeout(() => {
-        const idx = pageFlip.getCurrentPageIndex();
-        try { pageFlip.destroy(); } catch (e) {}
-        buildBook(idx);
-        update();
-      }, 200);
+    function rebuildKeepPage() {
+      const idx = pageFlip.getCurrentPageIndex();
+      try { pageFlip.destroy(); } catch (e) {}
+      buildBook(idx);
+      update();
+    }
+    window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(rebuildKeepPage, 200); });
+
+    // ---------- 읽기 설정(테마·야간·몰입·진행률) — 이미지 책은 글자크기/줄간격 미적용 ----------
+    if (window.EBReader) EBReader.init({
+      features: { font: false, gap: false },
+      onImmersive: () => setTimeout(rebuildKeepPage, 60)
     });
   </script>
 
