@@ -144,7 +144,8 @@ img { display: block; }
 .shop-splash-cell:nth-child(2) { animation-delay: .09s; }
 .shop-splash-cell:nth-child(3) { animation-delay: .18s; }
 .shop-splash-cell:nth-child(4) { animation-delay: .27s; }
-.shop-splash-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 사진이 잘리지 않도록 전체를 담아서 표시(여백은 어두운 갤러리 톤) */
+.shop-splash-cell img { width: 100%; height: 100%; object-fit: contain; display: block; padding: 14px; box-sizing: border-box; }
 @keyframes shopSplashIn { to { opacity: 1; transform: scale(1); } }
 /* 상품이 잘 보이도록 E-Books보다 옅은 스크림 */
 .shop-splash-scrim {
