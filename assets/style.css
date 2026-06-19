@@ -347,8 +347,8 @@ img { display: block; }
 .p-badge.p-sold { background: #555; }
 .p-info { display: flex; flex-direction: column; gap: 5px; padding: 14px 16px 16px; flex: 1; }
 .p-cat { font-size: 11.5px; font-weight: 600; color: var(--muted); }
-.p-brand { font-size: 11.5px; font-weight: 600; color: var(--muted); letter-spacing: -.2px; margin-top: -3px; }
-.p-name { margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.35; letter-spacing: -.2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.p-brand { font-size: 11.5px; font-weight: 600; color: var(--muted); letter-spacing: -.2px; margin-top: -3px; word-break: keep-all; overflow-wrap: anywhere; }
+.p-name { margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.35; letter-spacing: -.2px; word-break: keep-all; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .p-desc { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .p-price { display: flex; align-items: baseline; gap: 7px; margin-top: auto; padding-top: 6px; flex-wrap: wrap; }
 .p-off { color: var(--red); font-size: 14px; font-weight: 800; }
@@ -378,8 +378,8 @@ img { display: block; }
 .pd-img img { width: 100%; height: 100%; object-fit: cover; }
 .pd-info { padding: 30px 30px 28px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
 .pd-cat { font-size: 12.5px; font-weight: 600; color: var(--muted); }
-.pd-brand { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: -.2px; margin-top: -4px; }
-.pd-name { margin: 0; font-size: 23px; font-weight: 700; letter-spacing: -.02em; }
+.pd-brand { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: -.2px; margin-top: -4px; word-break: keep-all; overflow-wrap: anywhere; }
+.pd-name { margin: 0; font-size: 23px; font-weight: 700; letter-spacing: -.02em; word-break: keep-all; overflow-wrap: anywhere; }
 .pd-price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .pd-price .p-now { font-size: 24px; }
 .pd-detail { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 4px 0; flex: 1; }
