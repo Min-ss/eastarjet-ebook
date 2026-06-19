@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 공식 상품몰 Eastar SHOP — 모형 항공기·굿즈·리빙·의류" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-  <link rel="stylesheet" href="assets/style.css?v=20260619g" />
+  <link rel="stylesheet" href="assets/style.css?v=20260619h" />
   <style>
     /* 하위 카테고리(콜라보 브랜드) 칩 — 상위 '굿즈' 선택 시 노출 */
     .shop-subcats { max-width: 1180px; margin: 2px auto 6px; padding: 0 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -19,6 +19,18 @@
   </style>
 </head>
 <body class="shop-body">
+  <!-- ===== E-Shop 진입 스플래시 (판매 상품 4분할, 2초 / E-Books 사진 스플래시와 구분) ===== -->
+  <div class="splash shop-splash" id="shopSplash">
+    <div class="shop-splash-grid" id="shopSplashGrid"></div>
+    <div class="splash-scrim shop-splash-scrim"></div>
+    <div class="splash-inner">
+      <img class="splash-logo" src="assets/eastar_logo.svg" alt="이스타항공" />
+      <div class="splash-title">EASTAR SHOP</div>
+      <div class="splash-bar"><span id="shopSplashBar"></span></div>
+    </div>
+    <button class="splash-skip" id="shopSplashSkip">건너뛰기 ✕</button>
+  </div>
+
   <!-- ===== 커머스 상단바 ===== -->
   <header class="shop-top">
     <div class="shop-top-inner">
@@ -114,6 +126,33 @@
     let activeCat = 'all';   // 상위(또는 'all')
     let activeSub = 'all';   // 하위(콜라보 브랜드)
     let query = '';
+
+    /* ---------- E-Shop 진입 스플래시 (상품 4분할, 2초) ---------- */
+    (function shopSplashInit() {
+      const splash = $('shopSplash');
+      if (!splash) return;
+      const imgs = products.filter(p => p.image).map(p => p.image);
+      if (!imgs.length) { splash.remove(); return; }   // 이미지 있는 상품이 없으면 스플래시 생략
+      // 무작위로 섞어 4칸 채우기(상품이 4개 미만이면 순환 배치)
+      const shuffled = imgs.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+      const pick = [];
+      for (let i = 0; i < 4; i++) pick.push(shuffled[i % shuffled.length]);
+      $('shopSplashGrid').innerHTML = pick.map(src => `<div class="shop-splash-cell"><img src="${esc(src)}" alt="" /></div>`).join('');
+
+      const DURATION = 2000;
+      $('shopSplashBar').style.transitionDuration = DURATION + 'ms';
+      requestAnimationFrame(() => $('shopSplashBar').style.width = '100%');
+
+      let done = false;
+      function finish() {
+        if (done) return; done = true;
+        splash.classList.add('hide');
+        setTimeout(() => splash.remove(), 650);
+      }
+      const timer = setTimeout(finish, DURATION);
+      $('shopSplashSkip').onclick = () => { clearTimeout(timer); finish(); };
+    })();
 
     /* ---------- 상단 문구 / 히어로 ---------- */
     if (shop.title) {
