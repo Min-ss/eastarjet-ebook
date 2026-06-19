@@ -152,12 +152,16 @@ img { display: block; }
   background: linear-gradient(180deg, rgba(5, 7, 12, .26), rgba(5, 7, 12, .52));
 }
 .shop-splash .splash-title { letter-spacing: 3px; }
-/* 모바일: 세로 3분할(1열 3행) — 상품 3장 + EASTAR SHOP/게이지바는 3번째 사진 아래(하단 띠)에 배치 */
+/* 모바일: 세로 3분할 — 위쪽 70%에 상품 3장, 아래 30% 영역 정중앙에 EASTAR SHOP/게이지바
+   (화면 높이가 달라도 라벨이 사진과 최하단의 중간에 오도록 남은 공간을 auto 마진으로 중앙 정렬) */
 @media (max-width: 640px) {
-  .shop-splash-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; bottom: 92px; }
+  .splash.shop-splash { flex-direction: column; align-items: center; justify-content: flex-start; padding: 0; }
+  .shop-splash-grid {
+    position: static; inset: auto; width: 100%; height: 70vh;
+    grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; background: transparent;
+  }
   .shop-splash-cell:nth-child(n+4) { display: none; }
-  /* 하단 띠(92px)의 정중앙에 라벨 배치: (92 - 라벨높이≈20) / 2 ≈ 36px */
-  .splash.shop-splash { align-items: flex-end; padding-bottom: 36px; }
+  .splash.shop-splash .splash-inner { margin: auto 0; }
 }
 
 /* ============================================================
