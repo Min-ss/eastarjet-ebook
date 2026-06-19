@@ -156,7 +156,8 @@ img { display: block; }
 @media (max-width: 640px) {
   .shop-splash-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; bottom: 92px; }
   .shop-splash-cell:nth-child(n+4) { display: none; }
-  .splash.shop-splash { align-items: flex-end; padding-bottom: 24px; }
+  /* 하단 띠(92px)의 정중앙에 라벨 배치: (92 - 라벨높이≈20) / 2 ≈ 36px */
+  .splash.shop-splash { align-items: flex-end; padding-bottom: 36px; }
 }
 
 /* ============================================================
