@@ -216,7 +216,6 @@
               ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />` : '<div class="p-noimg">이미지 준비 중</div>'}
             </div>
             <div class="p-info">
-              ${p.category ? `<span class="p-cat">${esc(catName(p.category))}</span>` : ''}
               ${(() => { const n = splitName(p.name); return (n.brand ? `<span class="p-brand">${esc(n.brand)}</span>` : '') + `<h3 class="p-name">${esc(n.title)}</h3>`; })()}
               <div class="p-price">${priceHtml(p)}</div>
             </div>
@@ -229,8 +228,7 @@
       const p = products.find(x => x.id === id); if (!p) return;
       $('pdImg').innerHTML = p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" />` : '<div class="p-noimg">이미지 준비 중</div>';
       $('pdImg').className = 'pd-img' + (p.soldOut ? ' is-sold' : '');
-      $('pdCat').textContent = catName(p.category) || '';
-      $('pdCat').style.display = p.category ? 'inline-block' : 'none';
+      $('pdCat').style.display = 'none';
       const pn = splitName(p.name);
       $('pdBrand').textContent = pn.brand;
       $('pdBrand').style.display = pn.brand ? 'block' : 'none';
