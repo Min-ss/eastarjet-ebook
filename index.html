@@ -30,7 +30,7 @@
     <span class="brand-divider"></span>
     <nav class="topnav">
       <a class="topnav-link active" id="brandTitle" href="index.html" aria-current="page">E-Books</a>
-      <a class="topnav-link" href="shop.html">Eastar SHOP</a>
+      <a class="topnav-link" id="shopBrand" href="shop.html">Eastar SHOP</a>
     </nav>
     <div class="spacer"></div>
   </div>
@@ -77,6 +77,7 @@
   <footer class="site">© EASTAR JET — 대외 간행물 e-Book. 무단 전재·재배포 금지. <a href="admin.html" class="admin-link">관리자</a></footer>
 
   <script src="books.js"></script>
+  <script src="products.js"></script>
   <script src="assets/track.js"></script>
   <script>
     const $ = id => document.getElementById(id);
@@ -95,6 +96,9 @@
       if (s.brandTitle) $('brandTitle').textContent = s.brandTitle;
       if (s.heroTitle) $('heroTitle').textContent = s.heroTitle;
       if (s.heroSubtitle) $('heroSubtitle').textContent = s.heroSubtitle;
+      // SHOP 제목(products.js)을 'Eastar SHOP' 탭에 반영 — shop-admin에서 변경 시 메인에도 동일 반영
+      const shop = window.SHOP || {};
+      if (shop.title) $('shopBrand').textContent = shop.title;
     })();
 
     if (window.ebTrack) ebTrack.visit();
