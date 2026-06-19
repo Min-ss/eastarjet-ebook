@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 공식 상품몰 Eastar SHOP — 모형 항공기·굿즈·리빙·의류" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-  <link rel="stylesheet" href="assets/style.css?v=20260619d" />
+  <link rel="stylesheet" href="assets/style.css?v=20260619e" />
   <style>
     /* 하위 카테고리(콜라보 브랜드) 칩 — 상위 '굿즈' 선택 시 노출 */
     .shop-subcats { max-width: 1180px; margin: 2px auto 6px; padding: 0 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -80,6 +80,7 @@
       <div class="pd-img" id="pdImg"></div>
       <div class="pd-info">
         <span class="pd-cat" id="pdCat"></span>
+        <span class="pd-brand" id="pdBrand"></span>
         <h2 class="pd-name" id="pdName"></h2>
         <div class="pd-price" id="pdPrice"></div>
         <p class="pd-detail" id="pdDetail"></p>
@@ -98,6 +99,11 @@
     const won = n => (Number(n) || 0).toLocaleString('ko-KR') + '원';
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
     const catName = id => { const c = shopCats.find(c => c.id === id); return c ? c.name : ''; };
+    // 상품명 앞의 [브랜드] 대괄호를 분리 → { brand, title }
+    const splitName = name => {
+      const m = String(name || '').match(/^\s*\[([^\]]+)\]\s*(.*)$/);
+      return m && m[2].trim() ? { brand: m[1].trim(), title: m[2].trim() } : { brand: '', title: String(name || '').trim() };
+    };
     const catParent = id => { const c = shopCats.find(c => c.id === id); return c ? c.parent : undefined; };
     const childrenOf = pid => shopCats.filter(c => c.parent === pid);
     // 상품이 속한 최상위 카테고리(하위면 부모로 승격)
@@ -211,7 +217,7 @@
             </div>
             <div class="p-info">
               ${p.category ? `<span class="p-cat">${esc(catName(p.category))}</span>` : ''}
-              <h3 class="p-name">${esc(p.name)}</h3>
+              ${(() => { const n = splitName(p.name); return (n.brand ? `<span class="p-brand">${esc(n.brand)}</span>` : '') + `<h3 class="p-name">${esc(n.title)}</h3>`; })()}
               <div class="p-price">${priceHtml(p)}</div>
             </div>
           </article>`;
@@ -225,7 +231,10 @@
       $('pdImg').className = 'pd-img' + (p.soldOut ? ' is-sold' : '');
       $('pdCat').textContent = catName(p.category) || '';
       $('pdCat').style.display = p.category ? 'inline-block' : 'none';
-      $('pdName').textContent = p.name;
+      const pn = splitName(p.name);
+      $('pdBrand').textContent = pn.brand;
+      $('pdBrand').style.display = pn.brand ? 'block' : 'none';
+      $('pdName').textContent = pn.title;
       $('pdPrice').innerHTML = priceHtml(p);
       $('pdDetail').textContent = p.detail || p.desc || '';
       $('pdActions').innerHTML = p.soldOut
