@@ -279,37 +279,6 @@ img { display: block; }
 .empty-state h2 { color: var(--text); font-weight: 700; letter-spacing: -.01em; }
 .empty-state code { color: var(--text); background: var(--bg-soft); padding: 2px 7px; border-radius: 6px; }
 
-/* ---------- 지금 핫한 책 (메인) ---------- */
-.hot-shelf { max-width: 1100px; margin: 8px auto 0; padding: 0 22px; }
-.hot-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-.hot-head h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.014em; }
-.hot-sub { color: var(--muted); font-size: 14px; }
-.hot-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
-.hot-card { position: relative; display: flex; flex-direction: column; color: var(--text); }
-.hot-rank {
-  position: absolute; top: 8px; left: 8px; z-index: 2;
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--red); color: #fff; font-size: 13px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
-}
-.hot-cover {
-  aspect-ratio: 1 / 1.3; border-radius: 12px; overflow: hidden;
-  background: var(--bg-soft); border: 1px solid var(--line); box-shadow: var(--shadow);
-  transition: transform .25s ease, box-shadow .25s ease;
-}
-.hot-cover img { width: 100%; height: 100%; object-fit: contain; }
-.hot-card:hover .hot-cover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.hot-meta h3 { margin: 10px 2px 3px; font-size: 14px; font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hot-count { display: block; margin: 0 2px; font-size: 12px; font-weight: 600; color: var(--red); }
-@media (max-width: 900px) { .hot-row { grid-template-columns: repeat(3, 1fr); max-width: 760px; } }
-@media (max-width: 640px) {
-  .hot-shelf { padding: 0 14px; margin-top: 18px; }
-  .hot-head h2 { font-size: 20px; }
-  .hot-sub { display: none; }
-  .hot-row { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 6px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-  .hot-card { flex: 0 0 40%; scroll-snap-align: start; }
-}
-
 /* ============================================================
    Eastar SHOP — 쇼핑몰형 스토어프론트 (shop.html)
    ============================================================ */
