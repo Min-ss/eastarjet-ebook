@@ -1,0 +1,38 @@
+# ESG 자동 동기화 — main.eastarjet.com/esg 의 안전·환경·사회 항목(제목·사진)을
+# 긁어 esg.js(분류·주제·이미지 매핑)와 assets/esg/ 사진을 자동 갱신·커밋합니다.
+# 변경이 있을 때만 커밋합니다(내용 동일 시 스킵).
+name: sync-esg
+on:
+  schedule:
+    - cron: '0 20 * * *'   # 매일 20:00 UTC (한국시간 05:00) — sync-shop(18:00)과 시간 분리
+  workflow_dispatch:        # Actions 탭에서 수동 실행 가능
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-esg
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: ESG 동기화
+        run: node scripts/sync-esg.js
+      - name: 변경사항 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add esg.js assets/esg
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략";
+            exit 0;
+          fi
+          git commit -m "🌱 ESG 지속가능경영 자동 동기화 ($(date -u +%Y-%m-%d))"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
