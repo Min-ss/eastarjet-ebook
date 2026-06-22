@@ -58,11 +58,11 @@ const CATEGORIES = [
     "cover": "assets/planes/20250529_172733.png"
   },
   {
-    "id": "safety-law",
-    "title": "항공안전 관련 법령",
-    "desc": "항공안전 관련 법령을 열람합니다.",
+    "id": "esg",
+    "title": "ESG 지속가능경영",
+    "desc": "이스타항공의 ESG 지속가능경영 활동을 소개합니다.",
     "cover": "assets/planes/20250529_172614.png",
-    "coverBook": "aviation-safety-act"
+    "external": "https://main.eastarjet.com/esg"
   }
 ];
 
@@ -216,36 +216,6 @@ const BOOKS = [
     "title": "9화 · 항공 안전, 무엇이든 물어보세요",
     "subtitle": "기내 안전 정보 툰",
     "cover": "books/safety-star-09/cover.png"
-  },
-  {
-    "id": "aviation-safety-act",
-    "type": "pdf",
-    "category": "safety-law",
-    "path": "books/aviation-safety-act",
-    "file": "doc.pdf",
-    "title": "항공안전법",
-    "subtitle": "법률 제21268호 (2025.12.30)",
-    "cover": "books/aviation-safety-act/cover.svg"
-  },
-  {
-    "id": "aviation-safety-decree",
-    "type": "pdf",
-    "category": "safety-law",
-    "path": "books/aviation-safety-decree",
-    "file": "doc.pdf",
-    "title": "항공안전법 시행령",
-    "subtitle": "대통령령 제35869호 (2025.11.28)",
-    "cover": "books/aviation-safety-decree/cover.svg"
-  },
-  {
-    "id": "aviation-safety-rule",
-    "type": "pdf",
-    "category": "safety-law",
-    "path": "books/aviation-safety-rule",
-    "file": "doc.pdf",
-    "title": "항공안전법 시행규칙",
-    "subtitle": "국토교통부령 제1262호 (2026.01.01)",
-    "cover": "books/aviation-safety-rule/cover.svg"
   }
 ];
 

@@ -164,9 +164,17 @@
       return (latest && latest.cover) ? latest.cover : c.cover;
     }
 
-    $('catGrid').innerHTML = categories.map(c => `
-      <a class="cat-card" data-cat="${c.id}" href="#${c.id}">
-        <span class="cat-count">${countIn(c.id)}종</span>
+    // eastarjet.com 계열 도메인에서만 외부 페이지를 iframe 으로 임베드 가능
+    // (ESG 페이지 보안정책: frame-ancestors https://*.eastarjet.com/).
+    // 그 외(pages.dev 등)에서는 외부 페이지로 바로 이동한다.
+    const canEmbed = /\.eastarjet\.com$/i.test(location.hostname);
+
+    $('catGrid').innerHTML = categories.map(c => {
+      const href = c.external ? c.external : `#${c.id}`;
+      const badge = c.external ? '바로가기 ↗' : `${countIn(c.id)}종`;
+      return `
+      <a class="cat-card" data-cat="${c.id}" href="${href}">
+        <span class="cat-count">${badge}</span>
         <div class="cat-body">
           <h3>${c.title}</h3>
           <p>${c.desc || ''}</p>
@@ -175,12 +183,46 @@
         <div class="cat-cover">
           <img src="${catCover(c)}" alt="${c.title}" loading="lazy" />
         </div>
-      </a>`).join('');
+      </a>`;
+    }).join('');
 
     /* ---------- ③ 카테고리 상세(웹진 목록) ---------- */
+    // 외부 페이지를 catDetail 안에 iframe 으로 표시(ESG 등). canEmbed 일 때만 호출.
+    function openEmbed(cat) {
+      $('detailTitle').textContent = cat.title;
+      $('detailDesc').textContent = cat.desc || '';
+      $('shelf').style.display = 'none';
+      $('shelf').innerHTML = '';
+      $('emptyState').style.display = 'none';
+      let frame = $('extFrame');
+      if (!frame) {
+        frame = document.createElement('iframe');
+        frame.id = 'extFrame';
+        frame.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        frame.style.cssText = 'width:100%;height:calc(100vh - 180px);min-height:600px;border:0;border-radius:14px;background:#fff;';
+        $('catDetail').appendChild(frame);
+      }
+      if (frame.dataset.src !== cat.external) { frame.src = cat.external; frame.dataset.src = cat.external; }
+      frame.style.display = 'block';
+      $('catGrid').style.display = 'none';
+      document.querySelector('.hero').style.display = 'none';
+      $('hotShelf').style.display = 'none';
+      $('catDetail').style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+    function hideEmbed() { const f = $('extFrame'); if (f) f.style.display = 'none'; }
+
     function openCategory(catId) {
       const cat = categories.find(c => c.id === catId);
       if (!cat) return;
+
+      // 외부 페이지 카테고리(ESG): eastarjet.com 계열이면 iframe 임베드, 아니면 외부로 이동
+      if (cat.external) {
+        if (canEmbed) return openEmbed(cat);
+        location.href = cat.external;
+        return;
+      }
+      hideEmbed();
       const list = books.filter(b => b.category === catId);
 
       $('detailTitle').textContent = cat.title;
@@ -243,6 +285,7 @@
     let _ftT; window.addEventListener('resize', () => { clearTimeout(_ftT); _ftT = setTimeout(() => fitTitles(document), 150); });
 
     function showHome() {
+      hideEmbed();
       $('catDetail').style.display = 'none';
       $('catGrid').style.display = 'grid';
       document.querySelector('.hero').style.display = 'block';
@@ -284,7 +327,13 @@
     }
 
     $('catGrid').querySelectorAll('.cat-card').forEach(el => {
-      el.addEventListener('click', e => { e.preventDefault(); location.hash = el.dataset.cat; });
+      el.addEventListener('click', e => {
+        const cat = categories.find(c => c.id === el.dataset.cat);
+        // 임베드 불가 환경의 외부 카테고리는 href(외부 URL)로 그대로 이동시킨다
+        if (cat && cat.external && !canEmbed) return;
+        e.preventDefault();
+        location.hash = el.dataset.cat;
+      });
     });
     $('backBtn').onclick = () => { location.hash = ''; };
 
