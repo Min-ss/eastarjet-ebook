@@ -74,10 +74,19 @@ function parseImageUrls(html) {
 
 async function downloadImage(enc, base) {
   const abs = path.join(IMG_DIR, base + '.jpg');
-  const r = await fetch(OPT(enc), { headers: { 'User-Agent': UA } });
-  if (!r.ok) throw new Error('이미지 HTTP ' + r.status);
-  const buf = Buffer.from(await r.arrayBuffer());
-  if (buf.length < 1000) throw new Error('이미지 응답이 너무 작음(' + buf.length + 'B)');
+  let buf;
+  for (let i = 0; i < 3; i++) {           // 일시적 오류는 재시도로 자동 복구
+    try {
+      const r = await fetch(OPT(enc), { headers: { 'User-Agent': UA } });
+      if (!r.ok) throw new Error('이미지 HTTP ' + r.status);
+      buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length < 1000) throw new Error('이미지 응답이 너무 작음(' + buf.length + 'B)');
+      break;
+    } catch (e) {
+      if (i === 2) throw e;
+      await sleep(1000);
+    }
+  }
   fs.mkdirSync(IMG_DIR, { recursive: true });
   if (fs.existsSync(abs) && fs.readFileSync(abs).equals(buf)) return false;   // 변경 없음
   fs.writeFileSync(abs, buf);
