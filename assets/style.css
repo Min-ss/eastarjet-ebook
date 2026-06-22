@@ -195,6 +195,15 @@ img { display: block; }
 /* 표지는 잘리지 않게 전체를 표시(contain). 남는 여백은 흰 배경으로 채워 액자처럼 보이게. */
 .cat-card .cat-cover img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; transition: transform .5s ease; }
 .cat-card:hover .cat-cover img { transform: scale(1.05); }
+/* 사진형 표지(ESG 등): 가로 사진을 꽉 채워 가운데 정렬 + 주제 제목 오버레이 */
+.cat-card--photo .cat-cover img { object-fit: cover; object-position: center; }
+.cat-card .cat-cover-cap {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 34px 14px 16px; text-align: center; pointer-events: none;
+  color: #fff; font-size: 21px; font-weight: 700; letter-spacing: -.01em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .6);
+  background: linear-gradient(to top, rgba(0, 0, 0, .62) 0%, rgba(0, 0, 0, .18) 55%, rgba(0, 0, 0, 0) 100%);
+}
 .cat-count {
   position: absolute; top: 16px; right: 16px; z-index: 3;
   background: rgba(255, 255, 255, .92); color: var(--text);
@@ -617,6 +626,7 @@ body.viewer { overflow: hidden; height: 100vh; height: 100dvh; background: var(-
   }
   /* PDF 목록 썸네일과 동일하게 표지 전체를 보여줌 */
   .cat-card .cat-cover img { object-fit: cover; object-position: center; }
+  .cat-card .cat-cover-cap { display: none; }   /* 작은 썸네일엔 제목 오버레이 생략(옆에 제목 텍스트가 있음) */
   .cat-card .cat-body { flex: 1; min-width: 0; text-align: left; padding: 0; }
   .cat-card h3 {
     margin: 0 0 4px; font-size: 16px; line-height: 1.3;

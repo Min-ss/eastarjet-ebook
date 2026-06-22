@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260619p" />
+<link rel="stylesheet" href="assets/style.css?v=20260622" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -151,14 +151,10 @@
     function countIn(catId) { return books.filter(b => b.category === catId).length; }
 
     // 카테고리 표지 우선순위:
-    //  ⓪ covers 배열이 있으면 그 중 무작위 1장(진입할 때마다 랜덤 — ESG 등)
     //  ① coverBook(특정 PDF로 표지 고정)이 있으면 그 간행물 표지
     //  ② 없으면 그 카테고리 '최신본'(목록 맨 끝 공개 간행물) 표지를 자동 사용
     //  ③ 간행물이 없으면 카테고리에 지정된 표지(c.cover)
     function catCover(c) {
-      if (Array.isArray(c.covers) && c.covers.length) {
-        return c.covers[Math.floor(Math.random() * c.covers.length)];
-      }
       const list = books.filter(b => b.category === c.id);
       if (c.coverBook) {
         const pin = list.find(b => b.id === c.coverBook);
@@ -173,11 +169,23 @@
     // 그 외(pages.dev 등)에서는 외부 페이지로 바로 이동한다.
     const canEmbed = /\.eastarjet\.com$/i.test(location.hostname);
 
+    // 사진형 표지 파일명으로 주제(안전·환경·사회) 제목을 정한다
+    function coverCaption(url) {
+      if (/img_safety/i.test(url)) return '안전경영';
+      if (/img_environment/i.test(url)) return '환경경영';
+      if (/img_society/i.test(url)) return '사회경영';
+      return '';
+    }
+
     $('catGrid').innerHTML = categories.map(c => {
       const href = c.external ? c.external : `#${c.id}`;
       const badge = c.external ? '바로가기 ↗' : `${countIn(c.id)}종`;
+      // covers 배열이 있으면 진입할 때마다 무작위 1장 + 그 사진의 주제 제목을 표지 위에 표시
+      const hasCovers = Array.isArray(c.covers) && c.covers.length;
+      const coverUrl = hasCovers ? c.covers[Math.floor(Math.random() * c.covers.length)] : catCover(c);
+      const cap = hasCovers ? coverCaption(coverUrl) : '';
       return `
-      <a class="cat-card" data-cat="${c.id}" href="${href}">
+      <a class="cat-card${hasCovers ? ' cat-card--photo' : ''}" data-cat="${c.id}" href="${href}">
         <span class="cat-count">${badge}</span>
         <div class="cat-body">
           <h3>${c.title}</h3>
@@ -185,7 +193,8 @@
           <span class="cat-go">살펴보기 ›</span>
         </div>
         <div class="cat-cover">
-          <img src="${catCover(c)}" alt="${c.title}" loading="lazy" />
+          <img src="${coverUrl}" alt="${c.title}" loading="lazy" />
+          ${cap ? `<span class="cat-cover-cap">${cap}</span>` : ''}
         </div>
       </a>`;
     }).join('');
