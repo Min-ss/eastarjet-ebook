@@ -195,17 +195,14 @@ img { display: block; }
 /* 표지는 잘리지 않게 전체를 표시(contain). 남는 여백은 흰 배경으로 채워 액자처럼 보이게. */
 .cat-card .cat-cover img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; transition: transform .5s ease; }
 .cat-card:hover .cat-cover img { transform: scale(1.05); }
-/* 사진형 표지(ESG 등): 가로 사진을 잘리지 않게 전부 보여줌(가운데 정렬) + 주제 제목 오버레이.
-   표지 영역을 가로형(3:2)으로 줄여 위아래 여백을 최소화하고, 카드 높이는 내용에 맞춤. */
-.cat-card--photo { align-self: start; }
-.cat-card--photo .cat-cover { aspect-ratio: 3 / 2; background: #f3f4f6; }
-.cat-card--photo .cat-cover img { object-fit: contain; object-position: center; }
+/* 사진형 표지(ESG 등): 표지 칸 크기는 다른 카테고리와 동일하게 두고, 가로 사진을
+   잘리지 않게 위쪽에 붙여 전체 표시 → 아래에 생기는 여백에 주제 제목을 넣는다. */
+.cat-card--photo .cat-cover img { object-fit: contain; object-position: center top; }
 .cat-card .cat-cover-cap {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  padding: 34px 14px 16px; text-align: center; pointer-events: none;
-  color: #fff; font-size: 21px; font-weight: 700; letter-spacing: -.01em;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, .6);
-  background: linear-gradient(to top, rgba(0, 0, 0, .62) 0%, rgba(0, 0, 0, .18) 55%, rgba(0, 0, 0, 0) 100%);
+  padding: 30px 14px 18px; text-align: center; pointer-events: none;
+  color: #1c1c21; font-size: 22px; font-weight: 700; letter-spacing: -.012em;
+  background: linear-gradient(to top, rgba(255, 255, 255, .97) 45%, rgba(255, 255, 255, 0));
 }
 .cat-count {
   position: absolute; top: 16px; right: 16px; z-index: 3;
