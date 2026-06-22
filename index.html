@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260622f" />
+<link rel="stylesheet" href="assets/style.css?v=20260622g" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -218,6 +218,7 @@
         </div>
       </a>`;
     }).join('');
+    fitCaption(document);   // 표지 주제 제목을 한 줄에 맞게 글자 크기 자동 조정
 
     /* ---------- ③ 카테고리 상세(웹진 목록) ---------- */
     // 외부 페이지를 catDetail 안에 iframe 으로 표시(ESG 등). canEmbed 일 때만 호출.
@@ -313,9 +314,25 @@
         }
       });
     }
+    // 표지 주제 제목(.cap-topic)을 한 줄로 유지 — 폭을 넘으면 글자 크기를 줄여 맞춘다
+    function fitCaption(scope) {
+      scope.querySelectorAll('.cat-cover-cap').forEach(cap => {
+        const topic = cap.querySelector('.cap-topic');
+        if (!topic) return;
+        const cs = getComputedStyle(cap);
+        const avail = cap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        if (avail <= 0) return;                 // 숨겨진(모바일) 경우 건너뜀
+        let fs = 18; topic.style.fontSize = fs + 'px';
+        let guard = 0;
+        while (topic.scrollWidth > avail && fs > 11 && guard++ < 60) {
+          fs -= 0.5; topic.style.fontSize = fs + 'px';
+        }
+      });
+    }
+
     // 글꼴 로드 완료/창 크기 변경 후 다시 맞춤
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTitles(document));
-    let _ftT; window.addEventListener('resize', () => { clearTimeout(_ftT); _ftT = setTimeout(() => fitTitles(document), 150); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitTitles(document); fitCaption(document); });
+    let _ftT; window.addEventListener('resize', () => { clearTimeout(_ftT); _ftT = setTimeout(() => { fitTitles(document); fitCaption(document); }, 150); });
 
     function showHome() {
       hideEmbed();
