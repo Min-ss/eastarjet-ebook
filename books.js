@@ -61,7 +61,29 @@ const CATEGORIES = [
     "id": "esg",
     "title": "ESG 지속가능경영",
     "desc": "이스타항공의 ESG 지속가능경영 활동을 소개합니다.",
-    "cover": "assets/planes/20250529_172614.png",
+    "cover": "assets/esg/img_safety_01-02.jpg",
+    "covers": [
+      "assets/esg/img_safety_01-02.jpg",
+      "assets/esg/img_safety_01-03.jpg",
+      "assets/esg/img_safety_02-01.jpg",
+      "assets/esg/img_safety_03-01.jpg",
+      "assets/esg/img_safety_03-02.jpg",
+      "assets/esg/img_environment_01.jpg",
+      "assets/esg/img_environment_01-02.jpg",
+      "assets/esg/img_environment_01-03.jpg",
+      "assets/esg/img_environment_02-01.jpg",
+      "assets/esg/img_environment_02-02.jpg",
+      "assets/esg/img_society_01.jpg",
+      "assets/esg/img_society_02-01.jpg",
+      "assets/esg/img_society_02-02.jpg",
+      "assets/esg/img_society_03-01.jpg",
+      "assets/esg/img_society_03-02.jpg",
+      "assets/esg/img_society_04-01.jpg",
+      "assets/esg/img_society_05-01.jpg",
+      "assets/esg/img_society_06-01.jpg",
+      "assets/esg/img_society_06-02.jpg",
+      "assets/esg/img_society_06-03.jpg"
+    ],
     "external": "https://main.eastarjet.com/esg"
   }
 ];

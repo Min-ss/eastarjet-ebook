@@ -151,10 +151,14 @@
     function countIn(catId) { return books.filter(b => b.category === catId).length; }
 
     // 카테고리 표지 우선순위:
+    //  ⓪ covers 배열이 있으면 그 중 무작위 1장(진입할 때마다 랜덤 — ESG 등)
     //  ① coverBook(특정 PDF로 표지 고정)이 있으면 그 간행물 표지
     //  ② 없으면 그 카테고리 '최신본'(목록 맨 끝 공개 간행물) 표지를 자동 사용
     //  ③ 간행물이 없으면 카테고리에 지정된 표지(c.cover)
     function catCover(c) {
+      if (Array.isArray(c.covers) && c.covers.length) {
+        return c.covers[Math.floor(Math.random() * c.covers.length)];
+      }
       const list = books.filter(b => b.category === c.id);
       if (c.coverBook) {
         const pin = list.find(b => b.id === c.coverBook);
