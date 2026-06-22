@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260622d" />
+<link rel="stylesheet" href="assets/style.css?v=20260622e" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -169,12 +169,27 @@
     // 그 외(pages.dev 등)에서는 외부 페이지로 바로 이동한다.
     const canEmbed = /\.eastarjet\.com$/i.test(location.hostname);
 
-    // 사진형 표지 파일명으로 주제(안전·환경·사회) 제목을 정한다
-    function coverCaption(url) {
-      if (/img_safety/i.test(url)) return '안전경영';
-      if (/img_environment/i.test(url)) return '환경경영';
-      if (/img_society/i.test(url)) return '사회경영';
-      return '';
+    // 사진형 표지: 파일명(img_safety_01-… 등)으로 ESG 분류와 세부 주제를 찾는다.
+    // 주제는 main.eastarjet.com/esg 의 항목 제목과 동일하게 맞춤.
+    const ESG_GROUPS = { safety: '안전경영', environment: '환경경영', society: '사회경영' };
+    const ESG_TOPICS = {
+      'safety-01': '항공 의료 안전 시스템 강화',
+      'safety-02': '현장 근로자 온열질환 예방',
+      'safety-03': '객실승무원 실전형 체력검정 도입',
+      'environment-01': '친환경 항공기 도입을 통한 기후변화 대응',
+      'environment-02': '임직원 나무심기 행사',
+      'society-01': '고귀한 생명 나눔 지원',
+      'society-02': '생명 존중 유기견 봉사활동',
+      'society-03': "장애인 축구단 '이스타항공 제우스' 운영",
+      'society-04': '고려인 동포 지원 및 글로벌 상생',
+      'society-05': '대한민국 국군 장병 지원',
+      'society-06': '항공 전문 인재 양성 산학협력'
+    };
+    function coverInfo(url) {
+      const m = String(url).match(/img_(safety|environment|society)_(\d+)/i);
+      if (!m) return null;
+      const cat = m[1].toLowerCase();
+      return { group: ESG_GROUPS[cat] || '', topic: ESG_TOPICS[cat + '-' + m[2]] || '' };
     }
 
     $('catGrid').innerHTML = categories.map(c => {
@@ -183,7 +198,12 @@
       // covers 배열이 있으면 진입할 때마다 무작위 1장 + 그 사진의 주제 제목을 표지 위에 표시
       const hasCovers = Array.isArray(c.covers) && c.covers.length;
       const coverUrl = hasCovers ? c.covers[Math.floor(Math.random() * c.covers.length)] : catCover(c);
-      const cap = hasCovers ? coverCaption(coverUrl) : '';
+      const info = hasCovers ? coverInfo(coverUrl) : null;
+      const cap = info ? `
+          <span class="cat-cover-cap">
+            ${info.topic ? `<span class="cap-topic">${info.topic}</span>` : ''}
+            ${info.group ? `<span class="cap-group">${info.group}</span>` : ''}
+          </span>` : '';
       return `
       <a class="cat-card${hasCovers ? ' cat-card--photo' : ''}" data-cat="${c.id}" href="${href}">
         <span class="cat-count">${badge}</span>
@@ -194,7 +214,7 @@
         </div>
         <div class="cat-cover">
           <img src="${coverUrl}" alt="${c.title}" loading="lazy" />
-          ${cap ? `<span class="cat-cover-cap">${cap}</span>` : ''}
+          ${cap}
         </div>
       </a>`;
     }).join('');

@@ -200,10 +200,12 @@ img { display: block; }
 .cat-card--photo .cat-cover img { object-fit: contain; object-position: center; }
 .cat-card .cat-cover-cap {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  padding: 30px 14px 18px; text-align: center; pointer-events: none;
-  color: #1c1c21; font-size: 22px; font-weight: 700; letter-spacing: -.012em;
-  background: linear-gradient(to top, rgba(255, 255, 255, .97) 45%, rgba(255, 255, 255, 0));
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 36px 16px 16px; text-align: center; pointer-events: none;
+  background: linear-gradient(to top, rgba(255, 255, 255, .98) 58%, rgba(255, 255, 255, 0));
 }
+.cat-card .cap-topic { color: #1c1c21; font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -.012em; }
+.cat-card .cap-group { color: var(--red); font-size: 13px; font-weight: 700; letter-spacing: .005em; }
 .cat-count {
   position: absolute; top: 16px; right: 16px; z-index: 3;
   background: rgba(255, 255, 255, .92); color: var(--text);
