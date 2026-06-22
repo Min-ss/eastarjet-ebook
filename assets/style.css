@@ -197,7 +197,7 @@ img { display: block; }
 .cat-card:hover .cat-cover img { transform: scale(1.05); }
 /* 사진형 표지(ESG 등): 표지 칸 크기는 다른 카테고리와 동일하게 두고, 가로 사진을
    잘리지 않게 위쪽에 붙여 전체 표시 → 아래에 생기는 여백에 주제 제목을 넣는다. */
-.cat-card--photo .cat-cover img { object-fit: contain; object-position: center top; }
+.cat-card--photo .cat-cover img { object-fit: contain; object-position: center; }
 .cat-card .cat-cover-cap {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
   padding: 30px 14px 18px; text-align: center; pointer-events: none;
