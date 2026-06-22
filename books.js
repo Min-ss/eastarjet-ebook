@@ -60,7 +60,7 @@ const CATEGORIES = [
   {
     "id": "esg",
     "title": "지속가능경영 ESG",
-    "desc": "이스타항공의 지속가능경영 활동을 소개합니다.",
+    "desc": "지속가능경영 활동을 소개합니다.",
     "cover": "assets/esg/img_safety_01-02.jpg",
     "covers": [
       "assets/esg/img_safety_01-02.jpg",
