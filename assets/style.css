@@ -195,8 +195,11 @@ img { display: block; }
 /* 표지는 잘리지 않게 전체를 표시(contain). 남는 여백은 흰 배경으로 채워 액자처럼 보이게. */
 .cat-card .cat-cover img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; transition: transform .5s ease; }
 .cat-card:hover .cat-cover img { transform: scale(1.05); }
-/* 사진형 표지(ESG 등): 가로 사진을 꽉 채워 가운데 정렬 + 주제 제목 오버레이 */
-.cat-card--photo .cat-cover img { object-fit: cover; object-position: center; }
+/* 사진형 표지(ESG 등): 가로 사진을 잘리지 않게 전부 보여줌(가운데 정렬) + 주제 제목 오버레이.
+   표지 영역을 가로형(3:2)으로 줄여 위아래 여백을 최소화하고, 카드 높이는 내용에 맞춤. */
+.cat-card--photo { align-self: start; }
+.cat-card--photo .cat-cover { aspect-ratio: 3 / 2; background: #f3f4f6; }
+.cat-card--photo .cat-cover img { object-fit: contain; object-position: center; }
 .cat-card .cat-cover-cap {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
   padding: 34px 14px 16px; text-align: center; pointer-events: none;
