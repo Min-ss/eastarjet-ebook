@@ -7,9 +7,11 @@
 (function () {
   var API = 'https://eastarjet-ebook.pages.dev/api/track';
 
-  // 관리자 본인의 접속은 통계에서 제외 (테스트 열람이 집계를 왜곡하지 않도록)
+  // 관리자 본인·로컬 미리보기 접속은 통계에서 제외 (테스트 열람이 집계를 왜곡하지 않도록)
   var isAdmin = false;
   try { isAdmin = localStorage.getItem('eb_admin') === '1'; } catch (e) {}
+  var h = location.hostname;
+  if (!h || h === 'localhost' || h === '127.0.0.1' || h === '[::1]') isAdmin = true;
 
   // 유입경로 태그(?from=qr 등)는 세션 동안 유지 — 사이트 안에서 이동해도 같은 유입으로 집계
   var from = '';

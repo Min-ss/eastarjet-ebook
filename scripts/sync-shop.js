@@ -173,6 +173,7 @@ window.PRODUCTS = PRODUCTS;
   const all = await fetchCategory(allUrl);
   const goods = all.filter(it => !exclude.has(it.id) && it.name);
   console.log(`▶ 굿즈 ${goods.length}종 추출 (전체 ${all.length})`);
+  if (goods.length < 10) throw new Error(`굿즈가 너무 적게 추출됨(${goods.length}종) — 페이지 구조 변경 의심. products.js 보존.`);
 
   // 카테고리 집계 + 상품 변환 + 이미지 다운로드
   const usedCats = new Map();
@@ -233,8 +234,18 @@ window.PRODUCTS = PRODUCTS;
     notice: { enabled: false, text: '', link: '', until: '' }
   };
 
+  // 단종(목록에서 빠진) 상품의 이미지 폴더 정리 — shop/es-* 중 미사용분 삭제
+  const liveIds = new Set(products.map(p => p.id));
+  let pruned = 0;
+  for (const d of fs.readdirSync(SHOP_DIR)) {
+    if (/^es-\d+$/.test(d) && !liveIds.has(d)) {
+      fs.rmSync(path.join(SHOP_DIR, d), { recursive: true, force: true });
+      pruned++;
+    }
+  }
+
   const out = genProductsJs(meta, cats, products);
   fs.writeFileSync(PRODUCTS_JS, out, 'utf8');
-  console.log(`✅ products.js 갱신 — 굿즈 ${products.length}종 / 카테고리 ${cats.length}개 / 이미지 변경 ${imgChanged}건`);
+  console.log(`✅ products.js 갱신 — 굿즈 ${products.length}종 / 카테고리 ${cats.length}개 / 이미지 변경 ${imgChanged}건 / 폴더 정리 ${pruned}건`);
   console.log('   카테고리:', cats.map(c => c.name).join(', '));
 })().catch(e => { console.error('❌ 동기화 실패:', e.message); process.exit(1); });
