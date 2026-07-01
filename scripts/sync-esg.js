@@ -122,7 +122,14 @@ window.ESG_ITEMS = ${JSON.stringify(items, null, 2)};
         if (await downloadImage(enc, base)) changed++;
         images.push('assets/esg/' + base + '.jpg');
         used.add(base + '.jpg');
-      } catch (e) { console.warn(`  ⚠ 이미지 실패 ${base}: ${e.message}`); }
+      } catch (e) {
+        console.warn(`  ⚠ 이미지 실패 ${base}: ${e.message}`);
+        // 일시 오류로 못 받아도 기존 사진이 있으면 보존(삭제·목록 제외 방지)
+        if (fs.existsSync(path.join(IMG_DIR, base + '.jpg'))) {
+          images.push('assets/esg/' + base + '.jpg');
+          used.add(base + '.jpg');
+        }
+      }
     }
     if (images.length) items.push({ group: it.group, topic: it.topic, images });
   }
