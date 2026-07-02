@@ -135,6 +135,11 @@
     const pdfUrl = `${book.path}/${book.file}`;
 
     // ---------- PDF.js 준비 ----------
+    // CDN(jsDelivr) 차단·실패 시 pdfjsLib 미정의 → 백지·정지 대신 안내 화면
+    if (typeof pdfjsLib === 'undefined') {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>뷰어를 불러오지 못했습니다</h2><p>네트워크 상태를 확인한 뒤 새로고침해 주세요.</p><p style="margin-top:18px"><a class="btn" href="' + pdfUrl + '" download>PDF 내려받기</a> &nbsp; <a class="btn" href="index.html">← 목록으로</a></p></div>';
+      throw new Error('pdfjsLib not loaded (CDN blocked?)');
+    }
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
@@ -295,7 +300,8 @@
         buildPlaceholders();
         if (window.EBReader) EBReader.setProgress(curPage, numPages);
         // 저장된 위치가 있으면 그 페이지로 이동
-        const saved = parseInt(localStorage.getItem(POS_KEY) || '0', 10);
+        let saved = 0;
+        try { saved = parseInt(localStorage.getItem(POS_KEY) || '0', 10); } catch (e) {}
         if (saved >= 2 && saved <= numPages) {
           requestAnimationFrame(() => {
             wrappers[saved - 1]?.scrollIntoView({ block: 'start' });
@@ -346,6 +352,7 @@
       scrollEl.scrollLeft = Math.max(0, (scrollEl.scrollWidth - scrollEl.clientWidth) / 2);
     }
     function applyZoom(z, focal) {
+      if (!numPages) return;   // 로드 완료 전에는 무시(진행률 메시지 유지·Infinity 스케일 방지)
       const anchor = curPage;
       const prev = zoom;
       zoom = Math.max(0.5, Math.min(3, Math.round(z * 100) / 100));
@@ -455,7 +462,9 @@
       document.body.appendChild(a); a.click(); a.remove();
     };
     // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
-    if (localStorage.getItem('eb_admin') !== '1') $('downloadBtn').style.display = 'none';
+    let _isAdmin = false;
+    try { _isAdmin = localStorage.getItem('eb_admin') === '1'; } catch (e) {}
+    if (!_isAdmin) $('downloadBtn').style.display = 'none';
 
     // ---------- 검색 (전체 문서) ----------
     const findbar = $('findbar'), findInput = $('findInput'), findCount = $('findCount');
@@ -465,7 +474,8 @@
     $('findClose').onclick = () => { findbar.classList.remove('show'); };
 
     async function buildIndex() {
-      if (indexed || indexing) return;
+      // 로드 완료 전에는 색인하지 않는다(indexed 를 조기 확정해 검색이 영구히 0건이 되는 것 방지)
+      if (indexed || indexing || !numPages) return;
       indexing = true; findCount.textContent = '준비중…';
       for (let n = 1; n <= numPages; n++) {
         if (textCache[n] === undefined) {
@@ -481,6 +491,7 @@
       q = q.trim().toLowerCase();
       matches = []; matchIdx = -1;
       if (!q) { findCount.textContent = '—'; return; }
+      if (!numPages) { findCount.textContent = '불러오는 중…'; return; }
       await buildIndex();
       for (let n = 1; n <= numPages; n++) {
         if (textCache[n] && textCache[n].includes(q)) matches.push(n);

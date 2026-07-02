@@ -65,7 +65,8 @@
     // ---------- 책 선택 ----------
     const params = new URLSearchParams(location.search);
     const bookId = params.get('book');
-    const book = (window.BOOKS || []).find(b => b.id === bookId) || (window.BOOKS || [])[0];
+    // 없는 id(오타·오래된 링크)는 첫 책으로 대체하지 않고 '찾을 수 없음'으로 처리한다
+    const book = (window.BOOKS || []).find(b => b.id === bookId);
 
     const $ = id => document.getElementById(id);
     const toast = (msg) => {
@@ -157,6 +158,7 @@
     $('nextBtn').onclick = () => pageFlip.flipNext();
     slider.oninput = e => pageFlip.flip(+e.target.value - 1);
     document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;   // 슬라이더 포커스 시 중복 넘김 방지
       if (e.key === 'ArrowLeft') pageFlip.flipPrev();
       if (e.key === 'ArrowRight') pageFlip.flipNext();
       if (e.key === 'Escape') closePanel();
@@ -189,7 +191,10 @@
       }
     };
     // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
-    if (localStorage.getItem('eb_admin') !== '1') $('downloadBtn').style.display = 'none';
+    // localStorage 차단 환경(사생활 보호 모드 등)에서도 오류 없이 '숨김'으로 처리
+    let _isAdmin = false;
+    try { _isAdmin = localStorage.getItem('eb_admin') === '1'; } catch (e) {}
+    if (!_isAdmin) $('downloadBtn').style.display = 'none';
 
     // 공유
     $('shareBtn').onclick = async () => {

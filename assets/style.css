@@ -695,6 +695,9 @@ body.viewer { overflow: hidden; height: 100vh; height: 100dvh; background: var(-
   .wz-thumb-img.loaded span { color: var(--text); }
 }
 
+/* 표지 이미지 로드 실패 시 로고 폴백 — 깨진 이미지 아이콘 대신 옅은 로고 표시 */
+.img-fallback { object-fit: contain !important; padding: 22%; opacity: .35; background: #f4f5f7; }
+
 /* 시스템 '동작 줄이기' 설정 존중 — 큰 전환/애니메이션 최소화 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

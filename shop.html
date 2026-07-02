@@ -104,7 +104,7 @@
   <script src="products.js"></script>
   <script>
     const $ = id => document.getElementById(id);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);   // 한국시간(KST) 기준
     const shop = window.SHOP || {};
     const shopCats = window.SHOP_CATEGORIES || [];
     const products = (window.PRODUCTS || []).filter(p => p.published !== false);

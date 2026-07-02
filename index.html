@@ -7,7 +7,7 @@
   <meta name="description" content="이스타항공 대외 간행물을 웹진으로 읽는 e-Book" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260622i" />
+<link rel="stylesheet" href="assets/style.css?v=20260702a" />
 </head>
 <body>
   <!-- ===== 로딩 스플래시 (진입 시 3초, 이스타항공 사진 랜덤 표출) ===== -->
@@ -73,7 +73,10 @@
   <script src="assets/track.js"></script>
   <script>
     const $ = id => document.getElementById(id);
-    const today = new Date().toISOString().slice(0, 10);
+    // HTML 이스케이프 — 제목·설명 등 데이터가 자동 동기화(ESG 스크래핑)·관리자 입력에서 오므로
+    // innerHTML 삽입 전 항상 처리(따옴표·꺾쇠로 인한 레이아웃 깨짐/스크립트 주입 방지)
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);   // 한국시간(KST) 기준 날짜
     // 공개 조건: published !== false 이고, 게시 예약일(publishAt)이 지났을 것
     const isVisible = b => b.published !== false && (!b.publishAt || b.publishAt <= today);
     // 발행일(date)로부터 30일간 NEW 뱃지
@@ -209,19 +212,22 @@
       const info = pool ? coverInfo(coverUrl) : null;
       const cap = info ? `
           <span class="cat-cover-cap">
-            ${info.topic ? `<span class="cap-topic">${info.topic}</span>` : ''}
-            ${info.group ? `<span class="cap-group">${info.group}</span>` : ''}
+            ${info.topic ? `<span class="cap-topic">${esc(info.topic)}</span>` : ''}
+            ${info.group ? `<span class="cap-group">${esc(info.group)}</span>` : ''}
           </span>` : '';
+      const catImg = coverUrl
+        ? `<img src="${esc(coverUrl)}" alt="${esc(c.title)}" loading="lazy" onerror="this.onerror=null;this.src='assets/eastar_logo.svg';this.classList.add('img-fallback')" />`
+        : '';
       return `
-      <a class="cat-card${pool ? ' cat-card--photo' : ''}" data-cat="${c.id}" href="${href}">
-        <span class="cat-count">${badge}</span>
+      <a class="cat-card${pool ? ' cat-card--photo' : ''}" data-cat="${esc(c.id)}" href="${esc(href)}">
+        <span class="cat-count">${esc(badge)}</span>
         <div class="cat-body">
-          <h3>${c.title}</h3>
-          <p>${c.desc || ''}</p>
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.desc || '')}</p>
           <span class="cat-go">살펴보기 ›</span>
         </div>
         <div class="cat-cover">
-          <img src="${coverUrl}" alt="${c.title}" loading="lazy" />
+          ${catImg}
           ${cap}
         </div>
       </a>`;
@@ -285,15 +291,15 @@
             : 'viewer.html?book=' + encodeURIComponent(b.id);
           const count = Array.isArray(b.pages) ? ` · ${b.pages.length}p` : '';
           return `
-          <a class="book-card" href="${href}">
+          <a class="book-card" href="${esc(href)}">
             <div class="cover-wrap">
               ${isNew(b) ? '<span class="badge badge-new">NEW</span>' : ''}
               <span class="badge badge-type">${isPdf ? 'PDF' : '웹진'}</span>
-              <img src="${b.cover}" alt="${b.title} 표지" loading="lazy" />
+              <img src="${esc(b.cover || 'assets/eastar_logo.svg')}" alt="${esc(b.title)} 표지" loading="lazy" onerror="this.onerror=null;this.src='assets/eastar_logo.svg';this.classList.add('img-fallback')" />
             </div>
             <div class="book-info">
-              <h3>${b.title}</h3>
-              <div class="meta">${b.subtitle || ''}${count}</div>
+              <h3>${esc(b.title)}</h3>
+              <div class="meta">${esc(b.subtitle || '')}${count}</div>
             </div>
             <span class="book-chevron" aria-hidden="true">›</span>
           </a>`;

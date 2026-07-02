@@ -104,7 +104,7 @@
     $('flipTitle').textContent = book.title;
     $('titleBig').textContent = book.title;
     $('subBig').textContent = book.subtitle || '';
-    $('coverImg').src = book.cover;
+    if (book.cover) $('coverImg').src = book.cover; else $('coverImg').style.display = 'none';
     const pdfUrl = `${book.path}/${book.file}`;
     const searchHref = `pdf.html?book=${encodeURIComponent(book.id)}`;
     $('searchLink').href = searchHref;
@@ -124,9 +124,16 @@
     function download() { if (window.ebTrack) ebTrack.download(book.id); const a = document.createElement('a'); a.href = pdfUrl; a.download = `${book.title}.pdf`; document.body.appendChild(a); a.click(); a.remove(); }
     $('dlBtn1').onclick = download; $('dlBtn2').onclick = download;
     // 다운로드는 관리자에게만 노출 (일반 방문자는 읽기 전용)
-    if (localStorage.getItem('eb_admin') !== '1') { $('dlBtn1').style.display = 'none'; $('dlBtn2').style.display = 'none'; }
+    let _isAdmin = false;
+    try { _isAdmin = localStorage.getItem('eb_admin') === '1'; } catch (e) {}
+    if (!_isAdmin) { $('dlBtn1').style.display = 'none'; $('dlBtn2').style.display = 'none'; }
 
     // ---------- PDF.js ----------
+    // CDN(jsDelivr) 차단·실패 시 pdfjsLib 미정의 → 뷰어 대신 안내 화면(백지·정지 방지)
+    if (typeof pdfjsLib === 'undefined') {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>뷰어를 불러오지 못했습니다</h2><p>네트워크 상태를 확인한 뒤 새로고침해 주세요.</p><p style="margin-top:18px"><a class="btn" href="' + pdfUrl + '" download>PDF 내려받기</a> &nbsp; <a class="btn" href="index.html">← 목록으로</a></p></div>';
+      throw new Error('pdfjsLib not loaded (CDN blocked?)');
+    }
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
     let pdf = null, numPages = 0, baseW = 0, baseH = 0, RATIO = 1.414;
@@ -175,7 +182,7 @@
         $('spreadsHead').textContent = `전체 ${numPages}페이지`;
         $('slider').max = numPages;
         buildThumbs();
-        if (location.hash === '#read') openWithResume();
+        if (location.hash === '#read' || pendingOpen) { pendingOpen = false; openWithResume(); }
       } catch (e) {
         clearTimeout(timer);
         const isFile = location.protocol === 'file:';
@@ -235,7 +242,8 @@
     // ============================================================
     const pagesEl = $('pages');
     const stageEl = $('stage');
-    let mode = localStorage.getItem('eb_pdf_mode');
+    let mode = null;
+    try { mode = localStorage.getItem('eb_pdf_mode'); } catch (e) {}
     mode = (mode === 'spread' || mode === 'scroll') ? mode : 'single';
     let cur = 1;                  // 현재(또는 펼침 왼쪽) 페이지
     let scale = 1, tx = 0, ty = 0;   // 확대 배율 / 이동(px) — 페이지 모드
@@ -509,12 +517,14 @@
     }
     // ---------- 이어읽기: 책별 마지막 페이지 기억 (pdf.html 과 키 공유) ----------
     const POS_KEY = 'eb_pos_' + book.id;
-    function savePos() { try { localStorage.setItem(POS_KEY, String(cur)); } catch (e) {} if (window.ebTrack) ebTrack.page(book.id, cur, numPages); }
+    function savePos() { if (!numPages) return; try { localStorage.setItem(POS_KEY, String(cur)); } catch (e) {} if (window.ebTrack) ebTrack.page(book.id, cur, numPages); }
     function resumePage() {
-      const v = parseInt(localStorage.getItem(POS_KEY) || '0', 10);
+      let v = 0;
+      try { v = parseInt(localStorage.getItem(POS_KEY) || '0', 10); } catch (e) {}
       return (v >= 2 && v <= numPages) ? v : 0;
     }
     let resumeShown = false;
+    let pendingOpen = false;   // 로드 완료 전 '열람하기'를 누른 경우, 완료 시 자동 진입
     function resumeToast(p) {
       resumeShown = true;
       const t = $('toast');
@@ -528,6 +538,8 @@
       clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 4500);
     }
     function openWithResume() {
+      // 아직 PDF가 로드되지 않았으면 대기 표시 후, 로드 완료 시 자동으로 열림(빈 화면 방지)
+      if (!numPages) { pendingOpen = true; toast('불러오는 중…'); return; }
       const r = resumePage();
       openReader(r || 1);
       if (r) setTimeout(() => resumeToast(r), 600);
@@ -575,7 +587,7 @@
 
     // 보기 방식 토글
     function applyMode(m) {
-      mode = m; localStorage.setItem('eb_pdf_mode', m);
+      mode = m; try { localStorage.setItem('eb_pdf_mode', m); } catch (e) {}
       $('modeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
       fullCache.clear(); render(); applyReaderFont();
     }
