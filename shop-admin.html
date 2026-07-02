@@ -159,7 +159,7 @@
       <h2>💾 변경사항 적용 — products.js</h2>
       <p class="sub">GitHub 토큰을 넣고 「저장(게시)」을 누르면 products.js(및 업로드한 이미지)가 반영됩니다. 토큰은 이 브라우저에만 저장됩니다.</p>
       <div class="form-grid">
-        <div class="full"><label>GitHub 토큰 (Fine-grained · 이 저장소 · Contents: Read and write)</label><input type="text" id="ghToken" placeholder="github_pat_..." /></div>
+        <div class="full"><label>GitHub 토큰 (Fine-grained · 이 저장소 · Contents: Read and write · 이 탭에만 임시 저장, 닫으면 삭제)</label><input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off" /></div>
       </div>
       <div class="row-actions">
         <button class="btn primary" id="pubBtn">🚀 저장(게시)</button>
@@ -235,7 +235,7 @@
       $('hSub').value = meta.hero.sub;
       $('hImages').value = (meta.hero.images || []).join('\n');
       $('hLink').value = meta.hero.link;
-      $('ghToken').value = localStorage.getItem('eb_gh_token') || '';
+      $('ghToken').value = sessionStorage.getItem('eb_gh_token') || '';
       pendingImages = {};
       renderCats();
       fillCatSelect();
@@ -475,7 +475,7 @@ window.PRODUCTS = PRODUCTS;
     window.addEventListener('beforeunload', e => { if (savedSnapshot !== null && !saving && (genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length)) { e.preventDefault(); e.returnValue = ''; } });
 
     /* ---------- GitHub ---------- */
-    $('ghToken').addEventListener('change', () => localStorage.setItem('eb_gh_token', $('ghToken').value.trim()));
+    $('ghToken').addEventListener('change', () => sessionStorage.setItem('eb_gh_token', $('ghToken').value.trim()));
     const encPath = p => p.split('/').map(encodeURIComponent).join('/');
     async function ghReq(path, opts = {}) {
       const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/${path}`, {
@@ -498,7 +498,7 @@ window.PRODUCTS = PRODUCTS;
         const body = { message, content: base64, branch: GH.branch }; if (sha) body.sha = sha;
         return ghReq('contents/' + encPath(filePath), { method: 'PUT', body: JSON.stringify(body) });
       }
-      try { return await put(); } catch (e) { if (/does not match|409|sha/i.test(e.message)) return await put(); throw e; }
+      try { return await put(); } catch (e) { if (/does not match|409|sha/i.test(e.message)) { if (!confirm('다른 관리자(또는 다른 탭)가 방금 저장한 것 같습니다.\n그대로 저장하면 그 변경이 사라질 수 있습니다.\n[취소] 후 새로고침해 최신 내용을 불러오길 권장합니다.\n\n그래도 덮어쓸까요?')) throw new Error('저장을 취소했습니다. 새로고침 후 다시 시도하세요.'); return await put(); } throw e; }
     }
     const b64Text = s => btoa(unescape(encodeURIComponent(s)));
     const b64File = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(f); });
@@ -507,7 +507,7 @@ window.PRODUCTS = PRODUCTS;
       if (saving) return;
       const t = $('ghToken').value.trim();
       if (!t) { alert('GitHub 토큰을 먼저 입력하세요.\n발급: github.com → Settings → Developer settings → Fine-grained tokens → 이 저장소 → Contents: Read and write'); $('ghToken').focus(); return; }
-      localStorage.setItem('eb_gh_token', t);
+      sessionStorage.setItem('eb_gh_token', t);
       saving = true; $('pubBtn').disabled = $('saveBarBtn').disabled = true;
       $('pubMsg').textContent = '저장 중…'; $('saveBarState').textContent = '저장 중…';
       try {

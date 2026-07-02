@@ -14,16 +14,41 @@ const SITE_TAG_DEFAULT = "9f36fa4601844c2e95f5ecc9d9701285";   // Web Analytics 
 const ACCOUNT_DEFAULT = "d6f547fff6ac48829ac38b71bc00afbd";    // Cloudflare 계정 ID
 const MAX_CHUNK_DAYS = 90;                                     // 단일 쿼리 최대 범위
 
-function out(obj, status = 200) {
+// 관리자 콘솔이 열리는 알려진 출처만 브라우저 교차출처 조회 허용(임의 사이트의 스크래핑 차단).
+const ALLOW_ORIGINS = ["https://eastarjet-ebook.pages.dev", "https://min-ss.github.io"];
+function corsHeaders(request) {
+  const o = (request && request.headers.get("Origin")) || "";
+  const allow = ALLOW_ORIGINS.includes(o) ? o : ALLOW_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Vary": "Origin",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  };
+}
+
+// STATS_TOKEN 환경변수가 설정된 경우에만 인증 요구(미설정 시 기존처럼 공개 — 하위호환).
+// 근본 대책은 회사 도메인 연결 시 이 경로에 Cloudflare Access 정책 적용(#19).
+function unauthorized(env, request) {
+  const need = env.STATS_TOKEN;
+  if (!need) return false;
+  const got = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  return got !== need;
+}
+
+function out(obj, status = 200, request) {
   return new Response(JSON.stringify(obj), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
-      // 관리자 콘솔을 GitHub Pages(github.io)에서 열어도 조회되도록 허용
-      "Access-Control-Allow-Origin": "*",
+      ...corsHeaders(request),
     },
   });
+}
+
+export function onRequestOptions({ request }) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 }
 
 function makeChunks(startMs, endMs) {
@@ -56,12 +81,15 @@ async function queryChunk(token, account, siteTag, startISO, endISO) {
 }
 
 export async function onRequestGet({ request, env }) {
+  if (unauthorized(env, request)) {
+    return out({ ok: false, error: "unauthorized", message: "통계 열람 권한이 없습니다." }, 401, request);
+  }
   const token = env.CF_API_TOKEN;
   const account = env.CF_ACCOUNT_ID || ACCOUNT_DEFAULT;
   const siteTag = env.CF_SITE_TAG || SITE_TAG_DEFAULT;
 
   if (!token) {
-    return out({ ok: false, error: "missing_env", message: "Cloudflare Pages 환경변수 CF_API_TOKEN(API 토큰)을 설정한 뒤 재배포하세요." });
+    return out({ ok: false, error: "missing_env", message: "Cloudflare Pages 환경변수 CF_API_TOKEN(API 토큰)을 설정한 뒤 재배포하세요." }, 200, request);
   }
 
   const url = new URL(request.url);
@@ -79,7 +107,7 @@ export async function onRequestGet({ request, env }) {
   try {
     parts = await Promise.all(chunks.map(c => queryChunk(token, account, siteTag, c[0], c[1])));
   } catch (e) {
-    return out({ ok: false, error: "graphql_error", message: String((e && e.message) || e) });
+    return out({ ok: false, error: "graphql_error", message: String((e && e.message) || e) }, 200, request);
   }
 
   // 일별 데이터 + 인기페이지/국가 병합
@@ -114,5 +142,5 @@ export async function onRequestGet({ request, env }) {
     buckets,
     topPages: top(pageMap).map(([path, views]) => ({ path, views })),
     topCountries: top(countryMap).map(([country, views]) => ({ country, views })),
-  });
+  }, 200, request);
 }

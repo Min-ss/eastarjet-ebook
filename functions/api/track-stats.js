@@ -5,10 +5,34 @@
 //        유입경로별 집계, 월별 메인 방문 수
 // ============================================================
 
-const CORS = { "Access-Control-Allow-Origin": "*" };
-const out = (obj) => new Response(JSON.stringify(obj), {
-  headers: { ...CORS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+// 관리자 콘솔이 열리는 알려진 출처만 브라우저 교차출처 조회 허용(임의 사이트의 스크래핑 차단).
+const ALLOW_ORIGINS = ["https://eastarjet-ebook.pages.dev", "https://min-ss.github.io"];
+function corsHeaders(request) {
+  const o = (request && request.headers.get("Origin")) || "";
+  const allow = ALLOW_ORIGINS.includes(o) ? o : ALLOW_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Vary": "Origin",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  };
+}
+
+// STATS_TOKEN 환경변수가 설정된 경우에만 인증 요구(미설정 시 기존처럼 공개 — 하위호환).
+function unauthorized(env, request) {
+  const need = env.STATS_TOKEN;
+  if (!need) return false;
+  const got = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  return got !== need;
+}
+
+const out = (obj, request) => new Response(JSON.stringify(obj), {
+  headers: { ...corsHeaders(request), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
 });
+
+export function onRequestOptions({ request }) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
+}
 
 async function listAll(kv, prefix) {
   const names = [];
@@ -21,12 +45,15 @@ async function listAll(kv, prefix) {
   return names;
 }
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ request, env }) {
+  if (unauthorized(env, request)) {
+    return out({ ok: false, error: "unauthorized", message: "통계 열람 권한이 없습니다." }, request);
+  }
   if (!env.EB_STATS) {
     return out({
       ok: false, error: "missing_kv",
       message: "Cloudflare 대시보드에서 KV 네임스페이스를 만들고 Pages 프로젝트 Settings → Bindings 에 변수 이름 EB_STATS 로 연결한 뒤 재배포하세요.",
-    });
+    }, request);
   }
   const kv = env.EB_STATS;
   const month = new Date().toISOString().slice(0, 7);
@@ -67,5 +94,5 @@ export async function onRequestGet({ env }) {
   }
   visits.sort((a, b) => (a.month < b.month ? -1 : 1));
 
-  return out({ ok: true, month, books, sources, visits });
+  return out({ ok: true, month, books, sources, visits }, request);
 }
