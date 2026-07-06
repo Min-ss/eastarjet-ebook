@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
   <title>Eastar SHOP 상품 관리</title>
-  <link rel="stylesheet" href="assets/style.css?v=20260619p" />
+  <link rel="stylesheet" href="assets/style.css?v=20260706a" />
   <style>
     .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .gate-box { width: 100%; max-width: 360px; text-align: center; }
@@ -23,7 +24,7 @@
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
     .form-grid .full { grid-column: 1 / -1; }
     .form-grid label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .form-grid input[type=text], .form-grid input[type=number], .form-grid input[type=url], .form-grid textarea, .form-grid input[type=file] {
+    .form-grid input[type=text], .form-grid input[type=number], .form-grid input[type=url], .form-grid input[type=date], .form-grid textarea, .form-grid input[type=file] {
       width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; background: var(--bg-soft); font-family: var(--font); box-sizing: border-box;
     }
     .form-grid textarea { resize: vertical; min-height: 64px; }
@@ -34,6 +35,9 @@
     table.pubs th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
     table.pubs td.ops { white-space: nowrap; text-align: right; }
     table.pubs .pthumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--bg-soft); border: 1px solid var(--line); }
+    /* 모바일: 표가 화면보다 넓으면 페이지 대신 표 안에서만 좌우 스크롤 */
+    .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 640px) { .tbl-scroll table.pubs { min-width: 560px; } }
     .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 980px; margin-left: 6px; }
     .chip.hidden-c { background: #ddd; color: #555; }
     .chip.sold { background: #555; color: #fff; }
@@ -96,8 +100,30 @@
         <div class="full"><label>히어로 작은 라벨 (비우면 숨김)</label><input type="text" id="hKicker" placeholder="EASTAR SHOP" /></div>
         <div class="full"><label>히어로 큰 제목 (비우면 숨김)</label><input type="text" id="hHeadline" placeholder="이스타항공 공식 굿즈" /></div>
         <div class="full"><label>히어로 소개 문구 (비우면 숨김)</label><input type="text" id="hSub" placeholder="하늘 위의 설렘을 일상에서도." /></div>
-        <div class="full"><label>히어로 배경 이미지 (한 줄에 하나씩 · 여러 장이면 4초마다 자동 전환 · 비우면 레드 그라데이션)</label><textarea id="hImages" rows="3" placeholder="assets/planes/plane-05.jpg&#10;assets/planes/plane-02.jpg"></textarea></div>
+        <div class="full">
+          <label>히어로 배경 이미지 (한 줄에 하나씩 · 여러 장이면 4초마다 자동 전환 · 비우면 레드 그라데이션)</label>
+          <textarea id="hImages" rows="3" placeholder="assets/planes/plane-05.jpg&#10;assets/planes/plane-02.jpg"></textarea>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
+            <span class="sub" style="margin:0">새 사진 업로드 (저장 시 <code>assets/planes/</code>에 업로드 후 목록에 추가) →</span>
+            <input type="file" id="hImageFile" accept="image/*" style="flex:1;min-width:200px" />
+          </div>
+        </div>
         <div class="full"><label>히어로 버튼 링크 (선택)</label><input type="url" id="hLink" placeholder="https://..." /></div>
+      </div>
+    </div>
+
+    <!-- 공지 배너 -->
+    <div class="card">
+      <h2>📢 SHOP 공지 배너</h2>
+      <p class="sub">SHOP 화면 상단에 공지를 띄웁니다. (방문자가 ✕로 닫을 수 있음 · 자사몰 동기화 후에도 유지됨)</p>
+      <div class="form-grid">
+        <div class="check-line">
+          <input type="checkbox" id="nEnabled" />
+          <label for="nEnabled">공지 표시</label>
+        </div>
+        <div><label>표시 종료일 (선택 — 이 날짜까지만 표시)</label><input type="date" id="nUntil" /></div>
+        <div class="full"><label>공지 내용</label><input type="text" id="nText" placeholder="예: 피너츠 콜라보 신상품이 입고되었습니다!" /></div>
+        <div class="full"><label>링크 (선택 — '자세히' 버튼 연결)</label><input type="url" id="nLink" placeholder="https://..." /></div>
       </div>
     </div>
 
@@ -105,7 +131,7 @@
     <div class="card">
       <h2>🗂 카테고리</h2>
       <p class="sub">상품 분류 카테고리입니다. SHOP 화면 상단 칩으로 표시됩니다. (상품이 연결된 카테고리는 삭제 시 그 상품의 분류가 비워집니다)</p>
-      <table class="pubs"><thead><tr><th>이름</th><th>ID</th><th></th></tr></thead><tbody id="catRows"></tbody></table>
+      <div class="tbl-scroll"><table class="pubs"><thead><tr><th>이름</th><th>ID</th><th></th></tr></thead><tbody id="catRows"></tbody></table></div>
       <div class="row-actions">
         <input type="text" id="newCatId" placeholder="ID (영문·숫자, 예: goods)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);font-family:var(--font);font-size:13.5px" />
         <input type="text" id="newCatName" placeholder="이름 (예: 굿즈)" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);font-family:var(--font);font-size:13.5px" />
@@ -117,7 +143,7 @@
     <div class="card">
       <h2>🛍 상품 목록</h2>
       <p class="sub">순서 변경(▲▼) · 공개/비공개 · 품절 · 수정 · 삭제. 카드 순서가 SHOP 화면 노출 순서입니다.</p>
-      <table class="pubs"><thead><tr><th></th><th>상품</th><th>가격</th><th>상태</th><th></th></tr></thead><tbody id="prodRows"></tbody></table>
+      <div class="tbl-scroll"><table class="pubs"><thead><tr><th></th><th>상품</th><th>가격</th><th>상태</th><th></th></tr></thead><tbody id="prodRows"></tbody></table></div>
       <p class="sub" id="emptyHint" style="margin-top:14px;display:none">등록된 상품이 없습니다. 아래에서 추가하세요.</p>
     </div>
 
@@ -210,7 +236,8 @@
     $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
     /* ---------- 상태 ---------- */
-    let meta = {}, products = [], cats = [], pendingImages = {};   // pendingImages: id -> File
+    let meta = {}, products = [], cats = [], pendingImages = {};   // pendingImages: id -> File (상품 이미지)
+    let pendingAssets = {};   // 경로 -> File (히어로 배경 등 assets 업로드, 저장 시 반영)
     let editingId = null, savedSnapshot = null, saving = false;
 
     function initConsole() {
@@ -235,8 +262,13 @@
       $('hSub').value = meta.hero.sub;
       $('hImages').value = (meta.hero.images || []).join('\n');
       $('hLink').value = meta.hero.link;
+      $('nEnabled').checked = !!meta.notice.enabled;
+      $('nText').value = meta.notice.text || '';
+      $('nLink').value = meta.notice.link || '';
+      $('nUntil').value = meta.notice.until || '';
       $('ghToken').value = sessionStorage.getItem('eb_gh_token') || '';
       pendingImages = {};
+      pendingAssets = {};
       renderCats();
       fillCatSelect();
       renderList();
@@ -253,6 +285,23 @@
     $('hSub').addEventListener('input', () => { meta.hero.sub = $('hSub').value; });
     $('hImages').addEventListener('input', () => { meta.hero.images = $('hImages').value.split('\n').map(s => s.trim()).filter(Boolean); });
     $('hLink').addEventListener('input', () => { meta.hero.link = $('hLink').value; });
+    $('nEnabled').addEventListener('change', () => { meta.notice.enabled = $('nEnabled').checked; refreshDirty(); });
+    $('nText').addEventListener('input', () => { meta.notice.text = $('nText').value; });
+    $('nLink').addEventListener('input', () => { meta.notice.link = $('nLink').value.trim(); });
+    $('nUntil').addEventListener('change', () => { meta.notice.until = $('nUntil').value; refreshDirty(); });
+
+    // 히어로 배경: 파일을 고르면 목록에 경로 추가 + 저장 시 assets/planes/ 로 업로드
+    $('hImageFile').addEventListener('change', () => {
+      const f = $('hImageFile').files[0]; if (!f) return;
+      const name = f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
+      const p = 'assets/planes/' + name;
+      pendingAssets[p] = f;
+      if (!meta.hero.images.includes(p)) meta.hero.images.push(p);
+      $('hImages').value = meta.hero.images.join('\n');
+      $('hImageFile').value = '';
+      toast('목록에 추가됨 — 「저장(게시)」 하면 업로드됩니다');
+      refreshDirty();
+    });
 
     /* ---------- 카테고리 ---------- */
     const catName = id => { const c = cats.find(c => c.id === id); return c ? c.name : ''; };
@@ -265,7 +314,7 @@
       $('catRows').innerHTML = cats.length ? cats.map(c => `
         <tr data-id="${esc(c.id)}">
           <td><input type="text" class="catname" value="${esc(c.name)}" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg-soft);font-family:var(--font);font-size:13.5px" /></td>
-          <td style="color:var(--muted);font-size:12px">${esc(c.id)}</td>
+          <td style="color:var(--muted);font-size:12px">${esc(c.id)}${c.parent ? ` <span class="chip hidden-c" title="'${esc(catName(c.parent) || c.parent)}' 선택 시 브랜드 칩으로 표시됩니다">└ ${esc(catName(c.parent) || c.parent)} 하위</span>` : ''}</td>
           <td class="ops"><button class="mini danger" data-cdel="${esc(c.id)}">삭제</button></td>
         </tr>`).join('') : '<tr><td colspan="3" style="color:var(--muted);font-size:13px">카테고리가 없습니다.</td></tr>';
     }
@@ -286,8 +335,12 @@
     $('catRows').addEventListener('click', e => {
       const id = e.target.getAttribute('data-cdel'); if (!id) return;
       const used = products.filter(p => p.category === id).length;
-      if (!confirm(`'${catName(id)}' 카테고리를 삭제할까요?` + (used ? `\n연결된 상품 ${used}개의 분류가 비워집니다.` : ''))) return;
+      const kids = cats.filter(c => c.parent === id);
+      if (!confirm(`'${catName(id)}' 카테고리를 삭제할까요?`
+        + (used ? `\n연결된 상품 ${used}개의 분류가 비워집니다.` : '')
+        + (kids.length ? `\n하위 카테고리 ${kids.length}개(${kids.map(k => k.name).join(', ')})는 최상위로 승격됩니다.` : ''))) return;
       cats = cats.filter(c => c.id !== id);
+      cats.forEach(c => { if (c.parent === id) delete c.parent; });   // 허공을 가리키는 parent 방지
       products.forEach(p => { if (p.category === id) delete p.category; });
       renderCats(); fillCatSelect(); renderList(); refreshDirty();
     });
@@ -466,13 +519,13 @@ window.PRODUCTS = PRODUCTS;
     /* ---------- 변경 감지 ---------- */
     function refreshDirty() {
       if (savedSnapshot === null || saving) return;
-      const dirty = genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length > 0;
+      const dirty = genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length > 0 || Object.keys(pendingAssets).length > 0;
       $('saveBar').classList.toggle('show', dirty);
       $('saveBarState').textContent = dirty ? '● 저장하지 않은 변경이 있습니다' : '✓ 모든 변경사항이 저장됨';
       $('saveBarState').classList.toggle('dirty', dirty);
     }
     document.addEventListener('input', () => { clearTimeout(window._rd); window._rd = setTimeout(refreshDirty, 150); }, true);
-    window.addEventListener('beforeunload', e => { if (savedSnapshot !== null && !saving && (genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length)) { e.preventDefault(); e.returnValue = ''; } });
+    window.addEventListener('beforeunload', e => { if (savedSnapshot !== null && !saving && (genProductsJs() !== savedSnapshot || Object.keys(pendingImages).length || Object.keys(pendingAssets).length)) { e.preventDefault(); e.returnValue = ''; } });
 
     /* ---------- GitHub ---------- */
     $('ghToken').addEventListener('change', () => sessionStorage.setItem('eb_gh_token', $('ghToken').value.trim()));
@@ -517,6 +570,13 @@ window.PRODUCTS = PRODUCTS;
           $('saveBarState').textContent = '이미지 업로드 중…';
           await ghPutFile(p.image.split('?')[0], await b64File(pendingImages[id]), `🖼 ${id} 상품 이미지 업로드 (SHOP 관리)`);
           delete pendingImages[id];
+        }
+        // 1.5) 대기 중인 히어로 배경 이미지 업로드 (목록에서 지운 파일은 업로드하지 않음)
+        for (const p of Object.keys(pendingAssets)) {
+          if (!(meta.hero.images || []).includes(p)) { delete pendingAssets[p]; continue; }
+          $('saveBarState').textContent = '히어로 이미지 업로드 중…';
+          await ghPutFile(p, await b64File(pendingAssets[p]), `🖼 히어로 배경 이미지 업로드 (SHOP 관리)`);
+          delete pendingAssets[p];
         }
         // 2) products.js 게시
         const content = genProductsJs();

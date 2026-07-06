@@ -584,6 +584,7 @@ body.viewer { overflow: hidden; height: 100vh; height: 100dvh; background: var(-
   .cat-grid { grid-template-columns: 1fr; gap: 0; margin: 18px auto 60px; padding: 0 14px; }
   .cat-card {
     display: flex; flex-direction: row; align-items: center; gap: 14px;
+    min-width: 0;   /* 그리드 아이템 기본 min-width:auto 로 nowrap 제목이 카드를 밀어 가로 스크롤이 생기는 것 방지 */
     min-height: 0; padding: 13px 4px; overflow: visible;
     background: transparent; border-radius: 0; box-shadow: none;
     border-bottom: 1px solid var(--line);
@@ -660,6 +661,8 @@ body.viewer { overflow: hidden; height: 100vh; height: 100dvh; background: var(-
   #flipView .v-top { gap: 8px; padding: 0 12px; }
   #flipView .v-top .bar-logo, #flipView .v-top .title { display: none; }
   #flipView .v-top .icon-btn { width: 36px; height: 36px; font-size: 16px; }
+  /* 좁은 화면: 핀치·더블탭·「화면 맞춤」으로 대체되는 버튼은 숨겨 상단바 넘침 방지 */
+  #flipView .v-top #zoomIn, #flipView .v-top #zoomOut, #flipView .v-top #fsBtn { display: none; }
   #flipView .seg button { padding: 6px 12px; }
   .v-bottom { gap: 8px; }
   .v-bottom input[type=range] { width: 42vw; }

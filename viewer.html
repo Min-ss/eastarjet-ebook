@@ -6,7 +6,7 @@
   <title>e-Book 뷰어 — 이스타항공</title>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0c0c10" media="(prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="assets/style.css?v=20260619p" />
+<link rel="stylesheet" href="assets/style.css?v=20260706a" />
 <link rel="stylesheet" href="assets/reader.css?v=20260619a" />
 </head>
 <body class="viewer">
@@ -86,6 +86,11 @@
       document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>표시할 페이지가 없습니다</h2><p>이 간행물에 페이지 이미지가 등록되지 않았습니다.</p><p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p></div>';
       throw new Error('no pages');
     }
+    // CDN(page-flip) 차단·실패 시 St 미정의 → 백지·정지 대신 안내 화면 (flip/pdf.html 과 동일 패턴)
+    if (typeof St === 'undefined') {
+      document.body.innerHTML = '<div class="empty-state" style="margin-top:120px"><h2>뷰어를 불러오지 못했습니다</h2><p>네트워크 상태를 확인한 뒤 새로고침해 주세요.</p><p style="margin-top:18px"><a class="btn" href="index.html">← 목록으로</a></p></div>';
+      throw new Error('page-flip not loaded (CDN blocked?)');
+    }
     if (window.ebTrack) ebTrack.open(book.id);
     $('bookTitle').textContent = book.title;
 
@@ -93,7 +98,9 @@
 
     // ---------- 책 크기 계산 ----------
     const bookEl = $('book');
-    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    // 회전·창 크기 변경 후에도 항상 현재 폭 기준으로 판정 (로드 시 고정하면 640px 경계 통과 시 펼침 수가 안 바뀜)
+    const mqMobile = window.matchMedia('(max-width: 640px)');
+    const isMobile = () => mqMobile.matches;
     const RATIO = 1.414;            // 페이지 세로/가로 비율 (A4)
 
     // 펼친 상태(데스크탑 2장 / 모바일 1장)가 가로·세로 모두 화면 안에
@@ -102,7 +109,7 @@
       const stage = $('stage');
       const sw = stage.clientWidth;
       const sh = stage.clientHeight;
-      const cols = isMobile ? 1 : 2;                   // 데스크탑은 좌·우 2장 펼침
+      const cols = isMobile() ? 1 : 2;                 // 데스크탑은 좌·우 2장 펼침
       const byWidth = Math.floor((sw - 40) / cols);    // 가로 제약 → 좌/우가 화면에 맞음
       const byHeight = Math.floor((sh - 24) / RATIO);  // 세로 제약 → 위/아래가 안 넘침
       const w = Math.max(200, Math.min(byWidth, byHeight));
@@ -113,7 +120,7 @@
     let pageFlip;
     function buildBook(startIndex = 0) {
       const { w, h } = calcSize();
-      const cols = isMobile ? 1 : 2;
+      const cols = isMobile() ? 1 : 2;
       bookEl.innerHTML = pagePaths.map((src, i) =>
         `<div class="page" data-i="${i}"><img src="${src}" alt="${i + 1}페이지" loading="${i < 4 ? 'eager' : 'lazy'}"></div>`
       ).join('');
@@ -233,7 +240,7 @@
         <span>${i + 1}</span>
       </div>`).join('');
     $('thumbsView').querySelectorAll('.thumb').forEach(el => {
-      el.onclick = () => { pageFlip.flip(+el.dataset.i); update(); if (isMobile) closePanel(); };
+      el.onclick = () => { pageFlip.flip(+el.dataset.i); update(); if (isMobile()) closePanel(); };
     });
 
     // 목차
@@ -242,7 +249,7 @@
       ? toc.map(item => `<div class="toc-item" data-pg="${item.page}"><span>${item.title}</span><span class="pg">${item.page}p</span></div>`).join('')
       : '<div style="color:var(--muted);padding:12px;font-size:14px">등록된 목차가 없습니다.</div>';
     $('tocView').querySelectorAll('.toc-item').forEach(el => {
-      el.onclick = () => { pageFlip.flip(+el.dataset.pg - 1); update(); if (isMobile) closePanel(); };
+      el.onclick = () => { pageFlip.flip(+el.dataset.pg - 1); update(); if (isMobile()) closePanel(); };
     });
 
     update();
