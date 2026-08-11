@@ -267,6 +267,18 @@ const PRODUCTS = [
     "published": true
   },
   {
+    "id": "es-58",
+    "name": "[피너츠 X 이스타항공] 굿즈 세트",
+    "category": "peanuts",
+    "price": 30000,
+    "image": "shop/es-58/img.jpg",
+    "desc": "피너츠 X 이스타항공 굿즈 세트 - 제품 이미지",
+    "buyUrl": "https://eastarjetshop.com/product/피너츠-x-이스타항공-굿즈-세트/58/category/42/display/1/",
+    "badge": "",
+    "soldOut": false,
+    "published": true
+  },
+  {
     "id": "es-57",
     "name": "[피너츠 X 이스타항공] 똑딱이 담요",
     "category": "peanuts",
@@ -274,6 +286,18 @@ const PRODUCTS = [
     "image": "shop/es-57/img.jpg",
     "desc": "피너츠 X 이스타항공 똑딱이 담요 제품 이미지",
     "buyUrl": "https://eastarjetshop.com/product/피너츠-x-이스타항공-똑딱이-담요/57/category/42/display/1/",
+    "badge": "",
+    "soldOut": false,
+    "published": true
+  },
+  {
+    "id": "es-56",
+    "name": "[피너츠 X 이스타항공] 캐리어택",
+    "category": "peanuts",
+    "price": 8000,
+    "image": "shop/es-56/img.jpg",
+    "desc": "피너츠 X 이스타항공 캐리어택 이미지",
+    "buyUrl": "https://eastarjetshop.com/product/피너츠-x-이스타항공-캐리어택/56/category/42/display/1/",
     "badge": "",
     "soldOut": false,
     "published": true
